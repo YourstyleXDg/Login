@@ -87,15 +87,29 @@ body::before{
 }
 
 .hang{
-  position:absolute;top:-51px;right:22px;width:78px;height:54px;
-  display:flex;flex-direction:column;align-items:center;z-index:12;
-  transform-origin:50% 100%;animation:sway 5.2s ease-in-out 1.55s infinite;
+  position:absolute;
+  top:-36px;right:20px;width:78px;height:36px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  z-index:999;
+  transform-origin:50% 100%;
+  animation:sway 5.2s ease-in-out 1.55s infinite;
+  backface-visibility:hidden;
+  will-change:transform;
+  isolation:isolate;
+  pointer-events:auto;
+  overflow:visible;
+  opacity: 1;
+  margin-top: 0;
+  transition: opacity 0.6s ease, margin-top 0.6s ease !important;
 }
 
-@keyframes sway{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
+@keyframes sway{
+  0%,100%{transform:rotate(-2.2deg)}
+  50%{transform:rotate(2.2deg)}
+}
 .join-badge{
-  order:1;display:inline-flex;align-items:center;justify-content:center;
-  width:auto;height:auto;padding:7px 15px;border-radius:999px;
+  order:1;position:relative;z-index:1000;transform:translateZ(0);backface-visibility:hidden;display:inline-flex;align-items:center;justify-content:center;
+  width:auto;height:auto;padding:6px 14px;border-radius:999px;
   color:#03150b;text-decoration:none;font-size:10.5px;font-weight:900;letter-spacing:.6px;
   background:linear-gradient(135deg,#26f5a1,#00d978);
   box-shadow:0 6px 15px rgba(0,255,136,.24),inset 0 1px rgba(255,255,255,.48);
@@ -113,12 +127,13 @@ body::before{
   92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
 }
 .hang-string{
-  order:2;width:1px;height:18px;flex:none;
-  background:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.3));
+  order:2;width:1.5px;height:12px;flex:none;
+  background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.4));
 }
 .hang-pin{
-  order:3;width:6px;height:6px;flex:none;border-radius:50%;
-  background:#f7f7f7;box-shadow:0 0 7px rgba(255,255,255,.65);margin-top:-1px;
+  order:3;width:8px;height:8px;flex:none;border-radius:50%;
+  background:#fff;box-shadow:0 0 10px rgba(255,255,255,.85);
+  margin-top:-3px;margin-bottom:-4px;
 }
 
 .glass{
@@ -127,25 +142,59 @@ body::before{
   border:1px solid rgba(255,255,255,.13);
   box-shadow:0 38px 100px rgba(0,0,0,.72),0 0 70px rgba(255,255,255,.045),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.45);
   backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
-  transform-style:preserve-3d;transition:transform .2s ease-out;
+  transform-style:preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), backdrop-filter 0.8s ease, -webkit-backdrop-filter 0.8s ease, background 0.8s ease, box-shadow 0.8s ease, border 0.8s ease !important;
 }
+
 .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(255,105,105,.72),rgba(255,255,255,.78) 17%,transparent 42%,rgba(90,160,255,.55) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
-.glass::after{display:none}
-
-.glass-shadow-runner{
-  position:absolute!important;z-index:1!important;
-  top:-10%;bottom:-10%;left:0;width:50%;
-  pointer-events:none;opacity:.48}
-@keyframes shadowRunner{
-  from{transform:translate3d(-70%,7%,0) skewX(-11deg)}
-  to{transform:translate3d(170%,-7%,0) skewX(-11deg)}
+.glass::after{
+  content:"";position:absolute;top:-60%;left:0;width:42%;height:220%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.20),transparent);
+  animation:glassSheen 10s ease-in-out infinite;
+  pointer-events:none;z-index:1;
+}
+@keyframes glassSheen{
+  0%{transform:translate(-40%,-30%) rotate(20deg)}
+  50%{transform:translate(160%,40%) rotate(20deg)}
+  100%{transform:translate(-40%,-30%) rotate(20deg)}
 }
 
-/* Fine film grain on the glass only */
-.grain{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");transform:translateZ(3px)}
-.light-cap{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%)}
-.light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
-.iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
+/* Internal Transparent Glare Bar (Independent of drag/hold) */
+.glass-glare {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 300%;
+  height: 300%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.04) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: rotate(35deg) translateY(-50%);
+  pointer-events: none;
+  z-index: 7; 
+  animation: glareSweep 5.5s cubic-bezier(0.35, 0, 0.25, 1) infinite alternate;
+  will-change: transform;
+}
+@keyframes glareSweep {
+  0% { transform: rotate(35deg) translateY(-50%); }
+  100% { transform: rotate(35deg) translateY(50%); }
+}
+
+.glass-shadow-runner{display:none!important}
+
+/* Grain with smooth transition */
+.grain{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;transition:opacity 0.8s ease !important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");transform:translateZ(3px)}
+
+.light-cap{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%);transition:opacity 0.8s ease, filter 0.8s ease !important;}
+.light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%);transition:opacity 0.8s ease !important;}
+
+.iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;transition:opacity 0.8s ease !important;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
+
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
 h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3)}
@@ -183,26 +232,36 @@ body.recall-ready{cursor:crosshair}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
 @media (max-height:650px){body{overflow:auto;padding-top:62px;padding-bottom:25px}.glass{padding-top:34px;padding-bottom:27px}.logo{width:58px;height:58px}.tagline{margin-bottom:18px}}
 
-/* Smooth travelling mode: only active while the card is moving. */
+
+/* ========================================================= */
+/* --- DRAG & RECALL STATES (BUTTERY SMOOTH HOLD EFFECTS) --- */
+/* ========================================================= */
+
 .scene.drag-active{will-change:transform;contain:layout style paint}
-body.is-dragging .glass, body.is-recalling .glass{
-  backdrop-filter:none !important;
-  -webkit-backdrop-filter:none !important;
-  background:linear-gradient(
-    145deg,
-    rgba(28,32,30,.96),
-    rgba(12,16,14,.97) 52%,
-    rgba(7,10,8,.98)
-  ) !important;
+
+/* 1. Max Glass: Smooth transition, deep blur, high contrast, clean border */
+body.is-dragging .glass, body.is-recalling .glass {
+  backdrop-filter: blur(50px) saturate(250%) contrast(120%) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(250%) contrast(120%) !important;
+  background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08) 52%, rgba(255,255,255,0.03)) !important;
+  box-shadow: 0 45px 120px rgba(0,0,0,0.85), 0 0 80px rgba(0,255,136,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -1px rgba(0,0,0,0.5) !important;
+  border: 1px solid rgba(255,255,255,0.3) !important;
+  transform: scale(1.025) translateZ(40px);
 }
-body.is-dragging .grain, body.is-recalling .grain,
-body.is-dragging .iridescent, body.is-recalling .iridescent,
-body.is-dragging .light-cap, body.is-recalling .light-cap,
-body.is-dragging .glass-shadow-runner, body.is-recalling .glass-shadow-runner{
-  display:none !important;
+
+/* 2. Max Grain: Smoothly fade in visible grain */
+body.is-dragging .grain, body.is-recalling .grain { opacity: 0.15 !important; }
+
+/* 3. Max Iridescent & Cap Glow: Smoothly boost ambient glow */
+body.is-dragging .iridescent, body.is-recalling .iridescent { opacity: 0.32 !important; }
+body.is-dragging .light-cap, body.is-recalling .light-cap { opacity: 1 !important; filter: blur(6px); }
+
+/* 4. JOIN Button Auto Hide/Show */
+body.is-dragging .hang, body.is-recalling .hang {
+  opacity: 0 !important;
+  margin-top: -30px !important;
+  pointer-events: none !important;
 }
-body.is-dragging .hang,body.is-recalling .hang,
-body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:paused!important}
 
 </style>
 </head>
@@ -215,6 +274,10 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
     </div>
     <div class="glass" id="glass">
       <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
+      
+      <!-- Internal Transparent Glare Bar -->
+      <div class="glass-glare"></div>
+
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
@@ -237,6 +300,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
   </section>
 </main>
 <div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
+
 <script>
 const scene=document.getElementById('scene');
 const glass=document.getElementById('glass');
@@ -247,13 +311,27 @@ const HOLD_MS=600;
 const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
-// --- PRE-LOADED AUDIO OBJECTS ---
-window.sfxSuccess = new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto';
-window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.preload='auto';
-window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
-window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
-window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
-window.playSound = (obj) => { try { obj.currentTime=0; obj.play().catch(()=>{}); } catch(e){} };
+// --- NETWORK/GITHUB AUDIO FIX ---
+// Yahan tumhara github pages ka base URL dal diya hai, taaki app browser local paths par confuse na ho.
+const audioBase = 'https://aayushkumar099999.github.io/DGXEN-KEY/sounds/';
+
+window.sfxSuccess = new Audio(audioBase + 'sucess%20login.mp3'); window.sfxSuccess.preload='auto';
+window.sfxFailed = new Audio(audioBase + 'failed%20login.mp3'); window.sfxFailed.preload='auto';
+window.sfxSaveKey = new Audio(audioBase + 'save%20key.mp3'); window.sfxSaveKey.preload='auto';
+window.sfxRecall = new Audio(audioBase + 'recall%20big%20block.mp3'); window.sfxRecall.preload='auto';
+window.sfxAutoLogin = new Audio(audioBase + 'auto%20login%20on.mp3'); window.sfxAutoLogin.preload='auto';
+
+window.playSound = (obj) => { 
+  try { 
+    obj.currentTime = 0; 
+    const playPromise = obj.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Audio Network Load Delay or Blocked:", error);
+        });
+    }
+  } catch(e) {} 
+};
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
@@ -302,7 +380,6 @@ function cardMostlyOutside(){
 }
 function cancelCardHold(){clearTimeout(holdTimer);holdTimer=0;pressing=false}
 
-/* Desktop-only optical tilt. It is suspended during drag/recall to avoid competing frames. */
 if(!reduceMotion&&matchMedia('(pointer:fine)').matches){
   let tiltFrame=0,lastTiltEvent=null;
   scene.addEventListener('pointermove',e=>{
@@ -334,7 +411,6 @@ cardShell.addEventListener('pointerdown',e=>{
   },HOLD_MS);
 },{passive:true});
 
-/* STRICT 600ms HOLD-TO-DRAG SYSTEM */
 cardShell.addEventListener('pointermove',e=>{
   if(activePointer!==e.pointerId)return;
   const dx=e.clientX-startX;
@@ -362,7 +438,6 @@ cardShell.addEventListener('pointerup',finishDrag);
 cardShell.addEventListener('pointercancel',finishDrag);
 cardShell.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
 
-/* rAF recall travel. New pointer coordinates update the destination without restarting the animation. */
 function beginRecallTravel(clientX,clientY){
   const r=scene.getBoundingClientRect();
   travelFromX=dragX;travelFromY=dragY;
@@ -410,7 +485,13 @@ document.addEventListener('pointermove',e=>{
 function finishRecall(e){
   if(recallPointer!==e.pointerId)return;
   clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready');
-  if(recallFollowing){recallFollowing=false;saveCardPosition()}
+  if(recallFollowing){
+    recallFollowing=false;
+    setMoveMode('is-recalling',false);
+    scene.classList.remove('drag-active');
+    document.body.classList.remove('is-recalling','is-dragging');
+    saveCardPosition();
+  }
   else{setMoveMode('is-recalling',false);scene.classList.remove('drag-active')}
 }
 document.addEventListener('pointerup',finishRecall);
@@ -418,16 +499,16 @@ document.addEventListener('pointercancel',finishRecall);
 window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
 </script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 const firebaseConfig={databaseURL:"https://login-pass-1a196-default-rtdb.firebaseio.com/"};
 const app=initializeApp(firebaseConfig),db=getDatabase(app);
 const input=document.getElementById('keyInput'),save=document.getElementById('saveKeyCheck'),status=document.getElementById('statusText'),btn=document.getElementById('unlockBtn');
 const autoNotch=document.getElementById('autoNotch');
 let isAutoLoginEnabled=localStorage.getItem('dgxen_auto_login')==='true';
 
-// --- SOUND TRIGGER: SAVE KEY (ONLY WHEN CHECKED) ---
 save.addEventListener('change', (e) => { 
     if(e.target.checked) window.playSound(window.sfxSaveKey); 
 });
@@ -443,7 +524,6 @@ function getDeviceFingerprint() {
         return false;
     };
 
-    // 1. URL param (Auth.smali now injects ?deviceId=ANDROID_ID)
     try {
         const p = new URLSearchParams(location.search);
         const urlKeys = ['deviceId', 'uuid', 'id', 'device', 'userId'];
@@ -456,7 +536,6 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
-    // 2. localStorage / sessionStorage
     try {
         const keys = [
             'deviceId', 'device_id', 'uuid', 'userId', 'user_id',
@@ -469,7 +548,6 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
-    // 3. Android bridge
     try {
         if (window.Android) {
             const methods = ['getDeviceId', 'getId', 'getUniqueId', 'getAndroidId', 'getUUID', 'getUuid'];
@@ -486,7 +564,6 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
-    // 4. Last resort fingerprint
     const str = navigator.userAgent + screen.width + 'x' + screen.height + (navigator.hardwareConcurrency || '');
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -495,7 +572,6 @@ function getDeviceFingerprint() {
     }
     return "dev_" + Math.abs(hash).toString(16);
 }
-
 
 function getAppVersion() {
   try {
@@ -516,18 +592,15 @@ async function reportAppVersion() {
     const devId = getDeviceFingerprint();
     const ver = getAppVersion();
     if (!devId) return;
-    // Always store under knownDevices
     await set(ref(db, 'settings/knownDevices/' + devId), {
       lastSeen: Date.now(),
       id: devId,
       appVersion: ver
     });
-    // If this device is a registered user node, write appVersion there too
     const userSnap = await get(ref(db, 'users/' + devId));
     if (userSnap.exists()) {
       await set(ref(db, 'users/' + devId + '/appVersion'), ver);
     } else {
-      // Also try match any user whose device fields equal this id
       const all = await get(ref(db, 'users'));
       if (all.exists()) {
         const data = all.val();
@@ -547,26 +620,21 @@ async function reportAppVersion() {
   }
 }
 
-
-// Global registry of this device ID on load
 window.addEventListener('load', async () => {
     try { await reportAppVersion(); } catch (e) {}
 });
 
-// Single Tap "Get Key" → copy native device ID + Send directly to Admin
 const getKeyLink = document.getElementById('getKeyLink');
 if (getKeyLink) {
     getKeyLink.addEventListener('click', async (e) => {
         const id = getDeviceFingerprint();
         try { navigator.clipboard.writeText(id); } catch(err) {}
         try { await set(ref(db, 'deviceRequests/' + id), { deviceId: id, time: Date.now() }); } catch(err) {}
-        // Does not prevent default, so the link still successfully opens!
     });
 }
 
 function updateNotchUI(){autoNotch.classList.toggle('active',isAutoLoginEnabled);autoNotch.setAttribute('aria-pressed',String(isAutoLoginEnabled))}
 
-// --- SOUND TRIGGER: AUTO LOGIN (ONLY WHEN ENABLED) ---
 function toggleAutoLogin(){
     isAutoLoginEnabled=!isAutoLoginEnabled;
     localStorage.setItem('dgxen_auto_login',String(isAutoLoginEnabled));
@@ -591,11 +659,9 @@ async function verifyKey(){
     const deviceId = getDeviceFingerprint();
     const safeKey = btoa(unescape(encodeURIComponent(userInput))).replace(/[.#$\[\]/]/g,'_');
 
-    // ========== MASTER KEYS ==========
     try{
       const snap=await get(ref(db,'settings/masterKeys'));
       if(snap.exists()){
-        // Find matching key
         let mkEntry = null;
         for (const val of Object.values(snap.val())) {
           const keyStr = (typeof val === 'string') ? val.trim() : String((val && val.key) || '').trim();
@@ -610,16 +676,12 @@ async function verifyKey(){
         if (mkEntry) {
           const mkType = mkEntry.type || 'pure';
 
-          // --- DEVICE LOCKED ---
           if (mkType === 'device') {
             let liveId = getDeviceFingerprint();
-
             const allowedRaw = String(mkEntry.deviceId || '').trim();
             const currentRaw = String(liveId || '').trim();
             const allowedId = allowedRaw.toLowerCase().replace(/\s+/g, '');
             const currentId = currentRaw.toLowerCase().replace(/\s+/g, '');
-
-            console.log('[MK-DEVICE] allowed=', allowedRaw, 'current=', currentRaw);
 
             if (!allowedRaw) {
               show('Device lock misconfigured (no ID saved on key). Delete & recreate the key.', 'var(--error)');
@@ -650,7 +712,6 @@ async function verifyKey(){
             timeLeftText = ' (Device Locked)';
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
-          // --- LIMITED USES ---
           else if (mkType === 'limited') {
             const maxUses = Number(mkEntry.maxUses) || 0;
             const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
@@ -670,7 +731,6 @@ async function verifyKey(){
             timeLeftText = ` (${currentUses + 1}/${maxUses} uses)`;
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
-          // --- PURE / UNLIMITED ---
           else {
             const trackRef = ref(db, `settings/mkDeviceTrack/${safeKey}/${deviceId}`);
             const trackSnap = await get(trackRef);
@@ -684,7 +744,7 @@ async function verifyKey(){
                 try {
                   await set(parentRef, null);
                   await set(trackRef, true);
-                } catch (e) { console.error('Master key re-bind failed:', e); }
+                } catch (e) {}
                 isValid = true;
               } else {
                 try {
@@ -692,7 +752,7 @@ async function verifyKey(){
                   const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
                   const usage = await get(usageRef);
                   await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
-                } catch (e) { console.error('Usage count update failed:', e); }
+                } catch (e) {}
                 isValid = true;
               }
             }
@@ -701,12 +761,11 @@ async function verifyKey(){
           }
         }
       }
-    }catch(e){console.error('Master key fetch error:',e)}
+    }catch(e){}
 
-    // ========== NORMAL KEYS ==========
     if(!isValid&&userInput.startsWith('DGXEN-')){
       let banned=false,reason='';
-      try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
+      try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){}
       if(banned){show('Banned: '+reason,'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
       
       const usersSnap=await get(ref(db,'users'));
@@ -785,9 +844,7 @@ async function verifyKey(){
                       type: 'normal'
                     });
                   }
-                } catch (logErr) {
-                  console.error('Share log write failed:', logErr);
-                }
+                } catch (logErr) {}
 
                 show('This key is already used on another device','var(--error)');
                 window.playSound(window.sfxFailed);
@@ -811,9 +868,9 @@ async function verifyKey(){
       window.playSound(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
-      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
     }
-  }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
+  }catch(e){show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
 }
 </script>
 </body>
