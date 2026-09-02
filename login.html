@@ -294,7 +294,7 @@ body.is-dragging .hang, body.is-recalling .hang {
         </label>
         <button class="btn" id="unlockBtn" type="button">UNLOCK APP</button>
         <div id="statusText" class="status" role="status" aria-live="polite"></div>
-        <a href="https://aayushkumar099999.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
+        <a href="https://yourstylexdg.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
       </div>
     </div>
   </section>
@@ -312,8 +312,7 @@ const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
 // --- NETWORK/GITHUB AUDIO FIX ---
-// Yahan tumhara github pages ka base URL dal diya hai, taaki app browser local paths par confuse na ho.
-const audioBase = 'const audioBase = 'https://yourstylexdg.github.io/Login/sounds/';
+const audioBase = 'https://yourstylexdg.github.io/Login/sounds/';
 
 window.sfxSuccess = new Audio(audioBase + 'sucess%20login.mp3'); window.sfxSuccess.preload='auto';
 window.sfxFailed = new Audio(audioBase + 'failed%20login.mp3'); window.sfxFailed.preload='auto';
@@ -380,6 +379,7 @@ function cardMostlyOutside(){
 }
 function cancelCardHold(){clearTimeout(holdTimer);holdTimer=0;pressing=false}
 
+/* Desktop-only optical tilt. It is suspended during drag/recall to avoid competing frames. */
 if(!reduceMotion&&matchMedia('(pointer:fine)').matches){
   let tiltFrame=0,lastTiltEvent=null;
   scene.addEventListener('pointermove',e=>{
@@ -411,6 +411,7 @@ cardShell.addEventListener('pointerdown',e=>{
   },HOLD_MS);
 },{passive:true});
 
+/* STRICT 600ms HOLD-TO-DRAG SYSTEM */
 cardShell.addEventListener('pointermove',e=>{
   if(activePointer!==e.pointerId)return;
   const dx=e.clientX-startX;
@@ -438,6 +439,7 @@ cardShell.addEventListener('pointerup',finishDrag);
 cardShell.addEventListener('pointercancel',finishDrag);
 cardShell.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
 
+/* rAF recall travel. New pointer coordinates update the destination without restarting the animation. */
 function beginRecallTravel(clientX,clientY){
   const r=scene.getBoundingClientRect();
   travelFromX=dragX;travelFromY=dragY;
@@ -499,16 +501,16 @@ document.addEventListener('pointercancel',finishRecall);
 window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
 </script>
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, set, push, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 const firebaseConfig={databaseURL:"https://login-pass-1a196-default-rtdb.firebaseio.com/"};
 const app=initializeApp(firebaseConfig),db=getDatabase(app);
 const input=document.getElementById('keyInput'),save=document.getElementById('saveKeyCheck'),status=document.getElementById('statusText'),btn=document.getElementById('unlockBtn');
 const autoNotch=document.getElementById('autoNotch');
 let isAutoLoginEnabled=localStorage.getItem('dgxen_auto_login')==='true';
 
+// --- SOUND TRIGGER: SAVE KEY (ONLY WHEN CHECKED) ---
 save.addEventListener('change', (e) => { 
     if(e.target.checked) window.playSound(window.sfxSaveKey); 
 });
@@ -573,6 +575,7 @@ function getDeviceFingerprint() {
     return "dev_" + Math.abs(hash).toString(16);
 }
 
+
 function getAppVersion() {
   try {
     if (window.Android && typeof window.Android.getAppVersion === 'function') {
@@ -592,15 +595,18 @@ async function reportAppVersion() {
     const devId = getDeviceFingerprint();
     const ver = getAppVersion();
     if (!devId) return;
+    // Always store under knownDevices
     await set(ref(db, 'settings/knownDevices/' + devId), {
       lastSeen: Date.now(),
       id: devId,
       appVersion: ver
     });
+    // If this device is a registered user node, write appVersion there too
     const userSnap = await get(ref(db, 'users/' + devId));
     if (userSnap.exists()) {
       await set(ref(db, 'users/' + devId + '/appVersion'), ver);
     } else {
+      // Also try match any user whose device fields equal this id
       const all = await get(ref(db, 'users'));
       if (all.exists()) {
         const data = all.val();
@@ -620,21 +626,26 @@ async function reportAppVersion() {
   }
 }
 
+
+// Global registry of this device ID on load
 window.addEventListener('load', async () => {
     try { await reportAppVersion(); } catch (e) {}
 });
 
+// Single Tap "Get Key" → copy native device ID + Send directly to Admin
 const getKeyLink = document.getElementById('getKeyLink');
 if (getKeyLink) {
     getKeyLink.addEventListener('click', async (e) => {
         const id = getDeviceFingerprint();
         try { navigator.clipboard.writeText(id); } catch(err) {}
         try { await set(ref(db, 'deviceRequests/' + id), { deviceId: id, time: Date.now() }); } catch(err) {}
+        // Does not prevent default, so the link still successfully opens!
     });
 }
 
 function updateNotchUI(){autoNotch.classList.toggle('active',isAutoLoginEnabled);autoNotch.setAttribute('aria-pressed',String(isAutoLoginEnabled))}
 
+// --- SOUND TRIGGER: AUTO LOGIN (ONLY WHEN ENABLED) ---
 function toggleAutoLogin(){
     isAutoLoginEnabled=!isAutoLoginEnabled;
     localStorage.setItem('dgxen_auto_login',String(isAutoLoginEnabled));
@@ -659,9 +670,11 @@ async function verifyKey(){
     const deviceId = getDeviceFingerprint();
     const safeKey = btoa(unescape(encodeURIComponent(userInput))).replace(/[.#$\[\]/]/g,'_');
 
+    // ========== MASTER KEYS ==========
     try{
       const snap=await get(ref(db,'settings/masterKeys'));
       if(snap.exists()){
+        // Find matching key
         let mkEntry = null;
         for (const val of Object.values(snap.val())) {
           const keyStr = (typeof val === 'string') ? val.trim() : String((val && val.key) || '').trim();
@@ -676,12 +689,16 @@ async function verifyKey(){
         if (mkEntry) {
           const mkType = mkEntry.type || 'pure';
 
+          // --- DEVICE LOCKED ---
           if (mkType === 'device') {
             let liveId = getDeviceFingerprint();
+
             const allowedRaw = String(mkEntry.deviceId || '').trim();
             const currentRaw = String(liveId || '').trim();
             const allowedId = allowedRaw.toLowerCase().replace(/\s+/g, '');
             const currentId = currentRaw.toLowerCase().replace(/\s+/g, '');
+
+            console.log('[MK-DEVICE] allowed=', allowedRaw, 'current=', currentRaw);
 
             if (!allowedRaw) {
               show('Device lock misconfigured (no ID saved on key). Delete & recreate the key.', 'var(--error)');
@@ -712,6 +729,7 @@ async function verifyKey(){
             timeLeftText = ' (Device Locked)';
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
+          // --- LIMITED USES ---
           else if (mkType === 'limited') {
             const maxUses = Number(mkEntry.maxUses) || 0;
             const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
@@ -731,6 +749,7 @@ async function verifyKey(){
             timeLeftText = ` (${currentUses + 1}/${maxUses} uses)`;
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
+          // --- PURE / UNLIMITED ---
           else {
             const trackRef = ref(db, `settings/mkDeviceTrack/${safeKey}/${deviceId}`);
             const trackSnap = await get(trackRef);
@@ -744,7 +763,7 @@ async function verifyKey(){
                 try {
                   await set(parentRef, null);
                   await set(trackRef, true);
-                } catch (e) {}
+                } catch (e) { console.error('Master key re-bind failed:', e); }
                 isValid = true;
               } else {
                 try {
@@ -752,7 +771,7 @@ async function verifyKey(){
                   const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
                   const usage = await get(usageRef);
                   await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
-                } catch (e) {}
+                } catch (e) { console.error('Usage count update failed:', e); }
                 isValid = true;
               }
             }
@@ -761,11 +780,12 @@ async function verifyKey(){
           }
         }
       }
-    }catch(e){}
+    }catch(e){console.error('Master key fetch error:',e)}
 
+    // ========== NORMAL KEYS ==========
     if(!isValid&&userInput.startsWith('DGXEN-')){
       let banned=false,reason='';
-      try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){}
+      try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
       if(banned){show('Banned: '+reason,'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
       
       const usersSnap=await get(ref(db,'users'));
@@ -844,7 +864,9 @@ async function verifyKey(){
                       type: 'normal'
                     });
                   }
-                } catch (logErr) {}
+                } catch (logErr) {
+                  console.error('Share log write failed:', logErr);
+                }
 
                 show('This key is already used on another device','var(--error)');
                 window.playSound(window.sfxFailed);
@@ -868,9 +890,9 @@ async function verifyKey(){
       window.playSound(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
-      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
     }
-  }catch(e){show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
+  }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
 }
 </script>
 </body>
