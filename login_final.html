@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#050706">
+<title>DGXEN | App Login</title>
+<style>
+:root{
+  --bg:#030504;
+  --text:#fff;
+  --muted:#9ca5a0;
+  --accent:#00ff88;
+  --accent2:#00c96d;
+  --accent-soft:rgba(0,255,136,.18);
+  --error:#ff5252;
+  --card-radius:34px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
+html,body{min-height:100%;margin:0}
+body{
+  min-height:100svh;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  padding:28px 20px;
+  color:var(--text);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 14% 13%,rgba(255,255,255,.075),transparent 26%),
+    radial-gradient(circle at 88% 82%,rgba(0,255,136,.10),transparent 32%),
+    linear-gradient(145deg,#020302 0%,#070a08 48%,#020403 100%);
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;opacity:.16;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode:soft-light;
+}
+.scene{width:min(360px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1);transform:translateZ(0)}
+
+/* Soft grounding shadow only. The trapezium is clipped inside the glass. */
+.scene::before{content:"";position:absolute;inset:20px -18px -26px;z-index:-2;background:radial-gradient(ellipse at 50% 74%,rgba(0,0,0,.62),transparent 69%)}
+.scene::after{display:none}
+
+.card-shell{
+  position:relative;width:100%;transform-origin:0 0;transform-style:preserve-3d;touch-action:none;cursor:grab;
+  will-change:transform;backface-visibility:hidden;contain:layout style;
+  transform:translateZ(0);
+  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+/* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
+@keyframes unrollCorner4D{
+  0%{transform:translate3d(-38px,-34px,-180px) rotateX(-88deg) rotateY(64deg) rotateZ(-10deg) scale3d(.12,.08,.12)}
+  18%{transform:translate3d(-34px,-29px,-130px) rotateX(-76deg) rotateY(56deg) rotateZ(-8deg) scale3d(.24,.18,.24)}
+  43%{transform:translate3d(-18px,-15px,-48px) rotateX(-43deg) rotateY(31deg) rotateZ(-4.2deg) scale3d(.58,.52,.58)}
+  70%{transform:translate3d(5px,5px,18px) rotateX(9deg) rotateY(-7deg) rotateZ(1.15deg) scale3d(1.025,1.018,1.025)}
+  84%{transform:translate3d(-1px,-2px,-3px) rotateX(-3.2deg) rotateY(2.4deg) rotateZ(-.4deg) scale3d(.994,.996,.994)}
+  93%{transform:translate3d(0,1px,2px) rotateX(1.1deg) rotateY(-.8deg) rotateZ(.12deg) scale3d(1.003,1.002,1.003)}
+  100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1)}
+}
+/* Curled edge and its moving shadow */
+.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both}
+.roll-fold::before{
+  content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
+  background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.55) 30%,rgba(255,255,255,.10) 39%,rgba(0,0,0,.45) 52%,transparent 64%);
+  filter:blur(9px);transform-origin:0 0;animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+.roll-fold::after{
+  content:"";position:absolute;inset:-20% -55%;
+  background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.5) 47%,rgba(255,255,255,.22) 52%,transparent 64%);
+  animation:rollShadow4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+@keyframes foldDepthFade{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
+@keyframes foldRelease4D{
+  0%{opacity:1;transform:translate(-22%,-24%) rotate(-18deg) skew(-8deg,-5deg) scale(1.48)}
+  28%{opacity:.98;transform:translate(-5%,-7%) rotate(-10deg) skew(-4deg,-2deg) scale(1.2)}
+  62%{opacity:.68;transform:translate(43%,38%) rotate(6deg) skew(2deg,1deg) scale(.88)}
+  84%{opacity:.2;transform:translate(88%,78%) rotate(13deg) scale(.52)}
+  100%{opacity:0;transform:translate(122%,110%) rotate(16deg) scale(.2)}
+}
+@keyframes rollShadow4D{
+  0%{opacity:.96;transform:translate3d(-72%,-7%,0) skewX(-18deg) scaleX(1.3)}
+  38%{opacity:.82;transform:translate3d(-25%,0,0) skewX(-14deg) scaleX(1.12)}
+  72%{opacity:.35;transform:translate3d(45%,5%,0) skewX(-9deg) scaleX(.8)}
+  100%{opacity:0;transform:translate3d(92%,8%,0) skewX(-6deg) scaleX(.45)}
+}
+
+.hang{
+  position:absolute;top:-51px;right:22px;width:78px;height:54px;
+  display:flex;flex-direction:column;align-items:center;z-index:12;
+  transform-origin:50% 100%;animation:sway 5.2s ease-in-out 1.55s infinite;
+}
+
+@keyframes sway{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
+.join-badge{
+  order:1;display:inline-flex;align-items:center;justify-content:center;
+  width:auto;height:auto;padding:7px 15px;border-radius:999px;
+  color:#03150b;text-decoration:none;font-size:10.5px;font-weight:900;letter-spacing:.6px;
+  background:linear-gradient(135deg,#26f5a1,#00d978);
+  box-shadow:0 6px 15px rgba(0,255,136,.24),inset 0 1px rgba(255,255,255,.48);
+  transform-origin:50% 85%;
+  animation:joinMiniGesture 3.8s cubic-bezier(.22,1,.36,1) 2.1s infinite;
+  will-change:transform,box-shadow;
+}
+.join-badge:hover{animation-play-state:paused;transform:translateY(-2px) scale(1.045);box-shadow:0 9px 20px rgba(0,255,136,.34),inset 0 1px rgba(255,255,255,.55)}
+.join-badge:active{transform:translateY(0) scale(.95)}
+@keyframes joinMiniGesture{
+  0%,76%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  80%{transform:translate3d(0,-2px,0) rotate(-4deg) scale(1.035)}
+  84%{transform:translate3d(0,0,0) rotate(3.2deg) scale(1.02)}
+  88%{transform:translate3d(0,-1px,0) rotate(-2deg) scale(1.025)}
+  92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+.hang-string{
+  order:2;width:1px;height:18px;flex:none;
+  background:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.3));
+}
+.hang-pin{
+  order:3;width:6px;height:6px;flex:none;border-radius:50%;
+  background:#f7f7f7;box-shadow:0 0 7px rgba(255,255,255,.65);margin-top:-1px;
+}
+
+.glass{
+  position:relative;overflow:hidden;border-radius:var(--card-radius);padding:43px 29px 34px;text-align:center;
+  background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.034) 52%,rgba(255,255,255,.018));
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 38px 100px rgba(0,0,0,.72),0 0 70px rgba(255,255,255,.045),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.45);
+  backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
+  transform-style:preserve-3d;transition:transform .2s ease-out;
+}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(255,105,105,.72),rgba(255,255,255,.78) 17%,transparent 42%,rgba(90,160,255,.55) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
+.glass::after{display:none}
+
+.glass-shadow-runner{
+  position:absolute!important;z-index:1!important;
+  top:-10%;bottom:-10%;left:0;width:50%;
+  pointer-events:none;opacity:.48}
+@keyframes shadowRunner{
+  from{transform:translate3d(-70%,7%,0) skewX(-11deg)}
+  to{transform:translate3d(170%,-7%,0) skewX(-11deg)}
+}
+
+/* Fine film grain on the glass only */
+.grain{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");transform:translateZ(3px)}
+.light-cap{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%)}
+.light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
+.iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
+.content{position:relative;z-index:2;transform:translateZ(24px)}
+.logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
+h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3)}
+.tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
+
+.key-wrap{position:relative;margin-bottom:16px}
+input[type=text]{width:100%;padding:15px;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.13);color:#fff;border-radius:14px;text-align:center;font-size:15px;font-weight:750;letter-spacing:.8px;outline:none;box-shadow:inset 0 2px 8px rgba(0,0,0,.3);transition:.22s;-webkit-user-select:text!important;-moz-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft),inset 0 2px 8px rgba(0,0,0,.3)}
+.checkbox-container{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 21px;padding:5px;color:var(--muted);font-size:13px;cursor:pointer}
+.checkbox-container>input{position:absolute;opacity:0;width:0;height:0}
+.checkbox-box{position:relative;width:21px;height:21px;flex:none;border-radius:7px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.42);display:grid;place-items:center;overflow:visible;transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1)}
+.checkbox-check{width:13px;height:13px;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s}
+@keyframes checkPulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.55)}70%{box-shadow:0 0 0 11px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
+.spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0;pointer-events:none}
+@keyframes sparkOut{0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(0)}}
+.spark:nth-of-type(1){--sx:-16px;--sy:-12px}.spark:nth-of-type(2){--sx:16px;--sy:-12px}.spark:nth-of-type(3){--sx:-16px;--sy:12px}.spark:nth-of-type(4){--sx:16px;--sy:12px}.spark:nth-of-type(5){--sx:0;--sy:-18px}.spark:nth-of-type(6){--sx:0;--sy:18px}
+.checkbox-container input:checked+.checkbox-box{background:var(--accent);border-color:var(--accent);transform:scale(1.12);animation:checkPulse .55s ease}
+.checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
+.checkbox-container input:checked+.checkbox-box .spark{animation:sparkOut .55s ease-out forwards}
+
+.recall-hint{position:fixed;left:50%;bottom:28px;z-index:100;max-width:calc(100vw - 36px);padding:10px 15px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(12,15,13,.82);color:#d8dedb;font-size:12px;font-weight:700;letter-spacing:.15px;text-align:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .25s,transform .25s}
+.recall-hint.show{opacity:1;transform:translate(-50%,0)}
+body.recall-ready{cursor:crosshair}
+
+/* Auto-login notch */
+.auto-notch{position:absolute!important;top:0;left:50%;transform:translateX(-50%);z-index:20!important;display:flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid rgba(255,255,255,.15);border-top:0;border-radius:0 0 14px 14px;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer;transition:transform .3s cubic-bezier(.25,.8,.25,1)}
+.auto-notch:active{transform:translateX(-50%) scale(.95)}
+.auto-notch span{font-size:10px;font-weight:800;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;transition:color .3s}
+.notch-led{width:8px;height:8px;flex:none;border-radius:50%;background:#444;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);transition:background .3s,box-shadow .3s}
+.auto-notch.active span{color:var(--accent)}
+.auto-notch.active .notch-led{background:var(--accent);box-shadow:0 0 10px rgba(0,255,136,.6),inset 0 0 4px #fff}
+
+.btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .15s,box-shadow .25s,background .25s}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);box-shadow:0 10px 30px rgba(0,255,136,.32)}
+.status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}.get-key{display:block;margin-top:17px;padding:7px;color:var(--muted);font-size:12px;text-decoration:none}.get-key:hover{color:#fff}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
+@media (max-height:650px){body{overflow:auto;padding-top:62px;padding-bottom:25px}.glass{padding-top:34px;padding-bottom:27px}.logo{width:58px;height:58px}.tagline{margin-bottom:18px}}
+
+/* Smooth travelling mode: only active while the card is moving. */
+.scene.drag-active{will-change:transform;contain:layout style paint}
+body.is-dragging .glass, body.is-recalling .glass{
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
+  background:linear-gradient(
+    145deg,
+    rgba(28,32,30,.96),
+    rgba(12,16,14,.97) 52%,
+    rgba(7,10,8,.98)
+  ) !important;
+}
+body.is-dragging .grain, body.is-recalling .grain,
+body.is-dragging .iridescent, body.is-recalling .iridescent,
+body.is-dragging .light-cap, body.is-recalling .light-cap,
+body.is-dragging .glass-shadow-runner, body.is-recalling .glass-shadow-runner{
+  display:none !important;
+}
+body.is-dragging .hang,body.is-recalling .hang,
+body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:paused!important}
+
+</style>
+</head>
+<body>
+<main class="scene" id="scene">
+  <section class="card-shell" id="cardShell" aria-label="DGXEN login">
+    <div class="hang">
+      <span class="hang-pin"></span><span class="hang-string"></span>
+      <a class="join-badge" href="https://t.me/DGXEN" target="_blank" rel="noopener noreferrer">JOIN</a>
+    </div>
+    <div class="glass" id="glass">
+      <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
+      <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
+      <div class="content">
+        <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
+        <h2>DGXEN VIP</h2>
+        <p class="tagline">Enter your access key to unlock.</p>
+
+        <div class="key-wrap">
+          <input type="text" id="keyInput" placeholder="Enter Access Key..." autocomplete="off" autocapitalize="none" spellcheck="false">
+        </div>
+        <label class="checkbox-container" for="saveKeyCheck">
+          <input type="checkbox" id="saveKeyCheck">
+          <span class="checkbox-box"><svg class="checkbox-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></span>
+          <span>Save Key for next time</span>
+        </label>
+        <button class="btn" id="unlockBtn" type="button">UNLOCK APP</button>
+        <div id="statusText" class="status" role="status" aria-live="polite"></div>
+        <a href="https://aayushkumar099999.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
+<script>
+const scene=document.getElementById('scene');
+const glass=document.getElementById('glass');
+const cardShell=document.getElementById('cardShell');
+const recallHint=document.getElementById('recallHint');
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HOLD_MS=600;
+const CARD_POSITION_KEY='dgxen_card_position_v1';
+const INTERACTIVE='#keyInput';
+
+// --- PRE-LOADED AUDIO OBJECTS ---
+window.sfxSuccess = new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto';
+window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.preload='auto';
+window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
+window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
+window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
+window.playSound = (obj) => { try { obj.currentTime=0; obj.play().catch(()=>{}); } catch(e){} };
+
+let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
+let pendingX=0,pendingY=0,renderFrame=0;
+let holdTimer=0,pressing=false,dragging=false,moved=false,activePointer=null,hintTimer=0;
+let recallTimer=0,recallPointer=null,recallStartX=0,recallStartY=0,recallFollowing=false;
+let travelFrame=0,travelStart=0,travelFromX=0,travelFromY=0,travelTargetX=0,travelTargetY=0;
+
+function renderPosition(){
+  scene.style.transform=`translate3d(${dragX.toFixed(2)}px,${dragY.toFixed(2)}px,0)`;
+}
+function queuePosition(x,y){
+  pendingX=x;pendingY=y;
+  if(renderFrame)return;
+  renderFrame=requestAnimationFrame(()=>{
+    renderFrame=0;dragX=pendingX;dragY=pendingY;renderPosition();
+  });
+}
+function flushPosition(){
+  if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=0;dragX=pendingX;dragY=pendingY;renderPosition()}
+}
+function saveCardPosition(){
+  try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
+}
+function restoreCardPosition(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(CARD_POSITION_KEY)||'null');
+    if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y))return;
+    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;renderPosition();
+  }catch(error){localStorage.removeItem(CARD_POSITION_KEY)}
+}
+restoreCardPosition();
+
+function setMoveMode(type,on){
+  document.body.classList.toggle(type,on);
+  scene.classList.toggle('drag-active',on||dragging||recallFollowing);
+}
+function showRecallHint(){
+  clearTimeout(hintTimer);recallHint.classList.add('show');
+  hintTimer=setTimeout(()=>recallHint.classList.remove('show'),3200);
+}
+function cardMostlyOutside(){
+  const r=scene.getBoundingClientRect();
+  const visibleW=Math.max(0,Math.min(innerWidth,r.right)-Math.max(0,r.left));
+  const visibleH=Math.max(0,Math.min(innerHeight,r.bottom)-Math.max(0,r.top));
+  return visibleW*visibleH<r.width*r.height*.32;
+}
+function cancelCardHold(){clearTimeout(holdTimer);holdTimer=0;pressing=false}
+
+/* Desktop-only optical tilt. It is suspended during drag/recall to avoid competing frames. */
+if(!reduceMotion&&matchMedia('(pointer:fine)').matches){
+  let tiltFrame=0,lastTiltEvent=null;
+  scene.addEventListener('pointermove',e=>{
+    if(dragging||recallFollowing)return;
+    lastTiltEvent=e;
+    if(tiltFrame)return;
+    tiltFrame=requestAnimationFrame(()=>{
+      tiltFrame=0;
+      if(dragging||recallFollowing)return;
+      const r=scene.getBoundingClientRect();
+      const x=(lastTiltEvent.clientX-r.left)/r.width-.5;
+      const y=(lastTiltEvent.clientY-r.top)/r.height-.5;
+      glass.style.transform=`rotateX(${-y*4}deg) rotateY(${x*4.4}deg) translateZ(0)`;
+    });
+  });
+  scene.addEventListener('pointerleave',()=>{if(!dragging&&!recallFollowing)glass.style.transform='rotateX(0) rotateY(0)'});
+}
+
+cardShell.addEventListener('pointerdown',e=>{
+  if((e.button!==undefined&&e.button!==0)||e.target.closest(INTERACTIVE))return;
+  if(travelFrame){cancelAnimationFrame(travelFrame);travelFrame=0;setMoveMode('is-recalling',false)}
+  activePointer=e.pointerId;pressing=true;dragging=false;moved=false;
+  startX=e.clientX;startY=e.clientY;baseX=dragX;baseY=dragY;
+  holdTimer=setTimeout(()=>{
+    if(!pressing||activePointer!==e.pointerId)return;
+    dragging=true;setMoveMode('is-dragging',true);cardShell.setPointerCapture(e.pointerId);cardShell.style.cursor='grabbing';
+    glass.style.transform='rotateX(0) rotateY(0)';
+    if(navigator.vibrate)navigator.vibrate(12);
+  },HOLD_MS);
+},{passive:true});
+
+/* STRICT 600ms HOLD-TO-DRAG SYSTEM */
+cardShell.addEventListener('pointermove',e=>{
+  if(activePointer!==e.pointerId)return;
+  const dx=e.clientX-startX;
+  const dy=e.clientY-startY;
+  if(!dragging){
+    if(Math.hypot(dx,dy)>12){
+      cancelCardHold();
+    }
+    return;
+  }
+  e.preventDefault();
+  moved=true;
+  queuePosition(baseX+dx,baseY+dy);
+},{passive:false});
+
+function finishDrag(e){
+  if(activePointer!==e.pointerId)return;
+  cancelCardHold();
+  if(dragging&&cardShell.hasPointerCapture(e.pointerId))cardShell.releasePointerCapture(e.pointerId);
+  const wasDragging=dragging;dragging=false;activePointer=null;cardShell.style.cursor='grab';
+  flushPosition();setMoveMode('is-dragging',false);scene.classList.remove('drag-active');
+  if(wasDragging){saveCardPosition();if(cardMostlyOutside())showRecallHint()}
+}
+cardShell.addEventListener('pointerup',finishDrag);
+cardShell.addEventListener('pointercancel',finishDrag);
+cardShell.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
+
+/* rAF recall travel. New pointer coordinates update the destination without restarting the animation. */
+function beginRecallTravel(clientX,clientY){
+  const r=scene.getBoundingClientRect();
+  travelFromX=dragX;travelFromY=dragY;
+  travelTargetX=dragX+clientX-(r.left+r.width/2);
+  travelTargetY=dragY+clientY-(r.top+r.height/2);
+  travelStart=performance.now();recallFollowing=true;
+  setMoveMode('is-recalling',true);glass.style.transform='rotateX(0) rotateY(0)';
+  function tick(now){
+    const t=Math.min(1,(now-travelStart)/850); 
+    const eased = 1 - Math.pow(1 - t, 3);
+    dragX=travelFromX+(travelTargetX-travelFromX)*eased;
+    dragY=travelFromY+(travelTargetY-travelFromY)*eased;
+    pendingX=dragX;pendingY=dragY;renderPosition();
+    if(t<1||recallFollowing){travelFrame=requestAnimationFrame(tick)}
+    else{travelFrame=0;setMoveMode('is-recalling',false);scene.classList.remove('drag-active');saveCardPosition()}
+  }
+  if(travelFrame)cancelAnimationFrame(travelFrame);
+  travelFrame=requestAnimationFrame(tick);
+}
+
+document.addEventListener('pointerdown',e=>{
+  if(cardShell.contains(e.target)||(e.button!==undefined&&e.button!==0)||e.target.closest(INTERACTIVE))return;
+  recallPointer=e.pointerId;recallStartX=e.clientX;recallStartY=e.clientY;recallFollowing=false;
+  document.body.classList.add('recall-ready');
+  recallTimer=setTimeout(()=>{
+    if(recallPointer!==e.pointerId)return;
+    beginRecallTravel(e.clientX,e.clientY);recallHint.classList.remove('show');document.body.classList.remove('recall-ready');
+    if(navigator.vibrate)navigator.vibrate(12);
+    window.playSound(window.sfxRecall);
+    recallPointer=null;
+  },HOLD_MS);
+},{passive:true});
+
+document.addEventListener('pointermove',e=>{
+  if(recallPointer!==e.pointerId)return;
+  if(!recallFollowing){
+    if(Math.hypot(e.clientX-recallStartX,e.clientY-recallStartY)>12){clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready')}
+    return;
+  }
+  const r=scene.getBoundingClientRect();
+  travelTargetX += (dragX + e.clientX - (r.left + r.width/2) - travelTargetX) * 0.18;
+  travelTargetY += (dragY + e.clientY - (r.top + r.height/2) - travelTargetY) * 0.18;
+},{passive:true});
+
+function finishRecall(e){
+  if(recallPointer!==e.pointerId)return;
+  clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready');
+  if(recallFollowing){recallFollowing=false;saveCardPosition()}
+  else{setMoveMode('is-recalling',false);scene.classList.remove('drag-active')}
+}
+document.addEventListener('pointerup',finishRecall);
+document.addEventListener('pointercancel',finishRecall);
+window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+const firebaseConfig={databaseURL:"https://login-pass-1a196-default-rtdb.firebaseio.com/"};
+const app=initializeApp(firebaseConfig),db=getDatabase(app);
+const input=document.getElementById('keyInput'),save=document.getElementById('saveKeyCheck'),status=document.getElementById('statusText'),btn=document.getElementById('unlockBtn');
+const autoNotch=document.getElementById('autoNotch');
+let isAutoLoginEnabled=localStorage.getItem('dgxen_auto_login')==='true';
+
+// --- SOUND TRIGGER: SAVE KEY (ONLY WHEN CHECKED) ---
+save.addEventListener('change', (e) => { 
+    if(e.target.checked) window.playSound(window.sfxSaveKey); 
+});
+
+function getDeviceFingerprint() {
+    const isRealId = (s) => {
+        if (!s || typeof s !== 'string') return false;
+        const t = s.trim();
+        if (!t || t.indexOf('dev_') === 0) return false;
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(t)) return true;
+        if (/^[0-9a-f]{16,}$/i.test(t)) return true;
+        if (t.length >= 8 && t.indexOf(' ') === -1) return true;
+        return false;
+    };
+
+    // 1. URL param (Auth.smali now injects ?deviceId=ANDROID_ID)
+    try {
+        const p = new URLSearchParams(location.search);
+        const urlKeys = ['deviceId', 'uuid', 'id', 'device', 'userId'];
+        for (let i = 0; i < urlKeys.length; i++) {
+            const fromUrl = p.get(urlKeys[i]);
+            if (isRealId(fromUrl)) {
+                try { localStorage.setItem('deviceId', fromUrl.trim()); } catch (e) {}
+                return fromUrl.trim();
+            }
+        }
+    } catch (e) {}
+
+    // 2. localStorage / sessionStorage
+    try {
+        const keys = [
+            'deviceId', 'device_id', 'uuid', 'userId', 'user_id',
+            'dgxen_device_id', 'dgxen_uuid', 'dgxen_id',
+            'androidId', 'android_id', 'UNIQUE_ID', 'unique_id'
+        ];
+        for (let i = 0; i < keys.length; i++) {
+            const v = localStorage.getItem(keys[i]) || sessionStorage.getItem(keys[i]);
+            if (isRealId(v)) return v.trim();
+        }
+    } catch (e) {}
+
+    // 3. Android bridge
+    try {
+        if (window.Android) {
+            const methods = ['getDeviceId', 'getId', 'getUniqueId', 'getAndroidId', 'getUUID', 'getUuid'];
+            for (let i = 0; i < methods.length; i++) {
+                const m = methods[i];
+                if (typeof window.Android[m] === 'function') {
+                    const id = String(window.Android[m]() || '').trim();
+                    if (isRealId(id)) {
+                        try { localStorage.setItem('deviceId', id); } catch (e) {}
+                        return id;
+                    }
+                }
+            }
+        }
+    } catch (e) {}
+
+    // 4. Last resort fingerprint
+    const str = navigator.userAgent + screen.width + 'x' + screen.height + (navigator.hardwareConcurrency || '');
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return "dev_" + Math.abs(hash).toString(16);
+}
+
+
+function getAppVersion() {
+  try {
+    if (window.Android && typeof window.Android.getAppVersion === 'function') {
+      const v = String(window.Android.getAppVersion() || '').trim();
+      if (v) return v;
+    }
+  } catch (e) {}
+  try {
+    const p = new URLSearchParams(location.search);
+    if (p.get('appVersion')) return p.get('appVersion').trim();
+  } catch (e) {}
+  return localStorage.getItem('dgxen_app_version') || '1.0.0';
+}
+
+async function reportAppVersion() {
+  try {
+    const devId = getDeviceFingerprint();
+    const ver = getAppVersion();
+    if (!devId) return;
+    // Always store under knownDevices
+    await set(ref(db, 'settings/knownDevices/' + devId), {
+      lastSeen: Date.now(),
+      id: devId,
+      appVersion: ver
+    });
+    // If this device is a registered user node, write appVersion there too
+    const userSnap = await get(ref(db, 'users/' + devId));
+    if (userSnap.exists()) {
+      await set(ref(db, 'users/' + devId + '/appVersion'), ver);
+    } else {
+      // Also try match any user whose device fields equal this id
+      const all = await get(ref(db, 'users'));
+      if (all.exists()) {
+        const data = all.val();
+        const norm = (s) => String(s || '').trim().toLowerCase();
+        const n = norm(devId);
+        for (const uid in data) {
+          const u = data[uid] || {};
+          if (norm(uid) === n || norm(u.deviceId) === n || norm(u.fingerprint) === n || norm(u.lastDeviceId) === n || norm(u.androidId) === n) {
+            await set(ref(db, 'users/' + uid + '/appVersion'), ver);
+            break;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('reportAppVersion failed', e);
+  }
+}
+
+
+// Global registry of this device ID on load
+window.addEventListener('load', async () => {
+    try { await reportAppVersion(); } catch (e) {}
+});
+
+// Single Tap "Get Key" → copy native device ID + Send directly to Admin
+const getKeyLink = document.getElementById('getKeyLink');
+if (getKeyLink) {
+    getKeyLink.addEventListener('click', async (e) => {
+        const id = getDeviceFingerprint();
+        try { navigator.clipboard.writeText(id); } catch(err) {}
+        try { await set(ref(db, 'deviceRequests/' + id), { deviceId: id, time: Date.now() }); } catch(err) {}
+        // Does not prevent default, so the link still successfully opens!
+    });
+}
+
+function updateNotchUI(){autoNotch.classList.toggle('active',isAutoLoginEnabled);autoNotch.setAttribute('aria-pressed',String(isAutoLoginEnabled))}
+
+// --- SOUND TRIGGER: AUTO LOGIN (ONLY WHEN ENABLED) ---
+function toggleAutoLogin(){
+    isAutoLoginEnabled=!isAutoLoginEnabled;
+    localStorage.setItem('dgxen_auto_login',String(isAutoLoginEnabled));
+    updateNotchUI();
+    if(isAutoLoginEnabled) window.playSound(window.sfxAutoLogin);
+}
+
+autoNotch.addEventListener('click',toggleAutoLogin);
+autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAutoLogin()}});
+const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
+window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey)setTimeout(()=>{if(!btn.disabled)verifyKey()},1000)}});
+btn.addEventListener('click',verifyKey);
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
+
+async function verifyKey(){
+  const userInput=input.value.trim();
+  if(!userInput){show('Key khali nahi ho sakti!','var(--error)'); window.playSound(window.sfxFailed); input.focus();return}
+  show('Strict Security Check...');btn.disabled=true;btn.classList.remove('success');
+  try{
+    let isValid=false;
+    let timeLeftText="";
+    const deviceId = getDeviceFingerprint();
+    const safeKey = btoa(unescape(encodeURIComponent(userInput))).replace(/[.#$\[\]/]/g,'_');
+
+    // ========== MASTER KEYS ==========
+    try{
+      const snap=await get(ref(db,'settings/masterKeys'));
+      if(snap.exists()){
+        // Find matching key
+        let mkEntry = null;
+        for (const val of Object.values(snap.val())) {
+          const keyStr = (typeof val === 'string') ? val.trim() : String((val && val.key) || '').trim();
+          if (keyStr === userInput) {
+            mkEntry = (typeof val === 'string')
+              ? { key: keyStr, type: 'pure', maxUses: null, deviceId: null }
+              : { key: keyStr, type: val.type || 'pure', maxUses: val.maxUses != null ? Number(val.maxUses) : null, deviceId: val.deviceId || null };
+            break;
+          }
+        }
+
+        if (mkEntry) {
+          const mkType = mkEntry.type || 'pure';
+
+          // --- DEVICE LOCKED ---
+          if (mkType === 'device') {
+            let liveId = getDeviceFingerprint();
+
+            const allowedRaw = String(mkEntry.deviceId || '').trim();
+            const currentRaw = String(liveId || '').trim();
+            const allowedId = allowedRaw.toLowerCase().replace(/\s+/g, '');
+            const currentId = currentRaw.toLowerCase().replace(/\s+/g, '');
+
+            console.log('[MK-DEVICE] allowed=', allowedRaw, 'current=', currentRaw);
+
+            if (!allowedRaw) {
+              show('Device lock misconfigured (no ID saved on key). Delete & recreate the key.', 'var(--error)');
+              window.playSound(window.sfxFailed);
+              localStorage.removeItem('dgxen_saved_key');
+              btn.disabled = false;
+              return;
+            }
+
+            const idMatch = currentId && (
+              currentId === allowedId ||
+              currentId.indexOf(allowedId) !== -1 ||
+              allowedId.indexOf(currentId) !== -1
+            );
+
+            if (!idMatch) {
+              show('Locked to other device. Yours: ' + currentRaw + ' | Key wants: ' + allowedRaw, 'var(--error)');
+              window.playSound(window.sfxFailed);
+              localStorage.removeItem('dgxen_saved_key');
+              btn.disabled = false;
+              return;
+            }
+
+            const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
+            const usage = await get(usageRef);
+            await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
+            isValid = true;
+            timeLeftText = ' (Device Locked)';
+            show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
+          }
+          // --- LIMITED USES ---
+          else if (mkType === 'limited') {
+            const maxUses = Number(mkEntry.maxUses) || 0;
+            const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
+            const usageSnap = await get(usageRef);
+            const currentUses = usageSnap.exists() ? Number(usageSnap.val()) : 0;
+
+            if (currentUses >= maxUses) {
+              show('This master key has reached its login limit (' + maxUses + ').', 'var(--error)');
+              window.playSound(window.sfxFailed);
+              localStorage.removeItem('dgxen_saved_key');
+              btn.disabled = false;
+              return;
+            }
+
+            await set(usageRef, currentUses + 1);
+            isValid = true;
+            timeLeftText = ` (${currentUses + 1}/${maxUses} uses)`;
+            show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
+          }
+          // --- PURE / UNLIMITED ---
+          else {
+            const trackRef = ref(db, `settings/mkDeviceTrack/${safeKey}/${deviceId}`);
+            const trackSnap = await get(trackRef);
+            const parentRef = ref(db, `settings/mkDeviceTrack/${safeKey}`);
+
+            if (trackSnap.exists()) {
+              isValid = true;
+            } else {
+              const parentSnap = await get(parentRef);
+              if (parentSnap.exists() && Object.keys(parentSnap.val() || {}).length > 0) {
+                try {
+                  await set(parentRef, null);
+                  await set(trackRef, true);
+                } catch (e) { console.error('Master key re-bind failed:', e); }
+                isValid = true;
+              } else {
+                try {
+                  await set(trackRef, true);
+                  const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
+                  const usage = await get(usageRef);
+                  await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
+                } catch (e) { console.error('Usage count update failed:', e); }
+                isValid = true;
+              }
+            }
+            timeLeftText = ' (Unlimited)';
+            show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
+          }
+        }
+      }
+    }catch(e){console.error('Master key fetch error:',e)}
+
+    // ========== NORMAL KEYS ==========
+    if(!isValid&&userInput.startsWith('DGXEN-')){
+      let banned=false,reason='';
+      try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
+      if(banned){show('Banned: '+reason,'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+      
+      const usersSnap=await get(ref(db,'users'));
+      let found=false;
+      if(usersSnap.exists()){
+        for(const uid in usersSnap.val()){
+          const user=usersSnap.val()[uid];
+          if(user.lastGeneratedKey && String(user.lastGeneratedKey).trim() === userInput){
+            found=true;
+            if(user.status==='banned'){show('Account Banned: '+(user.banReason||'Your device is permanently banned.'),'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+            if(user.keyExpiresAt&&Date.now()>user.keyExpiresAt){show('This key has expired! Get a new one.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+            
+            if (user.keyExpiresAt) {
+              let remainingMs = user.keyExpiresAt - Date.now();
+              if (remainingMs > 0) {
+                  let hrs = Math.floor(remainingMs / (1000 * 60 * 60));
+                  let mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+                  timeLeftText = hrs > 0 ? ` (Valid for ${hrs}h ${mins}m)` : ` (Valid for ${mins} mins)`;
+              }
+            }
+
+            const parentRef = ref(db, `settings/keyDeviceTrack/${safeKey}`);
+            const parentSnap = await get(parentRef);
+
+            if(parentSnap.exists()){
+              const devices = parentSnap.val() || {};
+              const existing = Object.keys(devices);
+              if(existing.length > 0 && !existing.includes(deviceId)){
+                try {
+                  const generatorName = (user && user.name) ? user.name : (uid || "Unknown Generator");
+                  const generatorId = uid || "";
+                  let receiverName = "unknown user";
+                  let receiverId = deviceId; 
+
+                  try {
+                    const allUsersSnap = await get(ref(db, 'users'));
+                    if (allUsersSnap.exists()) {
+                      const uData = allUsersSnap.val();
+                      const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+                      const devN = norm(deviceId);
+                      if (uData[deviceId]) {
+                        receiverName = uData[deviceId].name || deviceId;
+                        receiverId = deviceId;
+                      } else {
+                        for (const uKey in uData) {
+                          const u = uData[uKey];
+                          if (norm(uKey) === devN || norm(u.deviceId) === devN || norm(u.fingerprint) === devN || norm(u.lastDeviceId) === devN || norm(u.androidId) === devN) {
+                            receiverName = u.name || uKey;
+                            receiverId = uKey;
+                            break;
+                          }
+                        }
+                      }
+                    }
+                  } catch (_) {}
+
+                  const logKey = safeKey + '_' + deviceId.replace(/[.#$\[\]/]/g,'_');
+                  const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
+                  const existingLogSnap = await get(existingLogRef);
+
+                  if (receiverName === generatorName || receiverId === generatorId) {
+                    receiverName = 'unknown user';
+                    receiverId = deviceId;
+                  }
+
+                  if (!existingLogSnap.exists()) {
+                    await set(existingLogRef, {
+                      generatorName,
+                      generatorId,
+                      key: userInput,
+                      receiverName,
+                      receiverDevice: receiverId,
+                      receiverFingerprint: deviceId,
+                      originalDevices: existing,
+                      timestamp: Date.now(),
+                      type: 'normal'
+                    });
+                  }
+                } catch (logErr) {
+                  console.error('Share log write failed:', logErr);
+                }
+
+                show('This key is already used on another device','var(--error)');
+                window.playSound(window.sfxFailed);
+                localStorage.removeItem('dgxen_saved_key');
+                btn.disabled=false;
+                return;
+              }
+            } else {
+              await set(ref(db, `settings/keyDeviceTrack/${safeKey}/${deviceId}`), true);
+            }
+            
+            isValid=true;show('Live Key Verified! Access Granted.' + timeLeftText,'var(--accent)');break;
+          }
+        }
+      }
+      if(!found){show('Deleted, Unregistered or Fake Key!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+    }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+
+    if(isValid){
+      try { await reportAppVersion(); } catch(e) {}
+      window.playSound(window.sfxSuccess);
+      btn.classList.add('success');btn.textContent='ACCESS GRANTED';
+      save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
+    }
+  }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
+}
+</script>
+</body>
+</html>
