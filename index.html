@@ -227,12 +227,32 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 .revoke-box.critical h3{font-size:22px;letter-spacing:1px;text-transform:uppercase}
 
 
+
+/* JOIN finger hint (admin-toggleable) */
+.join-test{position:absolute;top:-8px;left:50%;width:26px;height:26px;transform:translateX(-50%);z-index:-1;pointer-events:none;animation:testBounce 1.4s ease-in-out infinite;display:none}
+.join-test.show{display:block}
+.join-test::before{content:"☝";display:block;font-size:24px;line-height:26px;text-align:center;filter:drop-shadow(0 0 8px rgba(255,255,255,.3))}
+@keyframes testBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-9px)}}
+
+/* Admin broadcast notice (bottom) */
+.admin-notice{
+  position:fixed;left:50%;bottom:28px;z-index:120;max-width:calc(100vw - 36px);
+  padding:12px 18px;border:1px solid rgba(0,255,136,.28);border-radius:16px;
+  background:rgba(8,16,12,.92);color:#e8f5ee;font-size:13px;font-weight:700;line-height:1.4;
+  text-align:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 12px 36px rgba(0,0,0,.4),0 0 20px rgba(0,255,136,.08);
+  opacity:0;pointer-events:none;transform:translate(-50%,16px);transition:opacity .3s,transform .3s;
+}
+.admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+.admin-notice .an-close{position:absolute;top:6px;right:10px;border:0;background:transparent;color:#9ca5a0;font-size:16px;cursor:pointer;line-height:1}
+
 </style>
 </head>
 <body>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
     <div class="hang">
+      <div class="join-test" id="joinFinger" aria-hidden="true"></div>
       <span class="hang-pin"></span><span class="hang-string"></span>
       <a class="join-badge" href="https://t.me/DGXEN" target="_blank" rel="noopener noreferrer">JOIN</a>
     </div>
@@ -268,6 +288,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
   </div>
 </div>
 
+<div class="admin-notice" id="adminNotice" role="status"><button type="button" class="an-close" id="adminNoticeClose" aria-label="Close">×</button><span id="adminNoticeText"></span></div>
 <div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
 <script>
 const scene=document.getElementById('scene');
@@ -279,27 +300,13 @@ const HOLD_MS=600;
 const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
-// --- PRE-LOADED AUDIO OBJECTS (Strict Path for GitHub Pages) ---
-// Note: Hata diya gaya './' kyunki kabhi-kabhi webview me base path gadbadata hai.
-window.sfxSuccess = new Audio('sounds/success-login.mp3'); window.sfxSuccess.preload='auto';
-window.sfxFailed = new Audio('sounds/failed-login.mp3'); window.sfxFailed.preload='auto';
-window.sfxSaveKey = new Audio('sounds/save-key.mp3'); window.sfxSaveKey.preload='auto';
-window.sfxRecall = new Audio('sounds/recall-big-block.mp3'); window.sfxRecall.preload='auto';
-window.sfxAutoLogin = new Audio('sounds/auto-login-on.mp3'); window.sfxAutoLogin.preload='auto';
-
-window.playSound = (obj) => { 
-    if(!obj) return;
-    try { 
-        obj.currentTime = 0; 
-        // Modern browsers require user interaction before playing audio. 
-        // Catching the promise rejection handles the auto-play block silently.
-        let playPromise = obj.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => { console.log("Audio play prevented: ", error); });
-        }
-    } catch(e){ console.log("Audio error: ", e); } 
-};
-
+// --- PRE-LOADED AUDIO OBJECTS ---
+window.sfxSuccess = new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto';
+window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.preload='auto';
+window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
+window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
+window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
+window.playSound = (obj) => { try { obj.currentTime=0; obj.play().catch(()=>{}); } catch(e){} };
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
@@ -1191,6 +1198,64 @@ async function verifyKey(){
     }
   }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
 }
+
+
+// ===== ADMIN NOTICE + JOIN FINGER =====
+(function(){
+  const finger=document.getElementById('joinFinger');
+  const noticeEl=document.getElementById('adminNotice');
+  const noticeText=document.getElementById('adminNoticeText');
+  const noticeClose=document.getElementById('adminNoticeClose');
+  let noticeTimer=null;
+  let lastBroadcastId=null;
+
+  function setFinger(on){
+    if(!finger) return;
+    if(on) finger.classList.add('show'); else finger.classList.remove('show');
+  }
+  function hideNotice(){
+    if(noticeEl) noticeEl.classList.remove('show');
+    if(noticeTimer){ clearTimeout(noticeTimer); noticeTimer=null; }
+  }
+  function showNotice(msg, seconds){
+    if(!noticeEl||!noticeText) return;
+    const text=String(msg||'').trim();
+    if(!text){ hideNotice(); return; }
+    noticeText.textContent=text;
+    noticeEl.classList.add('show');
+    if(noticeTimer) clearTimeout(noticeTimer);
+    const sec=Math.max(1, Number(seconds)||8);
+    noticeTimer=setTimeout(hideNotice, sec*1000);
+  }
+  if(noticeClose) noticeClose.addEventListener('click', hideNotice);
+
+  try{
+    onValue(ref(db,'settings/notice'), (snap)=>{
+      const v=snap.exists()? (snap.val()||{}) : {};
+      setFinger(v.fingerHint === true || v.fingerHint === 'on' || v.fingerHint === 1);
+      try{
+        const tag=document.querySelector('.tagline');
+        if(tag){
+          if(v.taglineEnabled && v.tagline){ tag.textContent=String(v.tagline); }
+          else if(!tag.dataset.defaultTagline){ tag.dataset.defaultTagline=tag.textContent; }
+          else if(!v.taglineEnabled && tag.dataset.defaultTagline){ tag.textContent=tag.dataset.defaultTagline; }
+        }
+      }catch(e){}
+
+      const bc=v.broadcast||{};
+      const enabled=bc.enabled===true||bc.enabled==='on'||bc.enabled===1;
+      const msg=bc.message||'';
+      const sec=bc.seconds!=null?Number(bc.seconds):8;
+      const id=bc.id||bc.updatedAt||null;
+      if(enabled && msg && id && id!==lastBroadcastId){
+        lastBroadcastId=id;
+        showNotice(msg, sec);
+      }
+      if(!enabled) hideNotice();
+    });
+  }catch(e){ console.warn('notice listen', e); }
+})();
+
 </script>
 </body>
 </html>
