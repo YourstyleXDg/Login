@@ -87,29 +87,15 @@ body::before{
 }
 
 .hang{
-  position:absolute;
-  top:-36px;right:20px;width:78px;height:36px;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
-  z-index:999;
-  transform-origin:50% 100%;
-  animation:sway 5.2s ease-in-out 1.55s infinite;
-  backface-visibility:hidden;
-  will-change:transform;
-  isolation:isolate;
-  pointer-events:auto;
-  overflow:visible;
-  opacity: 1;
-  margin-top: 0;
-  transition: opacity 0.6s ease, margin-top 0.6s ease !important;
+  position:absolute;top:-51px;right:22px;width:78px;height:54px;
+  display:flex;flex-direction:column;align-items:center;z-index:12;
+  transform-origin:50% 100%;animation:sway 5.2s ease-in-out 1.55s infinite;
 }
 
-@keyframes sway{
-  0%,100%{transform:rotate(-2.2deg)}
-  50%{transform:rotate(2.2deg)}
-}
+@keyframes sway{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
 .join-badge{
-  order:1;position:relative;z-index:1000;transform:translateZ(0);backface-visibility:hidden;display:inline-flex;align-items:center;justify-content:center;
-  width:auto;height:auto;padding:6px 14px;border-radius:999px;
+  order:1;display:inline-flex;align-items:center;justify-content:center;
+  width:auto;height:auto;padding:7px 15px;border-radius:999px;
   color:#03150b;text-decoration:none;font-size:10.5px;font-weight:900;letter-spacing:.6px;
   background:linear-gradient(135deg,#26f5a1,#00d978);
   box-shadow:0 6px 15px rgba(0,255,136,.24),inset 0 1px rgba(255,255,255,.48);
@@ -127,13 +113,12 @@ body::before{
   92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
 }
 .hang-string{
-  order:2;width:1.5px;height:12px;flex:none;
-  background:linear-gradient(rgba(255,255,255,.75),rgba(255,255,255,.4));
+  order:2;width:1px;height:18px;flex:none;
+  background:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.3));
 }
 .hang-pin{
-  order:3;width:8px;height:8px;flex:none;border-radius:50%;
-  background:#fff;box-shadow:0 0 10px rgba(255,255,255,.85);
-  margin-top:-3px;margin-bottom:-4px;
+  order:3;width:6px;height:6px;flex:none;border-radius:50%;
+  background:#f7f7f7;box-shadow:0 0 7px rgba(255,255,255,.65);margin-top:-1px;
 }
 
 .glass{
@@ -142,59 +127,36 @@ body::before{
   border:1px solid rgba(255,255,255,.13);
   box-shadow:0 38px 100px rgba(0,0,0,.72),0 0 70px rgba(255,255,255,.045),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.45);
   backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
-  transform-style:preserve-3d;
-  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), backdrop-filter 0.8s ease, -webkit-backdrop-filter 0.8s ease, background 0.8s ease, box-shadow 0.8s ease, border 0.8s ease !important;
+  transform-style:preserve-3d;transition:transform .2s ease-out;
 }
-
 .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(255,105,105,.72),rgba(255,255,255,.78) 17%,transparent 42%,rgba(90,160,255,.55) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
 .glass::after{
-  content:"";position:absolute;top:-60%;left:0;width:42%;height:220%;
-  background:linear-gradient(120deg,transparent,rgba(255,255,255,.20),transparent);
-  animation:glassSheen 10s ease-in-out infinite;
+  content:"";position:absolute;top:-60%;left:0;width:45%;height:220%;
+  background:linear-gradient(120deg,transparent,rgba(255,255,255,.22),transparent);
+  animation:glassSheen 14s ease-in-out infinite;
   pointer-events:none;z-index:1;
+  will-change:transform;
 }
 @keyframes glassSheen{
-  0%{transform:translate(-40%,-30%) rotate(20deg)}
-  50%{transform:translate(160%,40%) rotate(20deg)}
-  100%{transform:translate(-40%,-30%) rotate(20deg)}
+  0%{transform:translateX(-120%) rotate(20deg)}
+  50%{transform:translateX(220%) rotate(20deg)}
+  100%{transform:translateX(-120%) rotate(20deg)}
 }
 
-/* Internal Transparent Glare Bar (Independent of drag/hold) */
-.glass-glare {
-  position: absolute;
-  top: -100%;
-  left: -100%;
-  width: 300%;
-  height: 300%;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.04) 45%,
-    rgba(255, 255, 255, 0.25) 50%,
-    rgba(255, 255, 255, 0.04) 55%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  transform: rotate(35deg) translateY(-50%);
-  pointer-events: none;
-  z-index: 7; 
-  animation: glareSweep 5.5s cubic-bezier(0.35, 0, 0.25, 1) infinite alternate;
-  will-change: transform;
-}
-@keyframes glareSweep {
-  0% { transform: rotate(35deg) translateY(-50%); }
-  100% { transform: rotate(35deg) translateY(50%); }
+.glass-shadow-runner{
+  position:absolute!important;z-index:1!important;
+  top:-10%;bottom:-10%;left:0;width:50%;
+  pointer-events:none;opacity:.48}
+@keyframes shadowRunner{
+  from{transform:translate3d(-70%,7%,0) skewX(-11deg)}
+  to{transform:translate3d(170%,-7%,0) skewX(-11deg)}
 }
 
-.glass-shadow-runner{display:none!important}
-
-/* Grain with smooth transition */
-.grain{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;transition:opacity 0.8s ease !important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");transform:translateZ(3px)}
-
-.light-cap{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%);transition:opacity 0.8s ease, filter 0.8s ease !important;}
-.light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%);transition:opacity 0.8s ease !important;}
-
-.iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;transition:opacity 0.8s ease !important;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
-
+/* Fine film grain on the glass only */
+.grain{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;opacity:.07;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");transform:translateZ(3px)}
+.light-cap{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%)}
+.light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
+.iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
 h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3)}
@@ -232,36 +194,38 @@ body.recall-ready{cursor:crosshair}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
 @media (max-height:650px){body{overflow:auto;padding-top:62px;padding-bottom:25px}.glass{padding-top:34px;padding-bottom:27px}.logo{width:58px;height:58px}.tagline{margin-bottom:18px}}
 
-
-/* ========================================================= */
-/* --- DRAG & RECALL STATES (BUTTERY SMOOTH HOLD EFFECTS) --- */
-/* ========================================================= */
-
+/* Smooth travelling mode: only active while the card is moving. */
 .scene.drag-active{will-change:transform;contain:layout style paint}
-
-/* 1. Max Glass: Smooth transition, deep blur, high contrast, clean border */
-body.is-dragging .glass, body.is-recalling .glass {
-  backdrop-filter: blur(50px) saturate(250%) contrast(120%) !important;
-  -webkit-backdrop-filter: blur(50px) saturate(250%) contrast(120%) !important;
-  background: linear-gradient(145deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08) 52%, rgba(255,255,255,0.03)) !important;
-  box-shadow: 0 45px 120px rgba(0,0,0,0.85), 0 0 80px rgba(0,255,136,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -1px rgba(0,0,0,0.5) !important;
-  border: 1px solid rgba(255,255,255,0.3) !important;
-  transform: scale(1.025) translateZ(40px);
+body.is-dragging .glass, body.is-recalling .glass{
+  /* keep glass visible; sheen bar keeps moving */
+  backdrop-filter:blur(28px) saturate(170%) !important;
+  -webkit-backdrop-filter:blur(28px) saturate(170%) !important;
 }
-
-/* 2. Max Grain: Smoothly fade in visible grain */
-body.is-dragging .grain, body.is-recalling .grain { opacity: 0.15 !important; }
-
-/* 3. Max Iridescent & Cap Glow: Smoothly boost ambient glow */
-body.is-dragging .iridescent, body.is-recalling .iridescent { opacity: 0.32 !important; }
-body.is-dragging .light-cap, body.is-recalling .light-cap { opacity: 1 !important; filter: blur(6px); }
-
-/* 4. JOIN Button Auto Hide/Show */
-body.is-dragging .hang, body.is-recalling .hang {
-  opacity: 0 !important;
-  margin-top: -30px !important;
-  pointer-events: none !important;
+body.is-dragging .glass-shadow-runner, body.is-recalling .glass-shadow-runner{
+  display:none !important;
 }
+/* sheen never freezes / teleports */
+body.is-dragging .glass::after,
+body.is-recalling .glass::after{
+  animation-play-state:running !important;
+  display:block !important;
+  opacity:1 !important;
+}
+body.is-dragging .hang,body.is-recalling .hang,
+body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:paused!important}
+
+
+/* Live revoke overlay (while app session is open) */
+.revoke-overlay{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:28px;background:rgba(0,0,0,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.revoke-overlay.show{display:flex}
+.revoke-box{max-width:340px;width:100%;text-align:center;padding:28px 22px;border-radius:22px;border:1px solid rgba(255,82,82,.45);background:linear-gradient(145deg,rgba(40,8,8,.95),rgba(12,12,12,.92));box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.revoke-box h3{margin:0 0 10px;color:#ff5252;font-size:18px;font-weight:900;letter-spacing:.3px}
+.revoke-box p{margin:0 0 14px;color:#d8dedb;font-size:13px;line-height:1.45;font-weight:600}
+.revoke-count{font-size:34px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:1px;opacity:0;transform:translateY(12px) scale(.92);transition:opacity .55s ease,transform .55s cubic-bezier(.22,1,.36,1);max-height:0;overflow:hidden}
+.revoke-count.show{opacity:1;transform:translateY(0) scale(1);max-height:80px;margin-top:8px}
+.revoke-box.critical{border-color:rgba(255,50,50,.7);box-shadow:0 0 40px rgba(255,0,0,.25)}
+.revoke-box.critical h3{font-size:22px;letter-spacing:1px;text-transform:uppercase}
+
 
 </style>
 </head>
@@ -274,10 +238,6 @@ body.is-dragging .hang, body.is-recalling .hang {
     </div>
     <div class="glass" id="glass">
       <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
-      
-      <!-- Internal Transparent Glare Bar -->
-      <div class="glass-glare"></div>
-
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
@@ -294,13 +254,21 @@ body.is-dragging .hang, body.is-recalling .hang {
         </label>
         <button class="btn" id="unlockBtn" type="button">UNLOCK APP</button>
         <div id="statusText" class="status" role="status" aria-live="polite"></div>
-        <a href="https://yourstylexdg.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
+        <a href="https://YourstyleXdg.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
       </div>
     </div>
   </section>
 </main>
-<div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
 
+<div class="revoke-overlay" id="revokeOverlay" aria-live="assertive">
+  <div class="revoke-box">
+    <h3 id="revokeTitle">Session ended</h3>
+    <p id="revokeMsg">Access revoked by administrator.</p>
+    <div class="revoke-count" id="revokeCount">01:30</div>
+  </div>
+</div>
+
+<div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
 <script>
 const scene=document.getElementById('scene');
 const glass=document.getElementById('glass');
@@ -311,26 +279,27 @@ const HOLD_MS=600;
 const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
-// --- NETWORK/GITHUB AUDIO FIX ---
-const audioBase = 'https://yourstylexdg.github.io/Login/sounds/';
-
-window.sfxSuccess = new Audio(audioBase + 'sucess%20login.mp3'); window.sfxSuccess.preload='auto';
-window.sfxFailed = new Audio(audioBase + 'failed%20login.mp3'); window.sfxFailed.preload='auto';
-window.sfxSaveKey = new Audio(audioBase + 'save%20key.mp3'); window.sfxSaveKey.preload='auto';
-window.sfxRecall = new Audio(audioBase + 'recall%20big%20block.mp3'); window.sfxRecall.preload='auto';
-window.sfxAutoLogin = new Audio(audioBase + 'auto%20login%20on.mp3'); window.sfxAutoLogin.preload='auto';
+// --- PRE-LOADED AUDIO OBJECTS (Strict Path for GitHub Pages) ---
+// Note: Hata diya gaya './' kyunki kabhi-kabhi webview me base path gadbadata hai.
+window.sfxSuccess = new Audio('sounds/success-login.mp3'); window.sfxSuccess.preload='auto';
+window.sfxFailed = new Audio('sounds/failed-login.mp3'); window.sfxFailed.preload='auto';
+window.sfxSaveKey = new Audio('sounds/save-key.mp3'); window.sfxSaveKey.preload='auto';
+window.sfxRecall = new Audio('sounds/recall-big-block.mp3'); window.sfxRecall.preload='auto';
+window.sfxAutoLogin = new Audio('sounds/auto-login-on.mp3'); window.sfxAutoLogin.preload='auto';
 
 window.playSound = (obj) => { 
-  try { 
-    obj.currentTime = 0; 
-    const playPromise = obj.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.log("Audio Network Load Delay or Blocked:", error);
-        });
-    }
-  } catch(e) {} 
+    if(!obj) return;
+    try { 
+        obj.currentTime = 0; 
+        // Modern browsers require user interaction before playing audio. 
+        // Catching the promise rejection handles the auto-play block silently.
+        let playPromise = obj.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => { console.log("Audio play prevented: ", error); });
+        }
+    } catch(e){ console.log("Audio error: ", e); } 
 };
+
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
@@ -487,13 +456,7 @@ document.addEventListener('pointermove',e=>{
 function finishRecall(e){
   if(recallPointer!==e.pointerId)return;
   clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready');
-  if(recallFollowing){
-    recallFollowing=false;
-    setMoveMode('is-recalling',false);
-    scene.classList.remove('drag-active');
-    document.body.classList.remove('is-recalling','is-dragging');
-    saveCardPosition();
-  }
+  if(recallFollowing){recallFollowing=false;saveCardPosition()}
   else{setMoveMode('is-recalling',false);scene.classList.remove('drag-active')}
 }
 document.addEventListener('pointerup',finishRecall);
@@ -503,7 +466,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { update, getDatabase, ref, get, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 const firebaseConfig={databaseURL:"https://login-pass-1a196-default-rtdb.firebaseio.com/"};
 const app=initializeApp(firebaseConfig),db=getDatabase(app);
 const input=document.getElementById('keyInput'),save=document.getElementById('saveKeyCheck'),status=document.getElementById('statusText'),btn=document.getElementById('unlockBtn');
@@ -526,6 +489,7 @@ function getDeviceFingerprint() {
         return false;
     };
 
+    // 1. URL param (Auth.smali now injects ?deviceId=ANDROID_ID)
     try {
         const p = new URLSearchParams(location.search);
         const urlKeys = ['deviceId', 'uuid', 'id', 'device', 'userId'];
@@ -538,6 +502,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 2. localStorage / sessionStorage
     try {
         const keys = [
             'deviceId', 'device_id', 'uuid', 'userId', 'user_id',
@@ -550,6 +515,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 3. Android bridge
     try {
         if (window.Android) {
             const methods = ['getDeviceId', 'getId', 'getUniqueId', 'getAndroidId', 'getUUID', 'getUuid'];
@@ -566,6 +532,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 4. Last resort fingerprint
     const str = navigator.userAgent + screen.width + 'x' + screen.height + (navigator.hardwareConcurrency || '');
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -590,23 +557,46 @@ function getAppVersion() {
   return localStorage.getItem('dgxen_app_version') || '1.0.0';
 }
 
-async function reportAppVersion() {
+async function reportAppVersion(preferredUid) {
   try {
     const devId = getDeviceFingerprint();
     const ver = getAppVersion();
     if (!devId) return;
-    // Always store under knownDevices
-    await set(ref(db, 'settings/knownDevices/' + devId), {
-      lastSeen: Date.now(),
-      id: devId,
-      appVersion: ver
-    });
-    // If this device is a registered user node, write appVersion there too
-    const userSnap = await get(ref(db, 'users/' + devId));
-    if (userSnap.exists()) {
-      await set(ref(db, 'users/' + devId + '/appVersion'), ver);
-    } else {
-      // Also try match any user whose device fields equal this id
+    const safeDev = String(devId).replace(/[.#$\[\]\/]/g, '_');
+    // knownDevices map (device → version)
+    try {
+      await set(ref(db, 'settings/knownDevices/' + safeDev), {
+        lastSeen: Date.now(),
+        id: devId,
+        appVersion: ver
+      });
+    } catch (e1) { console.warn('knownDevices write', e1); }
+
+    const writeUser = async (uid) => {
+      if (!uid) return;
+      try {
+        await set(ref(db, 'users/' + uid + '/appVersion'), ver);
+        await set(ref(db, 'users/' + uid + '/lastDeviceId'), devId);
+      } catch (e2) { console.warn('user version write', e2); }
+    };
+
+    // Preferred uid (from successful key match) always wins
+    if (preferredUid) {
+      await writeUser(preferredUid);
+      return;
+    }
+
+    // Direct path users/{deviceId}
+    try {
+      const userSnap = await get(ref(db, 'users/' + devId));
+      if (userSnap.exists()) {
+        await writeUser(devId);
+        return;
+      }
+    } catch (e) {}
+
+    // Scan all users for matching device fields
+    try {
       const all = await get(ref(db, 'users'));
       if (all.exists()) {
         const data = all.val();
@@ -614,13 +604,20 @@ async function reportAppVersion() {
         const n = norm(devId);
         for (const uid in data) {
           const u = data[uid] || {};
-          if (norm(uid) === n || norm(u.deviceId) === n || norm(u.fingerprint) === n || norm(u.lastDeviceId) === n || norm(u.androidId) === n) {
-            await set(ref(db, 'users/' + uid + '/appVersion'), ver);
-            break;
+          if (
+            norm(uid) === n ||
+            norm(u.deviceId) === n ||
+            norm(u.fingerprint) === n ||
+            norm(u.lastDeviceId) === n ||
+            norm(u.androidId) === n ||
+            norm(u.lastLoginDevice) === n
+          ) {
+            await writeUser(uid);
+            return;
           }
         }
       }
-    }
+    } catch (e) {}
   } catch (e) {
     console.error('reportAppVersion failed', e);
   }
@@ -656,9 +653,202 @@ function toggleAutoLogin(){
 autoNotch.addEventListener('click',toggleAutoLogin);
 autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAutoLogin()}});
 const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
-window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey)setTimeout(()=>{if(!btn.disabled)verifyKey()},1000)}});
+window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey)setTimeout(()=>{if(!btn.disabled)verifyKey()},400)}});
 btn.addEventListener('click',verifyKey);
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
+
+
+// ===== LIVE SESSION GUARD (ban / key ban / master key delete) =====
+window.__sessionGuardStarted = false;
+window.__sessionRevoked = false;
+window.__sessionMeta = null; // { kind, key, uid, deviceId }
+
+function formatMMSS(ms){
+  const s = Math.max(0, Math.ceil(ms/1000));
+  const m = Math.floor(s/60);
+  const r = s % 60;
+  return String(m).padStart(2,'0') + ':' + String(r).padStart(2,'0');
+}
+
+function showRevokeUI(title, message){
+  const ov = document.getElementById('revokeOverlay');
+  const t = document.getElementById('revokeTitle');
+  const m = document.getElementById('revokeMsg');
+  const c = document.getElementById('revokeCount');
+  if (t) t.textContent = title;
+  if (m) m.textContent = message;
+  if (c) c.textContent = '01:30';
+  if (ov) ov.classList.add('show');
+}
+
+function triggerSessionRevoke(title, message){
+  if (window.__sessionRevoked) return;
+  window.__sessionRevoked = true;
+  showRevokeUI(title, message);
+  const countEl = document.getElementById('revokeCount');
+  if (countEl) {
+    countEl.classList.remove('show');
+    countEl.textContent = '01:30';
+  }
+  // Background total ~2:00 until process kill
+  try {
+    if (window.Android && typeof window.Android.setRevokeMessage === 'function') {
+      window.Android.setRevokeMessage(title);
+    }
+  } catch(e) {}
+  try {
+    if (window.Android && typeof window.Android.startNativeTimer === 'function') {
+      window.Android.startNativeTimer('120000');
+    }
+  } catch(e) {}
+
+  // Phase 1: message only for 30s
+  // Phase 2: smooth reveal 01:30 countdown, then close
+  const phase2At = Date.now() + 30000;
+  const endAt = Date.now() + 120000;
+  let phase2 = false;
+  const tick = () => {
+    const now = Date.now();
+    const c = document.getElementById('revokeCount');
+    if (!phase2 && now >= phase2At) {
+      phase2 = true;
+      if (c) {
+        c.textContent = '01:30';
+        requestAnimationFrame(() => c.classList.add('show'));
+      }
+    }
+    if (phase2 && c) {
+      const left = Math.max(0, endAt - now);
+      c.textContent = formatMMSS(left);
+    }
+    if (now >= endAt) {
+      try { if (window.Android && typeof window.Android.expire === 'function') window.Android.expire(); } catch(e) {}
+      return;
+    }
+    setTimeout(tick, 200);
+  };
+  tick();
+  setTimeout(() => {
+    try { if (window.Android && typeof window.Android.expire === 'function') window.Android.expire(); } catch(e) {}
+  }, 122000);
+}
+
+function triggerCriticalShutdown(){
+  if (window.__sessionRevoked) return;
+  window.__sessionRevoked = true;
+  const ov = document.getElementById('revokeOverlay');
+  const box = ov && ov.querySelector('.revoke-box');
+  const t = document.getElementById('revokeTitle');
+  const m = document.getElementById('revokeMsg');
+  const c = document.getElementById('revokeCount');
+  if (t) t.textContent = 'Critical shutdown';
+  if (m) m.textContent = 'Emergency close ordered by administrator.';
+  if (c) { c.textContent = '10'; c.classList.add('show'); }
+  if (box) box.classList.add('critical');
+  if (ov) ov.classList.add('show');
+  try {
+    if (window.Android && typeof window.Android.setRevokeMessage === 'function') {
+      window.Android.setRevokeMessage('Critical shutdown');
+    }
+  } catch(e) {}
+  try {
+    if (window.Android && typeof window.Android.startNativeTimer === 'function') {
+      window.Android.startNativeTimer('10000');
+    }
+  } catch(e) {}
+  const endAt = Date.now() + 10000;
+  const tick = () => {
+    const left = Math.max(0, Math.ceil((endAt - Date.now())/1000));
+    if (c) c.textContent = String(left);
+    if (left <= 0) {
+      try { if (window.Android && typeof window.Android.expire === 'function') window.Android.expire(); } catch(e) {}
+      return;
+    }
+    setTimeout(tick, 200);
+  };
+  tick();
+  setTimeout(() => {
+    try { if (window.Android && typeof window.Android.expire === 'function') window.Android.expire(); } catch(e) {}
+  }, 10500);
+}
+
+async function startSessionGuard(meta){
+  if (window.__sessionGuardStarted) return;
+  window.__sessionGuardStarted = true;
+  window.__sessionMeta = meta || {};
+  const deviceId = meta.deviceId || (typeof getDeviceFingerprint === 'function' ? getDeviceFingerprint() : '');
+  const key = (meta.key || '').trim();
+  const uid = meta.uid || null;
+  const kind = meta.kind || 'normal'; // master | normal
+
+  try {
+    // 1) User / device ban
+    const checkUserBan = (data) => {
+      if (!data) return;
+      const norm = (s) => String(s||'').trim().toLowerCase().replace(/\s+/g,'');
+      const my = norm(deviceId);
+      for (const id in data) {
+        const u = data[id] || {};
+        if (u.status !== 'banned') continue;
+        if (uid && id === uid) {
+          triggerSessionRevoke("You're banned", u.banReason || "You're banned by the administrator.");
+          return;
+        }
+        if (my && (norm(id)===my || norm(u.deviceId)===my || norm(u.fingerprint)===my ||
+            norm(u.lastDeviceId)===my || norm(u.androidId)===my || norm(u.lastLoginDevice)===my)) {
+          triggerSessionRevoke("You're banned", u.banReason || "You're banned by the administrator.");
+          return;
+        }
+      }
+    };
+    onValue(ref(db, 'users'), (snap) => {
+      if (window.__sessionRevoked) return;
+      if (snap.exists()) checkUserBan(snap.val());
+    });
+
+    // 2) Key banned (normal keys)
+    if (kind === 'normal' && key) {
+      onValue(ref(db, 'settings/bannedKeys/' + key), (snap) => {
+        if (window.__sessionRevoked) return;
+        if (snap.exists()) {
+          const reason = (snap.val() && snap.val().reason) || 'Key banned. Generate a new key to continue.';
+          triggerSessionRevoke('Key banned', reason);
+        }
+      });
+    }
+
+    // 3) Master key deleted / removed from settings/masterKeys
+    if (kind === 'master' && key) {
+      onValue(ref(db, 'settings/masterKeys'), (snap) => {
+        if (window.__sessionRevoked) return;
+        let stillThere = false;
+        if (snap.exists()) {
+          const val = snap.val() || {};
+          for (const k in val) {
+            const entry = val[k];
+            const keyStr = (typeof entry === 'string') ? entry.trim() : String((entry && entry.key) || '').trim();
+            if (keyStr === key) { stillThere = true; break; }
+          }
+        }
+        if (!stillThere) {
+          triggerSessionRevoke('Master key revoked by admin', 'Master key revoked by admin. App will close.');
+        }
+      });
+    }
+
+    // 4) Global kill switch from admin
+    onValue(ref(db, 'settings/globalKill'), (snap) => {
+      if (window.__sessionRevoked) return;
+      if (!snap.exists()) return;
+      const v = snap.val();
+      const active = (v === true) || (v && (v.active === true || v === 1));
+      if (active) triggerCriticalShutdown();
+    });
+  } catch (e) {
+    console.warn('session guard', e);
+  }
+}
+
 
 async function verifyKey(){
   const userInput=input.value.trim();
@@ -668,6 +858,40 @@ async function verifyKey(){
     let isValid=false;
     let timeLeftText="";
     const deviceId = getDeviceFingerprint();
+
+    // Banned device check (blocks master keys too)
+    try {
+      const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
+      const myN = norm(deviceId);
+      let bannedReason = null;
+      const direct = await get(ref(db, 'users/' + deviceId));
+      if (direct.exists() && direct.val().status === 'banned') {
+        bannedReason = direct.val().banReason || 'You are banned. Contact admin.';
+      } else {
+        const allU = await get(ref(db, 'users'));
+        if (allU.exists()) {
+          const data = allU.val();
+          for (const uid in data) {
+            const u = data[uid] || {};
+            if (u.status !== 'banned') continue;
+            if (norm(uid) === myN || norm(u.deviceId) === myN || norm(u.fingerprint) === myN ||
+                norm(u.lastDeviceId) === myN || norm(u.androidId) === myN || norm(u.lastLoginDevice) === myN) {
+              bannedReason = u.banReason || 'You are banned. Contact admin.';
+              break;
+            }
+          }
+        }
+      }
+      if (bannedReason) {
+        show(bannedReason, 'var(--error)');
+        window.playSound(window.sfxFailed);
+        localStorage.removeItem('dgxen_saved_key');
+        btn.disabled = false;
+        return;
+      }
+    } catch (banErr) { console.warn('ban check', banErr); }
+
+
     const safeKey = btoa(unescape(encodeURIComponent(userInput))).replace(/[.#$\[\]/]/g,'_');
 
     // ========== MASTER KEYS ==========
@@ -680,8 +904,8 @@ async function verifyKey(){
           const keyStr = (typeof val === 'string') ? val.trim() : String((val && val.key) || '').trim();
           if (keyStr === userInput) {
             mkEntry = (typeof val === 'string')
-              ? { key: keyStr, type: 'pure', maxUses: null, deviceId: null }
-              : { key: keyStr, type: val.type || 'pure', maxUses: val.maxUses != null ? Number(val.maxUses) : null, deviceId: val.deviceId || null };
+              ? { key: keyStr, type: 'pure', maxUses: null, deviceId: null, expiresAt: null }
+              : { key: keyStr, type: val.type || 'pure', maxUses: val.maxUses != null ? Number(val.maxUses) : null, deviceId: val.deviceId || null, expiresAt: val.expiresAt != null ? Number(val.expiresAt) : null };
             break;
           }
         }
@@ -689,8 +913,19 @@ async function verifyKey(){
         if (mkEntry) {
           const mkType = mkEntry.type || 'pure';
 
-          // --- DEVICE LOCKED ---
-          if (mkType === 'device') {
+          // --- TIME CHECK (time / device_time) ---
+          if ((mkType === 'time' || mkType === 'device_time') && mkEntry.expiresAt) {
+            if (Date.now() > Number(mkEntry.expiresAt)) {
+              show('This master key has expired.', 'var(--error)');
+              window.playSound(window.sfxFailed);
+              localStorage.removeItem('dgxen_saved_key');
+              btn.disabled = false;
+              return;
+            }
+          }
+
+          // --- DEVICE LOCKED (device or device_time) ---
+          if (mkType === 'device' || mkType === 'device_time') {
             let liveId = getDeviceFingerprint();
 
             const allowedRaw = String(mkEntry.deviceId || '').trim();
@@ -727,6 +962,17 @@ async function verifyKey(){
             await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
             isValid = true;
             timeLeftText = ' (Device Locked)';
+            show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
+          }
+          // --- TIME LIMITED (any device, unlimited uses until expiry) ---
+          else if (mkType === 'time') {
+            const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
+            const usage = await get(usageRef);
+            await set(usageRef, (usage.exists() ? Number(usage.val()) : 0) + 1);
+            isValid = true;
+            const left = mkEntry.expiresAt ? Math.max(0, Number(mkEntry.expiresAt) - Date.now()) : 0;
+            const mins = Math.floor(left / 60000);
+            timeLeftText = mins > 0 ? ` (Time left ~${mins}m)` : ' (Time Limited)';
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
           // --- LIMITED USES ---
@@ -786,7 +1032,7 @@ async function verifyKey(){
     if(!isValid&&userInput.startsWith('DGXEN-')){
       let banned=false,reason='';
       try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
-      if(banned){show('Banned: '+reason,'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+      if(banned){show(reason||'Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
       
       const usersSnap=await get(ref(db,'users'));
       let found=false;
@@ -795,7 +1041,7 @@ async function verifyKey(){
           const user=usersSnap.val()[uid];
           if(user.lastGeneratedKey && String(user.lastGeneratedKey).trim() === userInput){
             found=true;
-            if(user.status==='banned'){show('Account Banned: '+(user.banReason||'Your device is permanently banned.'),'var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+            if(user.status==='banned'){show('Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
             if(user.keyExpiresAt&&Date.now()>user.keyExpiresAt){show('This key has expired! Get a new one.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
             
             if (user.keyExpiresAt) {
@@ -804,6 +1050,9 @@ async function verifyKey(){
                   let hrs = Math.floor(remainingMs / (1000 * 60 * 60));
                   let mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
                   timeLeftText = hrs > 0 ? ` (Valid for ${hrs}h ${mins}m)` : ` (Valid for ${mins} mins)`;
+                  
+                  // 🔥 NATIVE TRACKING: Android System ko seedha bhej diya. Pura Live Timer/Crash ab Smali dekhega
+                  try { if(window.Android && typeof window.Android.startNativeTimer === 'function') window.Android.startNativeTimer(remainingMs.toString()); } catch(e) {}
               }
             }
 
@@ -817,8 +1066,10 @@ async function verifyKey(){
                 try {
                   const generatorName = (user && user.name) ? user.name : (uid || "Unknown Generator");
                   const generatorId = uid || "";
-                  let receiverName = "unknown user";
-                  let receiverId = deviceId; 
+                                    // Receiver: registered name if known, else device id (updates later when they register)
+                  let receiverName = null;
+                  let receiverId = deviceId;
+                  let isRegisteredReceiver = false;
 
                   try {
                     const allUsersSnap = await get(ref(db, 'users'));
@@ -826,15 +1077,20 @@ async function verifyKey(){
                       const uData = allUsersSnap.val();
                       const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
                       const devN = norm(deviceId);
-                      if (uData[deviceId]) {
-                        receiverName = uData[deviceId].name || deviceId;
+                      if (uData[deviceId] && uData[deviceId].name) {
+                        receiverName = uData[deviceId].name;
                         receiverId = deviceId;
+                        isRegisteredReceiver = true;
                       } else {
                         for (const uKey in uData) {
-                          const u = uData[uKey];
-                          if (norm(uKey) === devN || norm(u.deviceId) === devN || norm(u.fingerprint) === devN || norm(u.lastDeviceId) === devN || norm(u.androidId) === devN) {
-                            receiverName = u.name || uKey;
-                            receiverId = uKey;
+                          const u = uData[uKey] || {};
+                          if (norm(uKey) === devN || norm(u.deviceId) === devN || norm(u.fingerprint) === devN ||
+                              norm(u.lastDeviceId) === devN || norm(u.androidId) === devN || norm(u.lastLoginDevice) === devN) {
+                            if (u.name && String(u.name).trim()) {
+                              receiverName = String(u.name).trim();
+                              receiverId = uKey;
+                              isRegisteredReceiver = true;
+                            }
                             break;
                           }
                         }
@@ -842,27 +1098,44 @@ async function verifyKey(){
                     }
                   } catch (_) {}
 
-                  const logKey = safeKey + '_' + deviceId.replace(/[.#$\[\]/]/g,'_');
-                  const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
-                  const existingLogSnap = await get(existingLogRef);
-
-                  if (receiverName === generatorName || receiverId === generatorId) {
+                  if (!isRegisteredReceiver || !receiverName) {
                     receiverName = 'unknown user';
                     receiverId = deviceId;
                   }
+                  // Never show generator as receiver
+                  if (receiverId === generatorId || (receiverName && generatorName && receiverName === generatorName && isRegisteredReceiver === false)) {
+                    receiverName = 'unknown user';
+                    receiverId = deviceId;
+                    isRegisteredReceiver = false;
+                  }
 
+                  const logKey = safeKey + '_' + String(deviceId).replace(/[.#$\[\]\/]/g,'_');
+                  const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
+                  const existingLogSnap = await get(existingLogRef);
+
+                  const payload = {
+                    generatorName,
+                    generatorId,
+                    key: userInput,
+                    receiverName: isRegisteredReceiver ? receiverName : 'unknown user',
+                    receiverDevice: receiverId,
+                    receiverFingerprint: deviceId,
+                    originalDevices: existing,
+                    timestamp: Date.now(),
+                    type: 'normal'
+                  };
+                  // Create once; allow name upgrade if receiver registers later
                   if (!existingLogSnap.exists()) {
-                    await set(existingLogRef, {
-                      generatorName,
-                      generatorId,
-                      key: userInput,
-                      receiverName,
-                      receiverDevice: receiverId,
-                      receiverFingerprint: deviceId,
-                      originalDevices: existing,
-                      timestamp: Date.now(),
-                      type: 'normal'
-                    });
+                    await set(existingLogRef, payload);
+                  } else {
+                    const prev = existingLogSnap.val() || {};
+                    if (isRegisteredReceiver && prev.receiverName === 'unknown user') {
+                      await set(existingLogRef, Object.assign({}, prev, {
+                        receiverName: receiverName,
+                        receiverDevice: receiverId,
+                        timestamp: prev.timestamp || Date.now()
+                      }));
+                    }
                   }
                 } catch (logErr) {
                   console.error('Share log write failed:', logErr);
@@ -878,7 +1151,7 @@ async function verifyKey(){
               await set(ref(db, `settings/keyDeviceTrack/${safeKey}/${deviceId}`), true);
             }
             
-            isValid=true;show('Live Key Verified! Access Granted.' + timeLeftText,'var(--accent)');break;
+            isValid=true;window.__lastMatchedUserId=uid;show('Live Key Verified! Access Granted.' + timeLeftText,'var(--accent)');break;
           }
         }
       }
@@ -886,11 +1159,35 @@ async function verifyKey(){
     }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
 
     if(isValid){
-      try { await reportAppVersion(); } catch(e) {}
+      try {
+        const matchedUid = window.__lastMatchedUserId || null;
+        await reportAppVersion(matchedUid);
+        try {
+          const liveFp = getDeviceFingerprint();
+          if (matchedUid && liveFp) {
+            await update(ref(db, 'users/' + matchedUid), {
+              lastDeviceId: liveFp,
+              fingerprint: liveFp,
+              lastLoginDevice: liveFp
+            });
+          }
+        } catch (eWrite) { console.warn('native id write', eWrite); }
+        // Start live session guard (ban / key ban / master delete) while user uses app
+        const isMaster = !userInput.startsWith('DGXEN-');
+        try {
+          await startSessionGuard({
+            kind: isMaster ? 'master' : 'normal',
+            key: userInput,
+            uid: matchedUid,
+            deviceId: getDeviceFingerprint()
+          });
+        } catch (gErr) { console.warn('guard start', gErr); }
+        window.__lastMatchedUserId=null;
+      } catch(e) {}
       window.playSound(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
-      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},900);
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
     }
   }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
 }
