@@ -237,14 +237,15 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 /* Admin broadcast notice (bottom) */
 .admin-notice{
   position:fixed;left:50%;bottom:28px;z-index:120;max-width:calc(100vw - 36px);
-  padding:12px 18px;border:1px solid rgba(0,255,136,.28);border-radius:16px;
-  background:rgba(8,16,12,.92);color:#e8f5ee;font-size:13px;font-weight:700;line-height:1.4;
+  padding:14px 40px 14px 18px;border:1px solid rgba(0,255,136,.28);border-radius:16px;
+  background:rgba(8,16,12,.94);color:#e8f5ee;font-size:13px;font-weight:700;line-height:1.45;
   text-align:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
   box-shadow:0 12px 36px rgba(0,0,0,.4),0 0 20px rgba(0,255,136,.08);
   opacity:0;pointer-events:none;transform:translate(-50%,16px);transition:opacity .3s,transform .3s;
 }
 .admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 .admin-notice .an-close{position:absolute;top:6px;right:10px;border:0;background:transparent;color:#9ca5a0;font-size:16px;cursor:pointer;line-height:1}
+.admin-notice .an-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(0,255,136,.15);color:var(--accent);font-variant-numeric:tabular-nums;font-size:11px;font-weight:900}
 
 </style>
 </head>
@@ -288,7 +289,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
   </div>
 </div>
 
-<div class="admin-notice" id="adminNotice" role="status"><button type="button" class="an-close" id="adminNoticeClose" aria-label="Close">×</button><span id="adminNoticeText"></span></div>
+<div class="admin-notice" id="adminNotice" role="status"><button type="button" class="an-close" id="adminNoticeClose" aria-label="Close">×</button><span id="adminNoticeText"></span><span class="an-count" id="adminNoticeCount"></span></div>
 <div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
 <script>
 const scene=document.getElementById('scene');
@@ -306,7 +307,35 @@ window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.prel
 window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
 window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
 window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
-window.playSound = (obj) => { try { obj.currentTime=0; obj.play().catch(()=>{}); } catch(e){} };
+// Alternate filenames (typo / naming variants)
+try{ if(!window.sfxSuccess.src) window.sfxSuccess=new Audio('./sounds/success login.mp3'); }catch(e){}
+window.__audioUnlocked=false;
+window.unlockAudio=function(){
+  if(window.__audioUnlocked) return;
+  window.__audioUnlocked=true;
+  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin].forEach(function(a){
+    if(!a) return;
+    try{
+      const p=a.play();
+      if(p&&p.then) p.then(function(){ a.pause(); a.currentTime=0; }).catch(function(){});
+    }catch(e){}
+  });
+};
+document.addEventListener('pointerdown', function(){ window.unlockAudio(); }, {once:true,passive:true});
+document.addEventListener('touchstart', function(){ window.unlockAudio(); }, {once:true,passive:true});
+window.playSound = function(obj){
+  try{
+    if(!obj) return;
+    window.unlockAudio();
+    obj.muted=false;
+    obj.volume=1;
+    obj.currentTime=0;
+    const p=obj.play();
+    if(p&&p.catch) p.catch(function(){
+      try{ obj.load(); obj.play().catch(function(){}); }catch(e2){}
+    });
+  }catch(e){}
+};
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
@@ -1205,9 +1234,12 @@ async function verifyKey(){
   const finger=document.getElementById('joinFinger');
   const noticeEl=document.getElementById('adminNotice');
   const noticeText=document.getElementById('adminNoticeText');
+  const noticeCount=document.getElementById('adminNoticeCount');
   const noticeClose=document.getElementById('adminNoticeClose');
   let noticeTimer=null;
+  let tickTimer=null;
   let lastBroadcastId=null;
+  let pageShownId=null;
 
   function setFinger(on){
     if(!finger) return;
@@ -1216,45 +1248,73 @@ async function verifyKey(){
   function hideNotice(){
     if(noticeEl) noticeEl.classList.remove('show');
     if(noticeTimer){ clearTimeout(noticeTimer); noticeTimer=null; }
+    if(tickTimer){ clearInterval(tickTimer); tickTimer=null; }
+    if(noticeCount) noticeCount.textContent='';
   }
   function showNotice(msg, seconds){
     if(!noticeEl||!noticeText) return;
     const text=String(msg||'').trim();
     if(!text){ hideNotice(); return; }
+    let left=Math.max(1, Math.floor(Number(seconds)||8));
     noticeText.textContent=text;
+    if(noticeCount) noticeCount.textContent=String(left)+'s';
     noticeEl.classList.add('show');
     if(noticeTimer) clearTimeout(noticeTimer);
-    const sec=Math.max(1, Number(seconds)||8);
-    noticeTimer=setTimeout(hideNotice, sec*1000);
+    if(tickTimer) clearInterval(tickTimer);
+    tickTimer=setInterval(function(){
+      left-=1;
+      if(noticeCount) noticeCount.textContent=left>0?(String(left)+'s'):'';
+      if(left<=0){ clearInterval(tickTimer); tickTimer=null; }
+    }, 1000);
+    noticeTimer=setTimeout(hideNotice, left*1000);
   }
   if(noticeClose) noticeClose.addEventListener('click', hideNotice);
 
-  try{
-    onValue(ref(db,'settings/notice'), (snap)=>{
-      const v=snap.exists()? (snap.val()||{}) : {};
-      setFinger(v.fingerHint === true || v.fingerHint === 'on' || v.fingerHint === 1);
-      try{
-        const tag=document.querySelector('.tagline');
-        if(tag){
-          if(v.taglineEnabled && v.tagline){ tag.textContent=String(v.tagline); }
-          else if(!tag.dataset.defaultTagline){ tag.dataset.defaultTagline=tag.textContent; }
-          else if(!v.taglineEnabled && tag.dataset.defaultTagline){ tag.textContent=tag.dataset.defaultTagline; }
-        }
-      }catch(e){}
-
-      const bc=v.broadcast||{};
-      const enabled=bc.enabled===true||bc.enabled==='on'||bc.enabled===1;
-      const msg=bc.message||'';
-      const sec=bc.seconds!=null?Number(bc.seconds):8;
-      const id=bc.id||bc.updatedAt||null;
-      if(enabled && msg && id && id!==lastBroadcastId){
-        lastBroadcastId=id;
-        showNotice(msg, sec);
+  function applyNotice(v){
+    v=v||{};
+    setFinger(v.fingerHint===true||v.fingerHint==='on'||v.fingerHint===1);
+    try{
+      const tag=document.querySelector('.tagline');
+      if(tag){
+        if(!tag.dataset.defaultTagline) tag.dataset.defaultTagline=tag.textContent;
+        if(v.taglineEnabled && v.tagline) tag.textContent=String(v.tagline);
+        else tag.textContent=tag.dataset.defaultTagline||tag.textContent;
       }
-      if(!enabled) hideNotice();
+    }catch(e){}
+
+    const bc=v.broadcast||{};
+    const enabled=bc.enabled===true||bc.enabled==='on'||bc.enabled===1;
+    const msg=String(bc.message||'').trim();
+    const sec=bc.seconds!=null?Number(bc.seconds):8;
+    const id=bc.id||bc.updatedAt||null;
+
+    if(!enabled || !msg){
+      hideNotice();
+      return;
+    }
+    // Show on every page open once per broadcast id; re-show when admin sends new id
+    if(pageShownId===id) return;
+    pageShownId=id;
+    lastBroadcastId=id;
+    showNotice(msg, sec);
+  }
+
+  try{
+    onValue(ref(db,'settings/notice'), function(snap){
+      applyNotice(snap.exists()?snap.val():{});
     });
   }catch(e){ console.warn('notice listen', e); }
+
+  // Fallback poll once after 1.2s if listener slow
+  setTimeout(async function(){
+    try{
+      if(pageShownId!=null) return;
+      const snap=await get(ref(db,'settings/notice'));
+      if(snap.exists()) applyNotice(snap.val());
+    }catch(e){}
+  }, 1200);
 })();
+
 
 </script>
 </body>
