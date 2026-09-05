@@ -302,15 +302,14 @@ const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
 // --- PRE-LOADED AUDIO OBJECTS ---
-// Primary names use "success" spelling; fallback to older "sucess" filename
-window.sfxSuccess = new Audio('./sounds/success login.mp3'); window.sfxSuccess.preload='auto';
+window.sfxSuccess = new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto';
 window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.preload='auto';
 window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
 window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
 window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
-window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto'; }catch(e){} });
+// Alternate filenames (typo / naming variants)
+try{ if(!window.sfxSuccess.src) window.sfxSuccess=new Audio('./sounds/success login.mp3'); }catch(e){}
 window.__audioUnlocked=false;
-window.__pendingSound=null;
 window.unlockAudio=function(){
   if(window.__audioUnlocked) return;
   window.__audioUnlocked=true;
@@ -321,28 +320,21 @@ window.unlockAudio=function(){
       if(p&&p.then) p.then(function(){ a.pause(); a.currentTime=0; }).catch(function(){});
     }catch(e){}
   });
-  if(window.__pendingSound){
-    try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
-  }
 };
-['pointerdown','touchstart','click'].forEach(function(ev){
-  document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
-});
+document.addEventListener('pointerdown', function(){ window.unlockAudio(); }, {once:true,passive:true});
+document.addEventListener('touchstart', function(){ window.unlockAudio(); }, {once:true,passive:true});
 window.playSound = function(obj){
   try{
     if(!obj) return;
+    window.unlockAudio();
     obj.muted=false;
     obj.volume=1;
-    try{ obj.currentTime=0; }catch(e){}
+    obj.currentTime=0;
     const p=obj.play();
-    if(p&&p.then){
-      p.then(function(){ window.__audioUnlocked=true; }).catch(function(){
-        window.__pendingSound=obj;
-        // retry after microtask
-        setTimeout(function(){ try{ obj.currentTime=0; obj.play().catch(function(){}); }catch(e2){} }, 80);
-      });
-    }
-  }catch(e){ window.__pendingSound=obj; }
+    if(p&&p.catch) p.catch(function(){
+      try{ obj.load(); obj.play().catch(function(){}); }catch(e2){}
+    });
+  }catch(e){}
 };
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
@@ -1246,7 +1238,8 @@ async function verifyKey(){
   const noticeClose=document.getElementById('adminNoticeClose');
   let noticeTimer=null;
   let tickTimer=null;
-  let shownForId=null;
+  let lastBroadcastId=null;
+  let pageShownId=null;
 
   function setFinger(on){
     if(!finger) return;
@@ -1273,11 +1266,11 @@ async function verifyKey(){
       if(noticeCount) noticeCount.textContent=left>0?(String(left)+'s'):'';
       if(left<=0){ clearInterval(tickTimer); tickTimer=null; }
     }, 1000);
-    noticeTimer=setTimeout(hideNotice, left*1000 + 50);
+    noticeTimer=setTimeout(hideNotice, left*1000);
   }
   if(noticeClose) noticeClose.addEventListener('click', hideNotice);
 
-  function applyNotice(v, force){
+  function applyNotice(v){
     v=v||{};
     setFinger(v.fingerHint===true||v.fingerHint==='on'||v.fingerHint===1);
     try{
@@ -1290,39 +1283,37 @@ async function verifyKey(){
     }catch(e){}
 
     const bc=v.broadcast||{};
-    const enabled = bc.enabled===true || bc.enabled==='on' || bc.enabled===1 || bc.enabled==='true';
+    const enabled=bc.enabled===true||bc.enabled==='on'||bc.enabled===1;
     const msg=String(bc.message||'').trim();
-    const sec = (bc.seconds!=null && bc.seconds!=='') ? Number(bc.seconds) : 10;
-    const id = String(bc.id || bc.updatedAt || msg || 'default');
+    const sec=bc.seconds!=null?Number(bc.seconds):8;
+    const id=bc.id||bc.updatedAt||null;
 
     if(!enabled || !msg){
       hideNotice();
-      shownForId=null;
       return;
     }
-    if(!force && shownForId===id) return;
-    shownForId=id;
+    // Show on every page open once per broadcast id; re-show when admin sends new id
+    if(pageShownId===id) return;
+    pageShownId=id;
+    lastBroadcastId=id;
     showNotice(msg, sec);
   }
 
   try{
     onValue(ref(db,'settings/notice'), function(snap){
-      applyNotice(snap.exists()?snap.val():{}, false);
+      applyNotice(snap.exists()?snap.val():{});
     });
   }catch(e){ console.warn('notice listen', e); }
 
-  // Always try once on load (WebView / slow Firebase)
-  async function bootNotice(){
+  // Fallback poll once after 1.2s if listener slow
+  setTimeout(async function(){
     try{
+      if(pageShownId!=null) return;
       const snap=await get(ref(db,'settings/notice'));
-      if(snap.exists()) applyNotice(snap.val(), true);
-    }catch(e){ console.warn('notice boot', e); }
-  }
-  bootNotice();
-  setTimeout(bootNotice, 1500);
-  setTimeout(bootNotice, 4000);
+      if(snap.exists()) applyNotice(snap.val());
+    }catch(e){}
+  }, 1200);
 })();
-
 
 
 </script>
