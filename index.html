@@ -41,9 +41,8 @@ body::before{
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
-/* soft drop only under glass, clipped to card — no black side pages */
-.card-shell{filter:drop-shadow(0 22px 28px rgba(0,0,0,.45))}
-body.is-dragging .card-shell,body.is-recalling .card-shell{filter:drop-shadow(0 18px 22px rgba(0,0,0,.4))}
+.card-shell{filter:none!important}
+body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important}
 
 .card-shell{
   position:relative;width:100%;transform-origin:0 0;transform-style:preserve-3d;touch-action:none;cursor:grab;
@@ -127,7 +126,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:drop-shadow(0 
   position:relative;overflow:hidden;border-radius:var(--card-radius);padding:43px 29px 34px;text-align:center;
   background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.034) 52%,rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.13);
-  box-shadow:0 38px 100px rgba(0,0,0,.72),0 0 70px rgba(255,255,255,.045),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.45);
+  box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(255,255,255,.04),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.35);
   backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
   transform-style:preserve-3d;transition:transform .2s ease-out;
 }
@@ -249,9 +248,19 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 .admin-notice .an-close{position:absolute;top:6px;right:10px;border:0;background:transparent;color:#9ca5a0;font-size:16px;cursor:pointer;line-height:1}
 .admin-notice .an-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(0,255,136,.15);color:var(--accent);font-variant-numeric:tabular-nums;font-size:11px;font-weight:900}
 
+
+.offline-banner{
+  position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:200;
+  padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:800;
+  background:rgba(255,82,82,.92);color:#fff;letter-spacing:.2px;
+  box-shadow:0 10px 28px rgba(0,0,0,.35);display:none;pointer-events:none;
+}
+.offline-banner.show{display:block}
+
 </style>
 </head>
 <body>
+<div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
     <div class="hang">
@@ -330,21 +339,56 @@ window.unlockAudio=function(){
 ['pointerdown','touchstart','click'].forEach(function(ev){
   document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
 });
+
+function isOnline(){ return navigator.onLine !== false; }
+function paintOffline(){
+  const b=document.getElementById('offlineBanner');
+  if(b) b.classList.toggle('show', !isOnline());
+  if(!isOnline()){
+    try{ show('Connect internet','var(--error)'); }catch(e){}
+  }
+}
+window.addEventListener('online', function(){
+  const b=document.getElementById('offlineBanner');
+  if(b) b.classList.remove('show');
+  try{ if(status&&status.textContent==='Connect internet') show('','white'); }catch(e){}
+});
+window.addEventListener('offline', paintOffline);
+paintOffline();
+
 window.playSound = function(obj){
   try{
     if(!obj) return;
     obj.muted=false;
     obj.volume=1;
     try{ obj.currentTime=0; }catch(e){}
-    const p=obj.play();
-    if(p&&p.then){
-      p.then(function(){ window.__audioUnlocked=true; }).catch(function(){
-        window.__pendingSound=obj;
-        // retry after microtask
-        setTimeout(function(){ try{ obj.currentTime=0; obj.play().catch(function(){}); }catch(e2){} }, 80);
-      });
-    }
+    const tryPlay=function(){
+      try{
+        const p=obj.play();
+        if(p&&p.then){
+          p.then(function(){ window.__audioUnlocked=true; window.__pendingSound=null; }).catch(function(){
+            window.__pendingSound=obj;
+          });
+        }
+      }catch(e){ window.__pendingSound=obj; }
+    };
+    tryPlay();
+    // Auto-login / WebView: a few retries help after unlock
+    setTimeout(tryPlay, 120);
+    setTimeout(tryPlay, 400);
   }catch(e){ window.__pendingSound=obj; }
+};
+window.playSoundReliable = function(obj){
+  window.__pendingSound=obj;
+  window.playSound(obj);
+  // After any next user gesture, ensure it plays (auto-login case)
+  const flush=function(){
+    if(!window.__pendingSound) return;
+    const o=window.__pendingSound;
+    try{ o.currentTime=0; o.play().then(function(){ window.__pendingSound=null; }).catch(function(){}); }catch(e){}
+  };
+  document.addEventListener('pointerdown', flush, {once:true,passive:true});
+  document.addEventListener('touchstart', flush, {once:true,passive:true});
 };
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
@@ -685,12 +729,15 @@ if (getKeyLink) {
           let localId='';
           try{ localId=String(localStorage.getItem('deviceId')||localStorage.getItem('dgxen_device_id')||'').trim(); }catch(e){}
           const safe=String(id).replace(/[.#$\[\]\/]/g,'_');
+          const now=Date.now();
           await set(ref(db, 'deviceRequests/' + safe), {
             deviceId: id,
             localId: localId && localId!==id ? localId : null,
             localStorageId: localId || null,
-            time: Date.now()
+            time: now,
+            expiresAt: now + 12*60*1000
           });
+          try{ sessionStorage.setItem('dgxen_pending_getkey', safe); }catch(e){}
         } catch(err) {}
         // Does not prevent default, so the link still successfully opens!
     });
@@ -709,7 +756,7 @@ function toggleAutoLogin(){
 autoNotch.addEventListener('click',toggleAutoLogin);
 autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAutoLogin()}});
 const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
-window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey)setTimeout(()=>{if(!btn.disabled)verifyKey()},400)}});
+window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey){setTimeout(function(){try{window.unlockAudio&&window.unlockAudio();}catch(e){}if(!btn.disabled)verifyKey();},500);}}paintOffline&&paintOffline();});
 btn.addEventListener('click',verifyKey);
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
 
@@ -909,6 +956,12 @@ async function startSessionGuard(meta){
 async function verifyKey(){
   const userInput=input.value.trim();
   if(!userInput){show('Key khali nahi ho sakti!','var(--error)'); window.playSound(window.sfxFailed); input.focus();return}
+  if(typeof isOnline==='function' && !isOnline()){
+    show('Connect internet','var(--error)');
+    window.playSound(window.sfxFailed);
+    paintOffline && paintOffline();
+    return;
+  }
   show('Strict Security Check...');btn.disabled=true;btn.classList.remove('success');
   try{
     let isValid=false;
@@ -1254,7 +1307,7 @@ async function verifyKey(){
         } catch (gErr) { console.warn('guard start', gErr); }
         window.__lastMatchedUserId=null;
       } catch(e) {}
-      window.playSound(window.sfxSuccess);
+      window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
       setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
@@ -1358,6 +1411,37 @@ async function verifyKey(){
 
 
 
+
+
+
+async function cleanupSkippedGetKey(){
+  try{
+    let safe='';
+    try{ safe=sessionStorage.getItem('dgxen_pending_getkey')||''; }catch(e){}
+    const id=typeof getDeviceFingerprint==='function'?getDeviceFingerprint():'';
+    const pathSafe=safe||String(id||'').replace(/[.#$\[\]\/]/g,'_');
+    if(!pathSafe) return;
+    const snap=await get(ref(db,'deviceRequests/'+pathSafe));
+    if(!snap.exists()) return;
+    // If this device already registered, always clear pending
+    try{
+      const u=await get(ref(db,'users/'+id));
+      if(u.exists()){ await set(ref(db,'deviceRequests/'+pathSafe), null); try{sessionStorage.removeItem('dgxen_pending_getkey');}catch(e){} return; }
+    }catch(e){}
+    const v=snap.val()||{};
+    const exp=Number(v.expiresAt||0);
+    const age=Date.now()-Number(v.time||0);
+    if((exp && Date.now()>exp) || age>12*60*1000){
+      await set(ref(db,'deviceRequests/'+pathSafe), null);
+      try{ sessionStorage.removeItem('dgxen_pending_getkey'); }catch(e){}
+    }
+  }catch(e){}
+}
+cleanupSkippedGetKey();
+setTimeout(cleanupSkippedGetKey, 8000);
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible') cleanupSkippedGetKey();
+});
 
 </script>
 </body>
