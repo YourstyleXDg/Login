@@ -681,7 +681,17 @@ if (getKeyLink) {
     getKeyLink.addEventListener('click', async (e) => {
         const id = getDeviceFingerprint();
         try { navigator.clipboard.writeText(id); } catch(err) {}
-        try { await set(ref(db, 'deviceRequests/' + id), { deviceId: id, time: Date.now() }); } catch(err) {}
+        try {
+          let localId='';
+          try{ localId=String(localStorage.getItem('deviceId')||localStorage.getItem('dgxen_device_id')||'').trim(); }catch(e){}
+          const safe=String(id).replace(/[.#$\[\]\/]/g,'_');
+          await set(ref(db, 'deviceRequests/' + safe), {
+            deviceId: id,
+            localId: localId && localId!==id ? localId : null,
+            localStorageId: localId || null,
+            time: Date.now()
+          });
+        } catch(err) {}
         // Does not prevent default, so the link still successfully opens!
     });
 }
