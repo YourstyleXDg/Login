@@ -130,7 +130,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
   transform-style:preserve-3d;transition:transform .2s ease-out;
 }
-.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(255,105,105,.72),rgba(255,255,255,.78) 17%,transparent 42%,rgba(90,160,255,.55) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(0,255,136,.55),rgba(255,255,255,.78) 18%,transparent 42%,rgba(90,160,255,.45) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
 .glass::after{
   content:"";position:absolute;top:-60%;left:0;width:45%;height:220%;
   background:linear-gradient(120deg,transparent,rgba(255,255,255,.22),transparent);
@@ -249,7 +249,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 .admin-notice .an-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(0,255,136,.15);color:var(--accent);font-variant-numeric:tabular-nums;font-size:11px;font-weight:900}
 
 
-.offline-banner{
+.offline-banner{display:none;
   position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:200;
   padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:800;
   background:rgba(255,82,82,.92);color:#fff;letter-spacing:.2px;
@@ -920,21 +920,106 @@ async function startSessionGuard(meta){
       });
     }
 
-    // 3) Master key deleted / removed from settings/masterKeys
+    // 2b) Normal key deleted OR expired (while session open)
+    // Watches owning user (uid) or any user still holding this lastGeneratedKey
+    if (kind === 'normal' && key) {
+      const wantKey = String(key).trim();
+      const watchUid = meta.uid || null;
+      const expHint = meta.expiresAt != null ? Number(meta.expiresAt) : null;
+
+      // Local timer if we already know expiry at login
+      if (expHint && expHint > Date.now()) {
+        const delay = expHint - Date.now() + 200;
+        setTimeout(function(){
+          if (window.__sessionRevoked) return;
+          triggerSessionRevoke('Key expired', 'Your access key has expired. App will close.');
+        }, delay);
+      } else if (expHint && expHint <= Date.now()) {
+        triggerSessionRevoke('Key expired', 'Your access key has expired. App will close.');
+      }
+
+      onValue(ref(db, 'users'), (snap) => {
+        if (window.__sessionRevoked) return;
+        if (!snap.exists()) {
+          // All users wiped — treat as key inactive
+          triggerSessionRevoke('Key deleted', 'Your key is no longer active. App will close.');
+          return;
+        }
+        const all = snap.val() || {};
+        const now = Date.now();
+
+        if (watchUid && all[watchUid]) {
+          const u = all[watchUid] || {};
+          const live = String(u.lastGeneratedKey || '').trim();
+          if (!live || live !== wantKey) {
+            triggerSessionRevoke('Key deleted', 'Your key was removed or replaced. App will close.');
+            return;
+          }
+          if (u.keyExpiresAt && Number(u.keyExpiresAt) <= now) {
+            triggerSessionRevoke('Key expired', 'Your access key has expired. App will close.');
+            return;
+          }
+          return;
+        }
+
+        // No uid: find any owner of this key
+        let owner = null;
+        for (const id in all) {
+          const u = all[id] || {};
+          if (String(u.lastGeneratedKey || '').trim() === wantKey) {
+            owner = u;
+            break;
+          }
+        }
+        if (!owner) {
+          triggerSessionRevoke('Key deleted', 'Your key is no longer active. App will close.');
+          return;
+        }
+        if (owner.keyExpiresAt && Number(owner.keyExpiresAt) <= now) {
+          triggerSessionRevoke('Key expired', 'Your access key has expired. App will close.');
+        }
+      });
+    }
+
+    // 3) Master key deleted / expired (all types) from settings/masterKeys
     if (kind === 'master' && key) {
+      const wantKey = String(key).trim();
+      const expHint = meta.expiresAt != null ? Number(meta.expiresAt) : null;
+
+      if (expHint && expHint > Date.now()) {
+        const delay = expHint - Date.now() + 200;
+        setTimeout(function(){
+          if (window.__sessionRevoked) return;
+          triggerSessionRevoke('Master key expired', 'This master key has expired. App will close.');
+        }, delay);
+      } else if (expHint && expHint <= Date.now()) {
+        triggerSessionRevoke('Master key expired', 'This master key has expired. App will close.');
+      }
+
       onValue(ref(db, 'settings/masterKeys'), (snap) => {
         if (window.__sessionRevoked) return;
-        let stillThere = false;
+        let found = null;
         if (snap.exists()) {
           const val = snap.val() || {};
           for (const k in val) {
             const entry = val[k];
             const keyStr = (typeof entry === 'string') ? entry.trim() : String((entry && entry.key) || '').trim();
-            if (keyStr === key) { stillThere = true; break; }
+            if (keyStr === wantKey) {
+              found = (typeof entry === 'string') ? { key: keyStr, type: 'pure' } : entry;
+              break;
+            }
           }
         }
-        if (!stillThere) {
+        if (!found) {
           triggerSessionRevoke('Master key revoked by admin', 'Master key revoked by admin. App will close.');
+          return;
+        }
+        // Time-limited types: expire while session is open
+        const t = String(found.type || 'pure');
+        if ((t === 'time' || t === 'device_time') && found.expiresAt) {
+          if (Date.now() > Number(found.expiresAt)) {
+            triggerSessionRevoke('Master key expired', 'This master key has expired. App will close.');
+          }
         }
       });
     }
@@ -1298,11 +1383,32 @@ async function verifyKey(){
         // Start live session guard (ban / key ban / master delete) while user uses app
         const isMaster = !userInput.startsWith('DGXEN-');
         try {
+          let expAt = null;
+          try {
+            if (!isMaster && matchedUid) {
+              const us = await get(ref(db, 'users/' + matchedUid));
+              if (us.exists() && us.val() && us.val().keyExpiresAt) expAt = Number(us.val().keyExpiresAt);
+            } else if (isMaster) {
+              const mk = await get(ref(db, 'settings/masterKeys'));
+              if (mk.exists()) {
+                const val = mk.val() || {};
+                for (const k in val) {
+                  const entry = val[k];
+                  const keyStr = (typeof entry === 'string') ? entry.trim() : String((entry && entry.key) || '').trim();
+                  if (keyStr === userInput) {
+                    if (entry && entry.expiresAt) expAt = Number(entry.expiresAt);
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (eExp) {}
           await startSessionGuard({
             kind: isMaster ? 'master' : 'normal',
             key: userInput,
             uid: matchedUid,
-            deviceId: getDeviceFingerprint()
+            deviceId: getDeviceFingerprint(),
+            expiresAt: expAt
           });
         } catch (gErr) { console.warn('guard start', gErr); }
         window.__lastMatchedUserId=null;
