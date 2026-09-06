@@ -257,9 +257,142 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 }
 .offline-banner.show{display:block}
 
+
+/* ===== LOGIN ATMOSPHERE (corners + sky, outside card) ===== */
+.sky-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease,background 1.2s ease}
+.sky-layer .sun{
+  position:absolute;top:7%;right:8%;width:56px;height:56px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#fff7d6 0%,#ffd56a 40%,#ff9f1a 72%,transparent 76%);
+  box-shadow:0 0 40px 12px rgba(255,200,80,.45),0 0 90px 30px rgba(255,160,40,.2);
+  animation:sunPulse 6s ease-in-out infinite;
+  opacity:0;transform:scale(.6);
+  transition:opacity .9s,transform .9s;
+}
+.sky-layer .moon{
+  position:absolute;top:8%;right:10%;width:42px;height:42px;border-radius:50%;
+  background:radial-gradient(circle at 30% 30%,#f8fafc,#c7d2fe 55%,#94a3b8);
+  box-shadow:0 0 28px 8px rgba(200,220,255,.35),inset -8px -4px 0 rgba(15,23,42,.15);
+  opacity:0;transform:scale(.6);transition:opacity .9s,transform .9s;
+}
+.sky-layer .stars{position:absolute;inset:0;opacity:0;transition:opacity 1s}
+.sky-layer .star{
+  position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;
+  box-shadow:0 0 4px #fff;animation:twinkle var(--d,3s) ease-in-out infinite;
+  opacity:.85;
+}
+.sky-layer .aurora{
+  position:absolute;left:-10%;right:-10%;top:0;height:42%;opacity:0;
+  background:linear-gradient(180deg,rgba(80,255,180,.0),rgba(56,189,248,.12) 40%,rgba(168,85,247,.1) 70%,transparent);
+  filter:blur(28px);animation:auroraShift 12s ease-in-out infinite;transition:opacity 1s;
+}
+.sky-layer .haze{
+  position:absolute;inset:0;opacity:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.14),transparent 55%);
+  transition:opacity 1s;
+}
+.sky-layer .rain{
+  position:absolute;inset:0;opacity:0;overflow:hidden;transition:opacity .8s;
+}
+.sky-layer .rain i{
+  position:absolute;width:1px;height:14px;background:linear-gradient(transparent,rgba(180,220,255,.55));
+  animation:rainFall linear infinite;opacity:.5;
+}
+.sky-layer .cyber-grid{
+  position:absolute;inset:0;opacity:0;
+  background-image:
+    linear-gradient(rgba(0,255,200,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,255,200,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);
+  transition:opacity 1s;
+}
+.sky-layer .orb-tl,.sky-layer .orb-br{
+  position:absolute;border-radius:50%;filter:blur(40px);opacity:0;transition:opacity 1s,background 1s;
+}
+.sky-layer .orb-tl{top:-8%;left:-6%;width:160px;height:160px}
+.sky-layer .orb-br{bottom:-10%;right:-8%;width:180px;height:180px}
+
+@keyframes sunPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes auroraShift{0%,100%{transform:translateX(-6%) skewX(-4deg)}50%{transform:translateX(6%) skewX(4deg)}}
+@keyframes rainFall{from{transform:translateY(-20px)}to{transform:translateY(110vh)}}
+
+/* Theme activations */
+body.atm-day_sunny .sky-layer .sun,
+body.atm-day_sunny .sky-layer .haze,
+body.atm-day_sunny .sky-layer .orb-tl{opacity:1}
+body.atm-day_sunny .sky-layer .orb-tl{background:rgba(255,200,80,.35)}
+body.atm-day_sunny .sky-layer .orb-br{opacity:.7;background:rgba(100,180,255,.2)}
+body.atm-day_sunny{background:
+  radial-gradient(circle at 86% 10%,rgba(255,220,120,.22),transparent 28%),
+  radial-gradient(circle at 12% 88%,rgba(120,190,255,.12),transparent 32%),
+  linear-gradient(160deg,#0a1218 0%,#0d1a14 45%,#07100c 100%) !important}
+
+body.atm-day_haze .sky-layer .haze,
+body.atm-day_haze .sky-layer .orb-tl,
+body.atm-day_haze .sky-layer .orb-br{opacity:1}
+body.atm-day_haze .sky-layer .orb-tl{background:rgba(255,255,255,.12)}
+body.atm-day_haze .sky-layer .orb-br{background:rgba(160,200,255,.15)}
+body.atm-day_haze{background:linear-gradient(155deg,#0b1014,#121a1c 50%,#0a100e) !important}
+
+body.atm-golden .sky-layer .sun{opacity:1;top:auto;bottom:18%;right:12%;box-shadow:0 0 50px 16px rgba(255,120,40,.4)}
+body.atm-golden .sky-layer .haze{opacity:1}
+body.atm-golden .sky-layer .orb-br{opacity:1;background:rgba(255,100,40,.28)}
+body.atm-golden{background:
+  radial-gradient(circle at 80% 75%,rgba(255,120,40,.28),transparent 35%),
+  linear-gradient(165deg,#1a0c08,#120e0a 40%,#0a0c10) !important}
+
+body.atm-rain .sky-layer .rain{opacity:1}
+body.atm-rain .sky-layer .haze{opacity:.6}
+body.atm-rain .sky-layer .orb-tl{opacity:.5;background:rgba(100,140,180,.2)}
+body.atm-rain{background:linear-gradient(160deg,#060a0e,#0a1016 50%,#050808) !important}
+
+body.atm-night_stars .sky-layer .moon,
+body.atm-night_stars .sky-layer .stars{opacity:1}
+body.atm-night_stars .sky-layer .orb-tl{opacity:.55;background:rgba(100,140,255,.18)}
+body.atm-night_stars .sky-layer .orb-br{opacity:.4;background:rgba(40,60,120,.25)}
+body.atm-night_stars{background:
+  radial-gradient(circle at 88% 12%,rgba(180,200,255,.12),transparent 22%),
+  linear-gradient(160deg,#02040a 0%,#050812 50%,#030508 100%) !important}
+
+body.atm-night_aurora .sky-layer .moon,
+body.atm-night_aurora .sky-layer .stars,
+body.atm-night_aurora .sky-layer .aurora{opacity:1}
+body.atm-night_aurora{background:linear-gradient(165deg,#02060c,#041018 45%,#03080a) !important}
+
+body.atm-cyber .sky-layer .cyber-grid{opacity:1}
+body.atm-cyber .sky-layer .orb-tl{opacity:.8;background:rgba(0,255,200,.2)}
+body.atm-cyber .sky-layer .orb-br{opacity:.7;background:rgba(180,0,255,.18)}
+body.atm-cyber{background:
+  radial-gradient(circle at 15% 20%,rgba(0,255,200,.1),transparent 30%),
+  radial-gradient(circle at 85% 80%,rgba(180,0,255,.1),transparent 30%),
+  linear-gradient(150deg,#03010a,#050812 50%,#020406) !important}
+body.atm-cyber .glass{border-color:rgba(0,255,200,.22)!important}
+
+body.atm-minimal .sky-layer .orb-tl,
+body.atm-minimal .sky-layer .orb-br{opacity:.25}
+body.atm-minimal{background:#030504 !important}
+
+.scene,.offline-banner,.admin-notice,.recall-hint,.revoke-overlay{position:relative;z-index:2}
+.offline-banner,.admin-notice,.recall-hint{z-index:120}
+.revoke-overlay{z-index:99999}
+
 </style>
 </head>
 <body>
+
+<div class="sky-layer" id="skyLayer" aria-hidden="true">
+  <div class="orb-tl"></div>
+  <div class="orb-br"></div>
+  <div class="sun"></div>
+  <div class="moon"></div>
+  <div class="haze"></div>
+  <div class="aurora"></div>
+  <div class="cyber-grid"></div>
+  <div class="stars" id="skyStars"></div>
+  <div class="rain" id="skyRain"></div>
+</div>
+
 <div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
@@ -1548,6 +1681,100 @@ setTimeout(cleanupSkippedGetKey, 8000);
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState==='visible') cleanupSkippedGetKey();
 });
+
+
+// ===== LOGIN ATMOSPHERE THEMES =====
+(function(){
+  const THEMES = ['day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','minimal'];
+  let forced = null; // from admin
+  let lock = false;
+
+  function hourTheme(){
+    const h = new Date().getHours();
+    if (h >= 6 && h < 10) return 'day_haze';
+    if (h >= 10 && h < 16) return 'day_sunny';
+    if (h >= 16 && h < 19) return 'golden';
+    if (h >= 19 || h < 6) return 'night_stars';
+    return 'day_sunny';
+  }
+
+  function clearAtm(){
+    THEMES.forEach(t => document.body.classList.remove('atm-'+t));
+  }
+
+  function buildStars(){
+    const box = document.getElementById('skyStars');
+    if (!box || box.dataset.ready) return;
+    let html = '';
+    for (let i = 0; i < 48; i++) {
+      const x = Math.random() * 100;
+      const y = Math.random() * 70;
+      const d = (2 + Math.random() * 4).toFixed(1) + 's';
+      const del = (Math.random() * 3).toFixed(1) + 's';
+      html += '<span class="star" style="left:'+x+'%;top:'+y+'%;--d:'+d+';animation-delay:'+del+'"></span>';
+    }
+    box.innerHTML = html;
+    box.dataset.ready = '1';
+  }
+
+  function buildRain(){
+    const box = document.getElementById('skyRain');
+    if (!box || box.dataset.ready) return;
+    let html = '';
+    for (let i = 0; i < 36; i++) {
+      const x = Math.random() * 100;
+      const dur = (0.6 + Math.random() * 0.7).toFixed(2) + 's';
+      const del = (Math.random() * 2).toFixed(2) + 's';
+      html += '<i style="left:'+x+'%;animation-duration:'+dur+';animation-delay:'+del+'"></i>';
+    }
+    box.innerHTML = html;
+    box.dataset.ready = '1';
+  }
+
+  window.applyLoginAtmosphere = function(theme){
+    let t = String(theme || 'auto').trim();
+    if (t === 'auto' || !t) t = hourTheme();
+    if (THEMES.indexOf(t) < 0) t = hourTheme();
+    clearAtm();
+    document.body.classList.add('atm-' + t);
+    if (t === 'night_stars' || t === 'night_aurora') buildStars();
+    if (t === 'rain') buildRain();
+    try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
+  };
+
+  function resolveAndApply(){
+    if (lock && forced && forced !== 'auto') {
+      applyLoginAtmosphere(forced);
+    } else if (forced && forced !== 'auto' && lock) {
+      applyLoginAtmosphere(forced);
+    } else if (forced && forced !== 'auto' && !lock) {
+      // admin picked theme but lock off → still use admin pick as preference
+      applyLoginAtmosphere(forced);
+    } else {
+      applyLoginAtmosphere('auto');
+    }
+  }
+
+  // Prefer admin settings/notice.loginTheme
+  try {
+    onValue(ref(db, 'settings/notice'), function(snap){
+      const v = snap.exists() ? (snap.val() || {}) : {};
+      forced = v.loginTheme ? String(v.loginTheme) : 'auto';
+      lock = !!(v.loginThemeLock === true || v.loginThemeLock === 'on' || v.loginThemeLock === 1);
+      resolveAndApply();
+    });
+  } catch (e) {
+    applyLoginAtmosphere('auto');
+  }
+
+  // Re-check every 15 min for auto day/night shift
+  setInterval(function(){
+    if (!lock || !forced || forced === 'auto') applyLoginAtmosphere(forced || 'auto');
+  }, 15 * 60 * 1000);
+
+  // Boot
+  applyLoginAtmosphere('auto');
+})();
 
 </script>
 </body>
