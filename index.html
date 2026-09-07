@@ -2128,7 +2128,7 @@ document.addEventListener('visibilitychange', function(){
     const b = document.getElementById('atmMuteBtn');
     if (!b) return;
     if (isNativeApp) { b.classList.remove('show'); b.style.display = 'none'; return; }
-    if (opts.sound) b.classList.add('show'); else b.classList.remove('show');
+    b.classList.add('show');
     b.classList.toggle('is-muted', muted);
     b.setAttribute('aria-label', muted ? 'Unmute atmosphere sound' : 'Mute atmosphere sound');
     b.innerHTML = muted ? SPEAKER_OFF_SVG : SPEAKER_ON_SVG;
