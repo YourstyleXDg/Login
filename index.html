@@ -1778,14 +1778,39 @@ document.addEventListener('visibilitychange', function(){
 
 // ===== LOGIN ATMOSPHERE THEMES =====
 (function(){
-  const THEMES = ['native','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal'];
+  const BASE = ['native','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex'];
+  const FEST = ['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra'];
+  const THEMES = BASE.concat(FEST);
+  const FESTIVAL_MAP = [
+    { md:'01-01', id:'fest_newyear', name:'New Year' },
+    { md:'01-14', id:'fest_sankranti', name:'Makar Sankranti / Pongal' },
+    { md:'01-26', id:'fest_republic', name:'Republic Day' },
+    { md:'03-04', id:'fest_holi', name:'Holi' },
+    { md:'03-14', id:'fest_holi', name:'Holi' },
+    { md:'08-15', id:'fest_independence', name:'Independence Day' },
+    { md:'08-28', id:'fest_rakhi', name:'Raksha Bandhan' },
+    { md:'09-04', id:'fest_janmashtami', name:'Janmashtami' },
+    { md:'09-05', id:'fest_teachers', name:"Teachers' Day" },
+    { md:'09-14', id:'fest_ganesh', name:'Ganesh Chaturthi' },
+    { md:'10-02', id:'fest_gandhi', name:'Gandhi Jayanti' },
+    { md:'10-21', id:'fest_dussehra', name:'Dussehra' },
+    { md:'11-08', id:'fest_diwali', name:'Diwali' },
+    { md:'11-14', id:'fest_children', name:"Children's Day" },
+    { md:'12-25', id:'fest_christmas', name:'Christmas' }
+  ];
   let forced = 'auto';
-  let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true };
+  let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
   let weatherTheme = null;
-  let audioCtx = null;
-  let audioNodes = null;
+  let audioEl = null;
   let muted = localStorage.getItem('dgxen_atm_mute') === '1';
-
+  function pad(n){ return (n<10?'0':'')+n; }
+  function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function festivalToday(){
+    if (!opts.festival) return null;
+    const md = todayMD();
+    for (let i=0;i<FESTIVAL_MAP.length;i++){ if (FESTIVAL_MAP[i].md === md) return FESTIVAL_MAP[i]; }
+    return null;
+  }
   function hourTheme(){
     const h = new Date().getHours();
     if (h >= 6 && h < 10) return 'day_haze';
@@ -1793,128 +1818,99 @@ document.addEventListener('visibilitychange', function(){
     if (h >= 16 && h < 19) return 'golden';
     return 'night_stars';
   }
-
-    function seasonTheme(){
-    if (!opts.season) return null;
-    const m = new Date().getMonth() + 1, d = new Date().getDate();
-    if (m === 3 && d >= 8 && d <= 20) return 'sakura'; // Holi
-    if (m === 10 || m === 11) return 'ember'; // Diwali
-    if (m === 12 || m === 1) return 'night_stars';
-    // Removed forced rain for June-Sept to allow real weather API to work
-    return null;
-  }
-
   function clearAtm(){
     THEMES.forEach(t => document.body.classList.remove('atm-'+t));
-    document.body.className.split(/\s+/).forEach(c => {
-      if (c.indexOf('skin-') === 0) document.body.classList.remove(c);
-    });
-  }
-
-  function buildStars(){
-    const box = document.getElementById('skyStars');
-    if (!box) return;
-    const n = Math.round((opts.particles||60)/100*48);
-    let html = '';
-    for (let i = 0; i < n; i++) {
-      const x = Math.random()*100, y = Math.random()*70;
-      html += '<span class="star" style="left:'+x+'%;top:'+y+'%;--d:'+(2+Math.random()*4).toFixed(1)+'s;animation-delay:'+(Math.random()*3).toFixed(1)+'s"></span>';
-    }
-    box.innerHTML = html;
+    document.body.className.split(/\s+/).forEach(c => { if (c.indexOf('skin-')===0) document.body.classList.remove(c); });
   }
   function buildRain(){
     const box = document.getElementById('skyRain');
     if (!box) return;
-    const n = Math.round((opts.particles||60)/100*40);
+    const n = Math.max(28, Math.round((opts.particles||60)/100*55));
     let html = '';
-    for (let i = 0; i < n; i++) {
-      html += '<i style="left:'+(Math.random()*100)+'%;animation-duration:'+(0.55+Math.random()*0.75).toFixed(2)+'s;animation-delay:'+(Math.random()*2).toFixed(2)+'s"></i>';
+    for (let i=0;i<n;i++){
+      html += '<i style="left:'+(Math.random()*100).toFixed(2)+'%;height:'+(12+Math.random()*14).toFixed(0)+'px;animation-duration:'+(0.55+Math.random()*0.9).toFixed(2)+'s;animation-delay:'+(Math.random()*2.2).toFixed(2)+'s"></i>';
     }
+    box.innerHTML = html;
+  }
+  function buildStars(){
+    const box = document.getElementById('skyStars');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*48);
+    for (let i=0;i<n;i++) html += '<span class="star" style="left:'+(Math.random()*100)+'%;top:'+(Math.random()*70)+'%;--d:'+(2+Math.random()*4).toFixed(1)+'s;animation-delay:'+(Math.random()*3).toFixed(1)+'s"></span>';
     box.innerHTML = html;
   }
   function buildPetals(){
     const box = document.getElementById('skyPetals');
     if (!box) return;
+    let html='';
     const n = Math.round((opts.particles||60)/100*28);
-    let html = '';
-    for (let i = 0; i < n; i++) {
-      html += '<span style="left:'+(Math.random()*100)+'%;animation-duration:'+(6+Math.random()*8).toFixed(1)+'s;animation-delay:'+(Math.random()*5).toFixed(1)+'s"></span>';
+    for (let i=0;i<n;i++) html += '<span style="left:'+(Math.random()*100)+'%;animation-duration:'+(6+Math.random()*8).toFixed(1)+'s;animation-delay:'+(Math.random()*5).toFixed(1)+'s"></span>';
+    box.innerHTML = html;
+  }
+  function buildShards(){
+    const box = document.getElementById('skyShards');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*22);
+    for (let i=0;i<n;i++){
+      const size = (10+Math.random()*16).toFixed(0);
+      html += '<b style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+size+'px;height:'+size+'px;animation-duration:'+(4+Math.random()*5).toFixed(1)+'s;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></b>';
     }
     box.innerHTML = html;
   }
-
-  function stopSound(){
-    try {
-      if (audioNodes) {
-        audioNodes.forEach(n => { try { n.stop(); } catch(e){} try { n.disconnect(); } catch(e){} });
-      }
-    } catch(e){}
-    audioNodes = null;
+  function buildSparks(){
+    const box = document.getElementById('skySparks');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*24);
+    for (let i=0;i<n;i++){
+      const sx=((Math.random()-0.5)*80).toFixed(0)+'px', sy=((Math.random()-0.5)*80).toFixed(0)+'px';
+      html += '<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(20+Math.random()*60).toFixed(1)+'%;--sx:'+sx+';--sy:'+sy+';animation-duration:'+(1.2+Math.random()*1.5).toFixed(1)+'s;animation-delay:'+(Math.random()*2).toFixed(1)+'s"></i>';
+    }
+    box.innerHTML = html;
   }
-
-  function startSoftDrone(theme){
+  function stopSound(){ try { if (audioEl) { audioEl.pause(); audioEl.currentTime=0; } } catch(e){} }
+  function startSound(theme){
     stopSound();
     if (!opts.sound || muted) return;
+    const map = { rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
+    const file = map[theme] || 'soft';
     try {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
-      audioCtx = audioCtx || new AC();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const freqs = theme.indexOf('night')>=0 ? [110, 165] : theme === 'ocean' ? [90, 140] : theme === 'ember' ? [100, 150] : [120, 180];
-      audioNodes = [];
-      freqs.forEach((f, i) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = 'sine';
-        o.frequency.value = f;
-        g.gain.value = 0.012 - i*0.003;
-        o.connect(g); g.connect(audioCtx.destination);
-        o.start();
-        audioNodes.push(o, g);
-      });
-    } catch(e) { console.warn('atm sound', e); }
+      if (!audioEl) { audioEl = new Audio(); audioEl.loop = true; audioEl.volume = 0.22; }
+      audioEl.src = './sounds/atm/' + file + '.mp3';
+      const p = audioEl.play(); if (p && p.catch) p.catch(function(){});
+    } catch(e) {}
   }
-
   function updateMuteBtn(){
     const b = document.getElementById('atmMuteBtn');
     if (!b) return;
     if (opts.sound) b.classList.add('show'); else b.classList.remove('show');
     b.textContent = muted ? '🔇' : '🔊';
   }
-
   window.applyLoginAtmosphere = function(theme){
     let t = String(theme || 'auto').trim();
-    // URL preview override: ?atm=sakura
-    try {
-      const q = new URLSearchParams(location.search).get('atm');
-      if (q) t = q;
-    } catch(e){}
-
+    try { const q = new URLSearchParams(location.search).get('atm'); if (q) t = q; } catch(e){}
     if (t === 'auto' || !t) {
-      t = weatherTheme || seasonTheme() || hourTheme();
+      const fest = festivalToday();
+      if (fest) t = fest.id;
+      else t = weatherTheme || hourTheme();
     }
     if (THEMES.indexOf(t) < 0) t = hourTheme();
-
     clearAtm();
     document.body.classList.add('atm-' + t);
-    if (opts.reduceMotion) document.body.classList.add('atm-reduce');
-    else document.body.classList.remove('atm-reduce');
-    if (opts.cardSkin && t !== 'native' && t !== 'minimal') {
-      document.body.classList.add('skin-' + t);
-    }
-
-    if (t === 'night_stars' || t === 'night_aurora') buildStars();
+    if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
+    if (opts.cardSkin && t !== 'native' && t !== 'minimal') document.body.classList.add('skin-' + t);
     if (t === 'rain') buildRain();
-    if (t === 'sakura') buildPetals();
-
+    if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
+    if (t === 'sakura' || t === 'fest_holi') buildPetals();
+    if (t === 'metroid' || t === 'apex') buildShards();
+    if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
     const sky = document.getElementById('skyLayer');
-    if (sky) sky.style.opacity = String(Math.max(0.35, Math.min(1, (opts.intensity||80)/100)));
-
-    startSoftDrone(t);
-    updateMuteBtn();
+    if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
+    startSound(t); updateMuteBtn();
     try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
   };
-
   async function fetchWeatherHint(){
     if (!opts.weather || !navigator.geolocation) return;
     try {
@@ -1922,12 +1918,10 @@ document.addEventListener('visibilitychange', function(){
         navigator.geolocation.getCurrentPosition(async (pos) => {
           try {
             const lat = pos.coords.latitude, lon = pos.coords.longitude;
-            const url = 'https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=weather_code,is_day&timezone=auto';
-            const res = await fetch(url);
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=weather_code,is_day&timezone=auto');
             const data = await res.json();
             const code = data && data.current && data.current.weather_code;
             const isDay = data && data.current && data.current.is_day;
-            // WMO codes: 51-67 rain, 71-77 snow, 0-1 clear, 2-3 cloud
             if (code >= 51 && code <= 67) weatherTheme = 'rain';
             else if (code >= 0 && code <= 1 && isDay) weatherTheme = 'day_sunny';
             else if (code >= 2 && code <= 3 && isDay) weatherTheme = 'day_haze';
@@ -1940,11 +1934,7 @@ document.addEventListener('visibilitychange', function(){
       });
     } catch(e){}
   }
-
-  function resolveAndApply(){
-    applyLoginAtmosphere(forced || 'auto');
-  }
-
+  function resolveAndApply(){ applyLoginAtmosphere(forced || 'auto'); }
   try {
     onValue(ref(db, 'settings/notice'), function(snap){
       const v = snap.exists() ? (snap.val() || {}) : {};
@@ -1956,32 +1946,30 @@ document.addEventListener('visibilitychange', function(){
         season: v.atmSeason !== false,
         weather: v.atmWeather !== false,
         sound: !!(v.atmSound),
-        cardSkin: v.atmCardSkin !== false
+        cardSkin: v.atmCardSkin !== false,
+        festival: v.atmFestival !== false
       };
       resolveAndApply();
       if (forced === 'auto' && opts.weather) fetchWeatherHint();
     });
-  } catch (e) {
-    applyLoginAtmosphere('auto');
-  }
-
+  } catch (e) { applyLoginAtmosphere('auto'); }
   setInterval(function(){ if (forced === 'auto') applyLoginAtmosphere('auto'); }, 15*60*1000);
-
   const muteBtn = document.getElementById('atmMuteBtn');
   if (muteBtn) {
     muteBtn.addEventListener('click', function(){
       muted = !muted;
       localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0');
-      if (muted) stopSound(); else startSoftDrone(document.documentElement.getAttribute('data-atm')||'native');
+      if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
       updateMuteBtn();
     });
   }
-  document.body.addEventListener('pointerdown', function once(){
-    if (opts.sound && !muted && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  document.body.addEventListener('pointerdown', function(){
+    if (opts.sound && !muted && audioEl) { try { audioEl.play().catch(function(){}); } catch(e){} }
   }, { once:true });
-
+  window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
   applyLoginAtmosphere('auto');
 })();
+
 
 
 </script>
