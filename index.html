@@ -479,8 +479,9 @@ body.atm-apex .sky-layer .theme-shards,body.atm-apex .sky-layer .theme-sparks{op
 body.atm-metroid{background:radial-gradient(circle at 50% 100%,rgba(220,20,30,.16),transparent 44%),linear-gradient(155deg,#060404,#110506 52%,#040202)!important}
 body.atm-apex{background:radial-gradient(circle at 50% 100%,rgba(255,70,12,.19),transparent 45%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
 body.atm-metroid .glass,body.atm-apex .glass{border-color:rgba(255,68,55,.26)!important}
-.theme-shards b{ position:absolute; border-radius:999px; background: linear-gradient( 90deg, rgba(255,255,255,1), rgba(255,200,100,.95), rgba(255,120,0,.7), rgba(255,40,0,0) ); filter: drop-shadow(0 0 8px rgba(255,170,50,.8)) drop-shadow(0 0 22px rgba(255,90,0,.7)); animation:meteorFall linear infinite; }
-@keyframes meteorFall{ 0%{ transform: translate3d(-25vw,-20vh,0) rotate(135deg); opacity:0; } 6%{ opacity:1; } 100%{ transform: translate3d(70vw,140vh,0) rotate(135deg); opacity:0; } }
+.theme-shards b{position:absolute;top:-16vh;display:block;clip-path:polygon(50% 0,100% 100%,0 76%);background:linear-gradient(145deg,rgba(255,70,55,.92),rgba(92,4,8,.44));border:1px solid rgba(255,125,95,.42);filter:drop-shadow(0 0 7px rgba(255,35,20,.45));animation:shardFall linear infinite}
+body.atm-metroid .theme-shards b{clip-path:polygon(50% 0,100% 32%,78% 100%,20% 82%,0 28%)}
+@keyframes shardFall{0%{transform:translate3d(-12vw,-10vh,0) rotateX(0) rotateZ(18deg);opacity:0}10%{opacity:.9}100%{transform:translate3d(22vw,122vh,0) rotateX(520deg) rotateZ(650deg);opacity:.12}}
 .theme-sparks i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ff9b42;box-shadow:0 0 7px #ff3d12,0 0 13px rgba(255,40,0,.75);animation:burnSpark ease-out infinite}
 @keyframes burnSpark{0%{transform:translate3d(0,0,0) scale(.25);opacity:0}18%{opacity:1}100%{transform:translate3d(var(--sx),var(--sy),0) scale(1.7);opacity:0}}
 /* Shared understated festival tint for added dates. */
@@ -809,7 +810,6 @@ document.addEventListener('pointerup',finishRecall);
 document.addEventListener('pointercancel',finishRecall);
 window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
-document.body.addEventListener( 'pointerdown', function(){ if( opts.sound && !muted && audioEl ){ try{ audioEl.muted=false; audioEl.play().catch(()=>{}); }catch(e){} } }, {once:false} );
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -1673,7 +1673,7 @@ async function verifyKey(){
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
-      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function'){ try{ stopSound(); }catch(e){} window.Android.unlock(); }else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
     }
   }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
 }
@@ -1899,21 +1899,21 @@ document.addEventListener('visibilitychange', function(){
     box.innerHTML=html;
   }
   function buildShards(){
-    const box=document.getElementById('skyShards');
-    if(!box)return;
+    const box = document.getElementById('skyShards');
+    if (!box) return;
     let html='';
-    const count=Math.max( 60, Math.round((opts.particles||60)*1.4) );
-    for(let i=0;i<count;i++){
-      const width=80+Math.random()*220;
-      html+=` <b style=" left:${-20+Math.random()*140}%; top:${-40+Math.random()*40}%; width:${width}px; height:${1+Math.random()*2}px; animation-duration:${4+Math.random()*8}s; animation-delay:${Math.random()*8}s; opacity:${0.3+Math.random()*0.7}; "> </b>`;
+    const n = Math.round((opts.particles||60)/100*22);
+    for (let i=0;i<n;i++){
+      const size = (10+Math.random()*16).toFixed(0);
+      html += '<b style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+size+'px;height:'+size+'px;animation-duration:'+(4+Math.random()*5).toFixed(1)+'s;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></b>';
     }
-    box.innerHTML=html;
+    box.innerHTML = html;
   }
   function buildSparks(){
     const box = document.getElementById('skySparks');
     if (!box) return;
     let html='';
-    const n = 120;
+    const n = Math.round((opts.particles||60)/100*24);
     for (let i=0;i<n;i++){
       const sx=((Math.random()-0.5)*80).toFixed(0)+'px', sy=((Math.random()-0.5)*80).toFixed(0)+'px';
       html += '<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(20+Math.random()*60).toFixed(1)+'%;--sx:'+sx+';--sy:'+sy+';animation-duration:'+(1.2+Math.random()*1.5).toFixed(1)+'s;animation-delay:'+(Math.random()*2).toFixed(1)+'s"></i>';
@@ -1933,20 +1933,9 @@ document.addEventListener('visibilitychange', function(){
     } catch(e) {}
   }
   function updateMuteBtn(){
-    const b = document.getElementById( 'atmMuteBtn' );
-    if(!b)return;
-    const theme = document.documentElement .getAttribute('data-atm');
-    if(theme==='native'){
-      b.style.display='none';
-      stopSound();
-      return;
-    }
-    b.style.display='';
-    if(opts.sound){
-      b.classList.add('show');
-    }else{
-      b.classList.remove('show');
-    }
+    const b = document.getElementById('atmMuteBtn');
+    if (!b) return;
+    if (opts.sound) b.classList.add('show'); else b.classList.remove('show');
     b.textContent = muted ? '🔇' : '🔊';
   }
   window.applyLoginAtmosphere = function(theme){
@@ -1966,13 +1955,16 @@ document.addEventListener('visibilitychange', function(){
     if (t === 'morning') buildMorningLeaves();
     if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
     if (t === 'sakura' || t === 'fest_holi') buildPetals();
-    if (t === 'metroid') { buildShards(); buildSparks(); }
+    if (t === 'metroid' || t === 'apex') buildShards();
+    if (t === 'metroid' || t === 'apex') buildSparks();
     if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
     const sky = document.getElementById('skyLayer');
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
     startSound(t); updateMuteBtn();
-    try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
+        try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
+    try { localStorage.setItem('dgxen_last_theme', t); } catch(e){} // <-- UPDATE 1: Yahan current theme ko cache me save kiya
   };
+
   async function fetchWeatherHint(){
     if (!opts.weather || !navigator.geolocation) return;
     try {
@@ -1996,7 +1988,9 @@ document.addEventListener('visibilitychange', function(){
       });
     } catch(e){}
   }
+
   function resolveAndApply(){ applyLoginAtmosphere(forced || 'auto'); }
+
   try {
     onValue(ref(db, 'settings/notice'), function(snap){
       const v = snap.exists() ? (snap.val() || {}) : {};
@@ -2015,7 +2009,9 @@ document.addEventListener('visibilitychange', function(){
       if (forced === 'auto' && opts.weather) fetchWeatherHint();
     });
   } catch (e) { applyLoginAtmosphere('auto'); }
+
   setInterval(function(){ if (forced === 'auto') applyLoginAtmosphere('auto'); }, 15*60*1000);
+
   const muteBtn = document.getElementById('atmMuteBtn');
   if (muteBtn) {
     muteBtn.addEventListener('click', function(){
@@ -2025,12 +2021,21 @@ document.addEventListener('visibilitychange', function(){
       updateMuteBtn();
     });
   }
+  document.body.addEventListener('pointerdown', function(){
+    if (opts.sound && !muted && audioEl) { try { audioEl.play().catch(function(){}); } catch(e){} }
+  }, { once:true });
+
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
-  applyLoginAtmosphere('auto');
+
+  // <-- UPDATE 2: Puraani line (applyLoginAtmosphere('auto');) hatakar yeh cache reader daal diya
+  try {
+    const cached = localStorage.getItem('dgxen_last_theme');
+    if (cached) applyLoginAtmosphere(cached);
+  } catch(e) {}
+
 })();
-
-
 
 </script>
 </body>
 </html>
+
