@@ -1978,21 +1978,37 @@ document.addEventListener('visibilitychange', function(){
   function startSound(theme){stopSound();if(isNativeApp||!opts.sound||!userSoundEnabled)return;const map={morning:'soft',day_sunny:'soft',day_haze:'soft',golden:'evening',rain:'rain',night_stars:'night',night_aurora:'night',ocean:'ocean',ember:'ember',sakura:'soft',fest_diwali:'diwali',fest_holi:'holi',fest_republic:'patriot',fest_independence:'patriot',fest_christmas:'soft',fest_teachers:'soft',fest_children:'soft',cyber:'cyber',meteor:'cyber',metroid:'cyber',apex:'cyber'};const file=map[theme]||'soft';try{if(!audioEl){audioEl=new Audio();audioEl.loop=true;audioEl.volume=.22}audioEl.src='./sounds/atm/'+file+'.mp3';const p=audioEl.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
   function updateMuteBtn(){const b=document.getElementById('atmMuteBtn');if(!b)return;if(isNativeApp){b.classList.remove('show');return}const playing=userSoundEnabled&&opts.sound;b.classList.add('show');b.classList.toggle('on',playing);b.classList.toggle('off',!playing);b.innerHTML='<span class="mute-ring" aria-hidden="true"></span><span class="sound-icon">'+(userSoundEnabled?'🔊':'🔇')+'</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="sound-state" aria-hidden="true"></span>';const label=!opts.sound?'Atmosphere sound disabled by admin':(userSoundEnabled?'Disable atmosphere sound':'Enable atmosphere sound');b.title=label;b.setAttribute('aria-label',label);b.dataset.adminSound=opts.sound?'on':'off'}
   function retryAutoplay(){if(isNativeApp||!opts.sound||!userSoundEnabled||!audioEl)return;try{const p=audioEl.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
-  window.applyLoginAtmosphere=function(theme){let t=String(theme||'auto').trim();try{const q=new URLSearchParams(location.search).get('atm');if(q)t=q}catch(e){}if(t==='metroid'||t==='apex')t='meteor';if(t==='auto'||!t){const fest=festivalToday();if(fest)t=fest.id;else t=weatherTheme||hourTheme()}if(THEMES.indexOf(t)<0)t=hourTheme();clearAtm();document.body.classList.add('atm-'+t);if(opts.reduceMotion)document.body.classList.add('atm-reduce');else document.body.classList.remove('atm-reduce');if(opts.cardSkin&&t!=='native'&&t!=='minimal')document.body.classList.add('skin-'+t);if(t==='rain')buildRain();if(t==='morning')buildMorningLeaves();if(t==='night_stars'||t==='night_aurora'||t==='fest_christmas')buildStars();if(t==='sakura'||t==='fest_holi')buildPetals();if(t==='meteor'||t==='fest_diwali'||t==='fest_newyear')startMeteorCanvas();else stopMeteorCanvas();const sky=document.getElementById('skyLayer');if(sky)sky.style.opacity=String(Math.max(.4,Math.min(1,(opts.intensity||80)/100)));startSound(t);updateMuteBtn();try{document.documentElement.setAttribute('data-atm',t)}catch(e){}}
+  window.applyLoginAtmosphere=function(theme){let t=String(theme||'auto').trim();try{const q=new URLSearchParams(location.search).get('atm');if(q)t=q}catch(e){}if(t==='metroid'||t==='apex')t='meteor';if(t==='auto'||!t){const fest=festivalToday();if(fest)t=fest.id;else t=weatherTheme||hourTheme()}if(THEMES.indexOf(t)<0)t=hourTheme();clearAtm();document.body.classList.add('atm-'+t);if(opts.reduceMotion)document.body.classList.add('atm-reduce');else document.body.classList.remove('atm-reduce');if(opts.cardSkin&&t!=='native'&&t!=='minimal')document.body.classList.add('skin-'+t);if(t==='rain')buildRain();if(t==='morning')buildMorningLeaves();if(t==='night_stars'||t==='night_aurora'||t==='fest_christmas')buildStars();if(t==='sakura'||t==='fest_holi')buildPetals();if(t==='meteor'||t==='fest_diwali'||t==='fest_newyear')startMeteorCanvas();else stopMeteorCanvas();const sky=document.getElementById('skyLayer');if(sky)sky.style.opacity=String(Math.max(.4,Math.min(1,(opts.intensity||80)/100)));startSound(t);updateMuteBtn();    try{document.documentElement.setAttribute('data-atm',t)}catch(e){}
+    try{localStorage.setItem('dgxen_last_theme', t)}catch(e){} // <-- UPDATE: Yahan current theme ko cache me save kiya
+  }
+
   async function fetchWeatherHint(){if(!opts.weather||!navigator.geolocation)return;try{await new Promise(resolve=>{navigator.geolocation.getCurrentPosition(async pos=>{try{const lat=pos.coords.latitude,lon=pos.coords.longitude;const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=weather_code,is_day&timezone=auto');const data=await res.json(),code=data&&data.current&&data.current.weather_code,isDay=data&&data.current&&data.current.is_day;if(code>=51&&code<=67)weatherTheme='rain';else if(code>=0&&code<=1&&isDay)weatherTheme='day_sunny';else if(code>=2&&code<=3&&isDay)weatherTheme='day_haze';else if(!isDay)weatherTheme='night_stars';else weatherTheme=null;if(forced==='auto')applyLoginAtmosphere('auto')}catch(e){}resolve()},()=>resolve(),{timeout:6000,maximumAge:600000})})}catch(e){}}
+  
   function resolveAndApply(){applyLoginAtmosphere(forced||'auto')}
+  
   try{onValue(ref(db,'settings/notice'),snap=>{const v=snap.exists()?(snap.val()||{}):{};forced=v.loginTheme?String(v.loginTheme):'auto';opts={intensity:v.atmIntensity!=null?Number(v.atmIntensity):80,particles:v.atmParticles!=null?Number(v.atmParticles):60,reduceMotion:!!v.atmReduceMotion,season:v.atmSeason!==false,weather:v.atmWeather!==false,sound:!!v.atmSound,cardSkin:v.atmCardSkin!==false,festival:v.atmFestival!==false};if(isNativeApp)stopSound();resolveAndApply();if(forced==='auto'&&opts.weather)fetchWeatherHint()})}catch(e){applyLoginAtmosphere('auto')}
+  
   setInterval(()=>{if(forced==='auto')applyLoginAtmosphere('auto')},15*60*1000);
+  
   const muteBtn=document.getElementById('atmMuteBtn');if(muteBtn&&!isNativeApp)muteBtn.addEventListener('click',()=>{userSoundEnabled=!userSoundEnabled;try{localStorage.setItem('dgxen_atm_sound_enabled',userSoundEnabled?'1':'0')}catch(e){}if(userSoundEnabled){startSound(document.documentElement.getAttribute('data-atm')||'native')}else{stopSound()}updateMuteBtn()});
+  
   ['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{if(opts.sound&&userSoundEnabled&&!isNativeApp)retryAutoplay()},{passive:true}));
+  
   // Resume automatically when the user comes back (tab/app foregrounded) — no need to toggle mute off/on.
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')retryAutoplay()});
   window.addEventListener('pageshow',()=>retryAutoplay());
   window.addEventListener('focus',()=>retryAutoplay());
   window.stopLoginAtmosphereSound=stopSound;
-  window.__DGXEN_FESTIVALS=FESTIVAL_MAP;applyLoginAtmosphere('auto');
-})();
+  
+  window.__DGXEN_FESTIVALS=FESTIVAL_MAP;
+  
+  // <-- UPDATE: Puraani line (applyLoginAtmosphere('auto');) hatakar yeh cache reader daal diya
+  try {
+    const cached = localStorage.getItem('dgxen_last_theme');
+    if (cached) applyLoginAtmosphere(cached);
+  } catch(e) {}
 
+})();
 
 </script>
 </body>
