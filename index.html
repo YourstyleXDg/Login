@@ -387,7 +387,8 @@ body.atm-native .sky-layer .aurora,
 body.atm-native .sky-layer .cyber-grid,
 body.atm-native .sky-layer .haze,
 body.atm-native .sky-layer .petals,
-body.atm-native .sky-layer .caustics{opacity:0!important}
+body.atm-native .sky-layer .caustics,
+body.atm-native .sky-layer .morning-dew,body.atm-native .sky-layer .morning-leaves,body.atm-native .sky-layer .theme-shards,body.atm-native .sky-layer .theme-sparks{opacity:0!important}
 body.atm-native .sky-layer .orb-tl{opacity:.22;background:rgba(0,255,136,.12);filter:blur(50px)}
 body.atm-native .sky-layer .orb-br{opacity:.18;background:rgba(90,140,255,.1);filter:blur(55px)}
 body.atm-native{
@@ -460,6 +461,32 @@ body.atm-ember{background:
   linear-gradient(170deg,#100805,#0a0604 50%,#080402) !important}
 
 body.atm-reduce .sky-layer *{animation:none!important}
+
+/* Morning dew + leaves */
+.sky-layer .morning-dew,.sky-layer .morning-leaves,.sky-layer .theme-shards,.sky-layer .theme-sparks{position:absolute;inset:0;opacity:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease}
+body.atm-morning .sky-layer .morning-dew,body.atm-morning .sky-layer .morning-leaves{opacity:1}
+body.atm-morning .sky-layer .sun{opacity:.72;top:8%;right:9%;transform:scale(.82)}
+body.atm-morning .sky-layer .haze{opacity:.72}
+body.atm-morning{background:radial-gradient(circle at 84% 10%,rgba(255,225,145,.2),transparent 28%),radial-gradient(circle at 12% 88%,rgba(80,190,125,.13),transparent 34%),linear-gradient(160deg,#08130f,#102019 48%,#07100d)!important}
+.morning-dew::before,.morning-dew::after{content:"";position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,rgba(190,255,226,.68) 28%,rgba(80,180,135,.13) 64%,transparent 70%);box-shadow:42px 18px 0 -3px rgba(220,255,240,.34),96px 56px 0 -4px rgba(220,255,240,.28),170px 26px 0 -3px rgba(220,255,240,.24),245px 72px 0 -4px rgba(220,255,240,.24);width:10px;height:10px;left:7%;top:14%;filter:drop-shadow(0 0 5px rgba(200,255,230,.35));animation:dewBlink 5s ease-in-out infinite}
+.morning-dew::after{left:18%;top:66%;transform:scale(.75);animation-delay:-2.4s}
+@keyframes dewBlink{0%,100%{opacity:.34}50%{opacity:.9}}
+.morning-leaves span{position:absolute;top:-12vh;width:13px;height:8px;border-radius:100% 0 100% 0;background:linear-gradient(135deg,#79c882,#1e6e45);box-shadow:0 0 8px rgba(80,190,110,.22);animation:leafDrift linear infinite}
+@keyframes leafDrift{0%{transform:translate3d(0,-8vh,0) rotate(0);opacity:0}12%{opacity:.78}100%{transform:translate3d(42px,118vh,0) rotate(420deg);opacity:.12}}
+/* Dedicated Metroid and Apex layers. They remain behind the translucent login glass. */
+body.atm-metroid .sky-layer .theme-shards{opacity:1}
+body.atm-apex .sky-layer .theme-shards,body.atm-apex .sky-layer .theme-sparks{opacity:1}
+body.atm-metroid{background:radial-gradient(circle at 50% 100%,rgba(220,20,30,.16),transparent 44%),linear-gradient(155deg,#060404,#110506 52%,#040202)!important}
+body.atm-apex{background:radial-gradient(circle at 50% 100%,rgba(255,70,12,.19),transparent 45%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
+body.atm-metroid .glass,body.atm-apex .glass{border-color:rgba(255,68,55,.26)!important}
+.theme-shards b{position:absolute;top:-16vh;display:block;clip-path:polygon(50% 0,100% 100%,0 76%);background:linear-gradient(145deg,rgba(255,70,55,.92),rgba(92,4,8,.44));border:1px solid rgba(255,125,95,.42);filter:drop-shadow(0 0 7px rgba(255,35,20,.45));animation:shardFall linear infinite}
+body.atm-metroid .theme-shards b{clip-path:polygon(50% 0,100% 32%,78% 100%,20% 82%,0 28%)}
+@keyframes shardFall{0%{transform:translate3d(-12vw,-10vh,0) rotateX(0) rotateZ(18deg);opacity:0}10%{opacity:.9}100%{transform:translate3d(22vw,122vh,0) rotateX(520deg) rotateZ(650deg);opacity:.12}}
+.theme-sparks i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ff9b42;box-shadow:0 0 7px #ff3d12,0 0 13px rgba(255,40,0,.75);animation:burnSpark ease-out infinite}
+@keyframes burnSpark{0%{transform:translate3d(0,0,0) scale(.25);opacity:0}18%{opacity:1}100%{transform:translate3d(var(--sx),var(--sy),0) scale(1.7);opacity:0}}
+/* Shared understated festival tint for added dates. */
+body[class*="atm-fest_"] .sky-layer .haze{opacity:.55}
+
 body[data-atm-intensity] .sky-layer{opacity:1}
 
 
@@ -483,6 +510,10 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   <div class="rain" id="skyRain"></div>
   <div class="petals" id="skyPetals"></div>
   <div class="caustics"></div>
+  <div class="morning-dew" id="morningDew"></div>
+  <div class="morning-leaves" id="morningLeaves"></div>
+  <div class="theme-shards" id="skyShards"></div>
+  <div class="theme-sparks" id="skySparks"></div>
 </div>
 
 <button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Mute atmosphere">🔊</button>
@@ -1778,15 +1809,26 @@ document.addEventListener('visibilitychange', function(){
 
 // ===== LOGIN ATMOSPHERE THEMES =====
 (function(){
-  const BASE = ['native','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex'];
-  const FEST = ['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra'];
+  const BASE = ['native','morning','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex'];
+  const FEST = ['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra','fest_ugadi','fest_ramnavami','fest_hanuman','fest_baisakhi','fest_akshaya','fest_buddha','fest_vatsavitri','fest_ganga','fest_yoga','fest_rathyatra','fest_kargil','fest_gurupurnima'];
   const THEMES = BASE.concat(FEST);
   const FESTIVAL_MAP = [
     { md:'01-01', id:'fest_newyear', name:'New Year' },
     { md:'01-14', id:'fest_sankranti', name:'Makar Sankranti / Pongal' },
     { md:'01-26', id:'fest_republic', name:'Republic Day' },
     { md:'03-04', id:'fest_holi', name:'Holi' },
-    { md:'03-14', id:'fest_holi', name:'Holi' },
+    { md:'03-19', id:'fest_ugadi', name:'Ugadi / Gudi Padwa' },
+    { md:'03-26', id:'fest_ramnavami', name:'Ram Navami' },
+    { md:'04-02', id:'fest_hanuman', name:'Hanuman Jayanti' },
+    { md:'04-14', id:'fest_baisakhi', name:'Baisakhi / Vaisakhi' },
+    { md:'04-19', id:'fest_akshaya', name:'Akshaya Tritiya' },
+    { md:'05-01', id:'fest_buddha', name:'Buddha Purnima' },
+    { md:'05-16', id:'fest_vatsavitri', name:'Vat Savitri' },
+    { md:'05-25', id:'fest_ganga', name:'Ganga Dussehra' },
+    { md:'06-21', id:'fest_yoga', name:'International Yoga Day' },
+    { md:'07-16', id:'fest_rathyatra', name:'Jagannath Rath Yatra' },
+    { md:'07-26', id:'fest_kargil', name:'Kargil Vijay Diwas' },
+    { md:'07-29', id:'fest_gurupurnima', name:'Guru Purnima' },
     { md:'08-15', id:'fest_independence', name:'Independence Day' },
     { md:'08-28', id:'fest_rakhi', name:'Raksha Bandhan' },
     { md:'09-04', id:'fest_janmashtami', name:'Janmashtami' },
@@ -1813,8 +1855,8 @@ document.addEventListener('visibilitychange', function(){
   }
   function hourTheme(){
     const h = new Date().getHours();
-    if (h >= 6 && h < 10) return 'day_haze';
-    if (h >= 10 && h < 16) return 'day_sunny';
+    if (h >= 5 && h < 11) return 'morning';
+    if (h >= 11 && h < 16) return 'day_sunny';
     if (h >= 16 && h < 19) return 'golden';
     return 'night_stars';
   }
@@ -1848,6 +1890,14 @@ document.addEventListener('visibilitychange', function(){
     for (let i=0;i<n;i++) html += '<span style="left:'+(Math.random()*100)+'%;animation-duration:'+(6+Math.random()*8).toFixed(1)+'s;animation-delay:'+(Math.random()*5).toFixed(1)+'s"></span>';
     box.innerHTML = html;
   }
+  function buildMorningLeaves(){
+    const box = document.getElementById('morningLeaves');
+    if (!box) return;
+    let html='';
+    const n=Math.max(10,Math.round((opts.particles||60)/100*20));
+    for(let i=0;i<n;i++) html+='<span style="left:'+(Math.random()*100).toFixed(1)+'%;animation-duration:'+(7+Math.random()*8).toFixed(1)+'s;animation-delay:-'+(Math.random()*10).toFixed(1)+'s"></span>';
+    box.innerHTML=html;
+  }
   function buildShards(){
     const box = document.getElementById('skyShards');
     if (!box) return;
@@ -1874,7 +1924,7 @@ document.addEventListener('visibilitychange', function(){
   function startSound(theme){
     stopSound();
     if (!opts.sound || muted) return;
-    const map = { rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
+    const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
     const file = map[theme] || 'soft';
     try {
       if (!audioEl) { audioEl = new Audio(); audioEl.loop = true; audioEl.volume = 0.22; }
@@ -1902,9 +1952,11 @@ document.addEventListener('visibilitychange', function(){
     if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
     if (opts.cardSkin && t !== 'native' && t !== 'minimal') document.body.classList.add('skin-' + t);
     if (t === 'rain') buildRain();
+    if (t === 'morning') buildMorningLeaves();
     if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
     if (t === 'sakura' || t === 'fest_holi') buildPetals();
     if (t === 'metroid' || t === 'apex') buildShards();
+    if (t === 'metroid' || t === 'apex') buildSparks();
     if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
     const sky = document.getElementById('skyLayer');
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
