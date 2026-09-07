@@ -411,68 +411,12 @@ body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
-  position:fixed;right:16px;bottom:max(16px, env(safe-area-inset-bottom));z-index:130;
-  width:52px;height:52px;border-radius:18px;border:1px solid rgba(255,255,255,.16);
-  background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 55%,rgba(0,255,136,.05));
-  color:#fff;font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:0;
-  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
-  box-shadow:0 14px 36px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.04);
-  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .3s ease,border-color .3s ease,background .3s ease;
-  overflow:visible;
+  position:fixed;right:14px;bottom:max(14px, env(safe-area-inset-bottom));z-index:130;
+  width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.15);
+  background:rgba(0,0,0,.55);color:#fff;font-size:16px;cursor:pointer;display:none;
+  backdrop-filter:blur(10px);
 }
-.atm-mute-btn.show{display:flex}
-.atm-mute-btn::before{
-  content:"";position:absolute;inset:0;border-radius:18px;padding:1px;
-  background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,0) 40%,rgba(0,255,136,.28) 100%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
-}
-.atm-mute-btn .mute-ring{
-  position:absolute;inset:-6px;border-radius:22px;pointer-events:none;
-  border:1px solid rgba(0,255,136,.35);opacity:0;transform:scale(.85);
-}
-.atm-mute-btn.on .mute-ring{animation:muteRingPulse 2.2s ease-out infinite}
-@keyframes muteRingPulse{0%{opacity:.55;transform:scale(.85)}75%{opacity:0;transform:scale(1.18)}100%{opacity:0;transform:scale(1.18)}}
-.atm-mute-btn.on{border-color:rgba(0,255,136,.48);box-shadow:0 14px 38px rgba(0,0,0,.45),0 0 26px rgba(0,255,136,.16),inset 0 1px rgba(255,255,255,.32)}
-.atm-mute-btn.off{border-color:rgba(255,255,255,.13);opacity:.88}
-.atm-mute-btn:hover{transform:translateY(-1px)}
-.atm-mute-btn:active{transform:scale(.9)}
-.atm-mute-btn .sound-icon{font-size:19px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));transition:transform .25s ease}
-.atm-mute-btn.off .sound-icon{transform:scale(.92);opacity:.85}
-.atm-mute-btn .eq{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);display:none;align-items:flex-end;gap:2px;height:8px;pointer-events:none}
-.atm-mute-btn.on .eq{display:flex}
-.atm-mute-btn .eq i{width:2.5px;border-radius:2px;background:linear-gradient(180deg,#7dffc0,#00ff88);animation:eqBar 1s ease-in-out infinite}
-.atm-mute-btn .eq i:nth-child(1){animation-delay:-.6s}
-.atm-mute-btn .eq i:nth-child(2){animation-delay:-.3s}
-.atm-mute-btn .eq i:nth-child(3){animation-delay:0s}
-@keyframes eqBar{0%,100%{height:3px}50%{height:8px}}
-.atm-mute-btn .sound-state{position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;border-radius:50%;border:2px solid #050706;background:#00ff88;box-shadow:0 0 9px rgba(0,255,136,.55)}
-.atm-mute-btn.off .sound-state{background:#69716d;box-shadow:none}
-body.native-app .atm-mute-btn{display:none!important}
-@media (prefers-reduced-motion: reduce){.atm-mute-btn .mute-ring{animation:none!important;opacity:0!important}.atm-mute-btn .eq i{animation:none!important;height:5px!important}}
-
-/* Unified cinematic meteor effect: Metroid and Apex intentionally share one atmosphere. */
-body.atm-meteor,body.atm-metroid,body.atm-apex{
-  background:
-    radial-gradient(circle at 50% 115%,rgba(255,72,24,.17),transparent 43%),
-    radial-gradient(circle at 15% 25%,rgba(255,255,255,.025),transparent 32%),
-    linear-gradient(155deg,#020202 0%,#080404 48%,#010101 100%) !important
-}
-body.atm-meteor .glass,body.atm-metroid .glass,body.atm-apex .glass{border-color:rgba(255,100,65,.28)!important}
-.meteor-field{position:absolute;inset:-15%;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .6s ease}
-body.atm-meteor .meteor-field,body.atm-metroid .meteor-field,body.atm-apex .meteor-field{opacity:1}
-.meteor-field .meteor{position:absolute;top:-18vh;left:-22vw;width:var(--mw,120px);height:var(--mh,3px);border-radius:999px;transform:rotate(42deg);transform-origin:left center;opacity:0;background:linear-gradient(90deg,transparent 0%,rgba(255,130,65,.12) 35%,rgba(255,205,145,.62) 72%,#fff 100%);filter:blur(.2px);box-shadow:0 0 8px rgba(255,100,35,.7),0 0 20px rgba(255,50,20,.24);animation:meteorFly var(--md,3.8s) linear var(--delay,0s) infinite}
-.meteor-field .meteor::before{content:"";position:absolute;right:-2px;top:50%;width:var(--head,7px);height:var(--head,7px);border-radius:50%;transform:translateY(-50%);background:#fff8df;box-shadow:0 0 8px 2px rgba(255,214,145,.9),0 0 18px 4px rgba(255,92,24,.62)}
-.meteor-field .meteor::after{content:"";position:absolute;right:5px;top:50%;width:var(--trail,100px);height:1px;transform:translateY(-50%);transform-origin:right center;background:linear-gradient(90deg,transparent,rgba(255,75,20,.06),rgba(255,160,80,.42));filter:blur(2px)}
-@keyframes meteorFly{0%{transform:translate3d(-15vw,-18vh,0) rotate(42deg) scale(.72);opacity:0}7%{opacity:.9}55%{opacity:.78}82%{opacity:.22}100%{transform:translate3d(128vw,128vh,0) rotate(42deg) scale(1.05);opacity:0}}
-.meteor-field .ember{position:absolute;width:var(--es,3px);height:var(--es,3px);border-radius:50%;background:#ffb15a;box-shadow:0 0 7px #ff5b1f,0 0 13px rgba(255,50,10,.55);opacity:0;animation:emberFly var(--ed,1.7s) ease-out var(--delay,0s) infinite}
-@keyframes emberFly{0%{transform:translate3d(0,0,0) scale(.25);opacity:0}15%{opacity:.95}55%{opacity:.7}100%{transform:translate3d(var(--ex),var(--ey),0) scale(.05);opacity:0}}
-.meteor-field .smoke{position:absolute;width:var(--sw,180px);height:var(--sh,90px);border-radius:50%;background:radial-gradient(ellipse,rgba(150,120,105,.11),transparent 68%);filter:blur(22px);opacity:.35;animation:smokeDrift var(--sd,9s) ease-in-out var(--delay,0s) infinite alternate}
-#meteorCanvas{position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none}
-body.atm-meteor #meteorCanvas,body.atm-fest_diwali #meteorCanvas,body.atm-fest_newyear #meteorCanvas{display:block}
-body.atm-meteor .meteor-field,body.atm-fest_diwali .meteor-field,body.atm-fest_newyear .meteor-field{display:none}
-@keyframes smokeDrift{from{transform:translate3d(-20px,12px,0) scale(.9);opacity:.15}to{transform:translate3d(35px,-20px,0) scale(1.16);opacity:.38}}
-body.atm-reduce .meteor-field *{animation:none!important}
+.atm-mute-btn.show{display:grid;place-items:center}
 
 
 body.atm-sakura .sky-layer .haze{opacity:1}
@@ -553,7 +497,6 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 </style>
 </head>
 <body>
-<script>if(window.Android)document.body.classList.add("native-app");</script>
 
 <div class="sky-layer" id="skyLayer" aria-hidden="true">
   <div class="orb-tl"></div>
@@ -571,16 +514,9 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   <div class="morning-leaves" id="morningLeaves"></div>
   <div class="theme-shards" id="skyShards"></div>
   <div class="theme-sparks" id="skySparks"></div>
-  <div class="meteor-field" id="meteorField"></div>
-  <canvas id="meteorCanvas" aria-hidden="true"></canvas>
 </div>
 
-<button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Disable atmosphere sound" aria-label="Disable atmosphere sound">
-  <span class="mute-ring" aria-hidden="true"></span>
-  <span class="sound-icon">🔊</span>
-  <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
-  <span class="sound-state" aria-hidden="true"></span>
-</button>
+<button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Mute atmosphere">🔊</button>
 <div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
@@ -1734,7 +1670,6 @@ async function verifyKey(){
         } catch (gErr) { console.warn('guard start', gErr); }
         window.__lastMatchedUserId=null;
       } catch(e) {}
-      try { if (window.stopLoginAtmosphereSound) window.stopLoginAtmosphereSound(); } catch(e) {}
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
@@ -1874,135 +1809,225 @@ document.addEventListener('visibilitychange', function(){
 
 // ===== LOGIN ATMOSPHERE THEMES =====
 (function(){
-  const BASE=['native','morning','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','meteor','metroid','apex'];
-  const FEST=['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra','fest_ugadi','fest_ramnavami','fest_hanuman','fest_baisakhi','fest_akshaya','fest_buddha','fest_vatsavitri','fest_ganga','fest_yoga','fest_rathyatra','fest_kargil','fest_gurupurnima'];
-  const THEMES=BASE.concat(FEST);
-  const FESTIVAL_MAP=[
-    {md:'01-01',id:'fest_newyear',name:'New Year'},{md:'01-14',id:'fest_sankranti',name:'Makar Sankranti / Pongal'},
-    {md:'01-26',id:'fest_republic',name:'Republic Day'},{md:'03-04',id:'fest_holi',name:'Holi'},
-    {md:'03-19',id:'fest_ugadi',name:'Ugadi / Gudi Padwa'},{md:'03-26',id:'fest_ramnavami',name:'Ram Navami'},
-    {md:'04-02',id:'fest_hanuman',name:'Hanuman Jayanti'},{md:'04-14',id:'fest_baisakhi',name:'Baisakhi / Vaisakhi'},
-    {md:'04-19',id:'fest_akshaya',name:'Akshaya Tritiya'},{md:'05-01',id:'fest_buddha',name:'Buddha Purnima'},
-    {md:'05-16',id:'fest_vatsavitri',name:'Vat Savitri'},{md:'05-25',id:'fest_ganga',name:'Ganga Dussehra'},
-    {md:'06-21',id:'fest_yoga',name:'International Yoga Day'},{md:'07-16',id:'fest_rathyatra',name:'Jagannath Rath Yatra'},
-    {md:'07-26',id:'fest_kargil',name:'Kargil Vijay Diwas'},{md:'07-29',id:'fest_gurupurnima',name:'Guru Purnima'},
-    {md:'08-15',id:'fest_independence',name:'Independence Day'},{md:'08-28',id:'fest_rakhi',name:'Raksha Bandhan'},
-    {md:'09-04',id:'fest_janmashtami',name:'Janmashtami'},{md:'09-05',id:'fest_teachers',name:"Teachers' Day"},
-    {md:'09-14',id:'fest_ganesh',name:'Ganesh Chaturthi'},{md:'10-02',id:'fest_gandhi',name:'Gandhi Jayanti'},
-    {md:'10-21',id:'fest_dussehra',name:'Dussehra'},{md:'11-08',id:'fest_diwali',name:'Diwali'},
-    {md:'11-14',id:'fest_children',name:"Children's Day"},{md:'12-25',id:'fest_christmas',name:'Christmas'}
+  const BASE = ['native','morning','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex'];
+  const FEST = ['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra','fest_ugadi','fest_ramnavami','fest_hanuman','fest_baisakhi','fest_akshaya','fest_buddha','fest_vatsavitri','fest_ganga','fest_yoga','fest_rathyatra','fest_kargil','fest_gurupurnima'];
+  const THEMES = BASE.concat(FEST);
+  const FESTIVAL_MAP = [
+    { md:'01-01', id:'fest_newyear', name:'New Year' },
+    { md:'01-14', id:'fest_sankranti', name:'Makar Sankranti / Pongal' },
+    { md:'01-26', id:'fest_republic', name:'Republic Day' },
+    { md:'03-04', id:'fest_holi', name:'Holi' },
+    { md:'03-19', id:'fest_ugadi', name:'Ugadi / Gudi Padwa' },
+    { md:'03-26', id:'fest_ramnavami', name:'Ram Navami' },
+    { md:'04-02', id:'fest_hanuman', name:'Hanuman Jayanti' },
+    { md:'04-14', id:'fest_baisakhi', name:'Baisakhi / Vaisakhi' },
+    { md:'04-19', id:'fest_akshaya', name:'Akshaya Tritiya' },
+    { md:'05-01', id:'fest_buddha', name:'Buddha Purnima' },
+    { md:'05-16', id:'fest_vatsavitri', name:'Vat Savitri' },
+    { md:'05-25', id:'fest_ganga', name:'Ganga Dussehra' },
+    { md:'06-21', id:'fest_yoga', name:'International Yoga Day' },
+    { md:'07-16', id:'fest_rathyatra', name:'Jagannath Rath Yatra' },
+    { md:'07-26', id:'fest_kargil', name:'Kargil Vijay Diwas' },
+    { md:'07-29', id:'fest_gurupurnima', name:'Guru Purnima' },
+    { md:'08-15', id:'fest_independence', name:'Independence Day' },
+    { md:'08-28', id:'fest_rakhi', name:'Raksha Bandhan' },
+    { md:'09-04', id:'fest_janmashtami', name:'Janmashtami' },
+    { md:'09-05', id:'fest_teachers', name:"Teachers' Day" },
+    { md:'09-14', id:'fest_ganesh', name:'Ganesh Chaturthi' },
+    { md:'10-02', id:'fest_gandhi', name:'Gandhi Jayanti' },
+    { md:'10-21', id:'fest_dussehra', name:'Dussehra' },
+    { md:'11-08', id:'fest_diwali', name:'Diwali' },
+    { md:'11-14', id:'fest_children', name:"Children's Day" },
+    { md:'12-25', id:'fest_christmas', name:'Christmas' }
   ];
-  const isNativeApp=!!window.Android;if(isNativeApp)document.body.classList.add('native-app');
-  let forced='auto',weatherTheme=null,audioEl=null;
-  let opts={intensity:80,particles:60,reduceMotion:false,season:true,weather:true,sound:false,cardSkin:true,festival:true};
-  const savedSound=localStorage.getItem('dgxen_atm_sound_enabled');
-  let userSoundEnabled=savedSound===null?true:savedSound==='1';
-  function pad(n){return(n<10?'0':'')+n}
-  function todayMD(){const d=new Date();return pad(d.getMonth()+1)+'-'+pad(d.getDate())}
-  function festivalToday(){if(!opts.festival)return null;const md=todayMD();return FESTIVAL_MAP.find(x=>x.md===md)||null}
-  function hourTheme(){const h=new Date().getHours();if(h>=5&&h<11)return'morning';if(h>=11&&h<16)return'day_sunny';if(h>=16&&h<19)return'golden';return'night_stars'}
-  function clearAtm(){THEMES.forEach(t=>document.body.classList.remove('atm-'+t));document.body.className.split(/\s+/).forEach(c=>{if(c.indexOf('skin-')===0)document.body.classList.remove(c)})}
-  function buildRain(){const box=document.getElementById('skyRain');if(!box)return;const n=Math.max(28,Math.round((opts.particles||60)/100*55));let h='';for(let i=0;i<n;i++)h+='<i style="left:'+(Math.random()*100).toFixed(2)+'%;height:'+(12+Math.random()*14).toFixed(0)+'px;animation-duration:'+(0.55+Math.random()*0.9).toFixed(2)+'s;animation-delay:'+(Math.random()*2.2).toFixed(2)+'s"></i>';box.innerHTML=h}
-  function buildStars(){const box=document.getElementById('skyStars');if(!box)return;let h='';const n=Math.round((opts.particles||60)/100*48);for(let i=0;i<n;i++)h+='<span class="star" style="left:'+(Math.random()*100)+'%;top:'+(Math.random()*70)+'%;--d:'+(2+Math.random()*4).toFixed(1)+'s;animation-delay:'+(Math.random()*3).toFixed(1)+'s"></span>';box.innerHTML=h}
-  function buildPetals(){const box=document.getElementById('skyPetals');if(!box)return;let h='';const n=Math.round((opts.particles||60)/100*28);for(let i=0;i<n;i++)h+='<span style="left:'+(Math.random()*100)+'%;animation-duration:'+(6+Math.random()*8).toFixed(1)+'s;animation-delay:'+(Math.random()*5).toFixed(1)+'s"></span>';box.innerHTML=h}
-  function buildMorningLeaves(){const box=document.getElementById('morningLeaves');if(!box)return;let h='';const n=Math.max(10,Math.round((opts.particles||60)/100*20));for(let i=0;i<n;i++)h+='<span style="left:'+(Math.random()*100).toFixed(1)+'%;animation-duration:'+(7+Math.random()*8).toFixed(1)+'s;animation-delay:-'+(Math.random()*10).toFixed(1)+'s"></span>';box.innerHTML=h}
-  function buildMeteor(){const box=document.getElementById('meteorField');if(!box)return;const strength=Math.max(20,Math.min(100,Number(opts.particles)||60));let h='';const count=Math.round(7+strength*.10);for(let i=0;i<count;i++){const w=(70+Math.random()*150).toFixed(0),mh=(1.5+Math.random()*2.8).toFixed(1),head=(4+Math.random()*6).toFixed(1),trail=(45+Math.random()*110).toFixed(0);h+='<span class="meteor" style="left:'+(Math.random()*92-15).toFixed(1)+'%;top:'+(Math.random()*88-28).toFixed(1)+'%;--mw:'+w+'px;--mh:'+mh+'px;--head:'+head+'px;--trail:'+trail+'px;--md:'+(2.6+Math.random()*3.8).toFixed(2)+'s;--delay:-'+(Math.random()*6).toFixed(2)+'s"></span>'}const ec=Math.round(18+strength*.18);for(let i=0;i<ec;i++){const ex=((Math.random()-.5)*150).toFixed(0)+'px',ey=((Math.random()-.5)*120+30).toFixed(0)+'px';h+='<i class="ember" style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;--es:'+(1.5+Math.random()*3).toFixed(1)+'px;--ex:'+ex+';--ey:'+ey+';--ed:'+(1.1+Math.random()*2.2).toFixed(2)+'s;--delay:-'+(Math.random()*3).toFixed(2)+'s"></i>'}for(let i=0;i<5;i++)h+='<b class="smoke" style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(Math.random()*100).toFixed(1)+'%;--sw:'+(120+Math.random()*170).toFixed(0)+'px;--sh:'+(60+Math.random()*100).toFixed(0)+'px;--sd:'+(7+Math.random()*7).toFixed(1)+'s;--delay:-'+(Math.random()*7).toFixed(1)+'s"></b>';box.innerHTML=h}
-  // ---- Canvas meteor FX (diagonal meteors, sparks, embers, smoke) — replaces the old DOM meteor-field for meteor/metroid/apex + diwali/newyear ----
-  let meteorRAF=null,meteorResize=null;
-  function stopMeteorCanvas(){
-    if(meteorRAF){cancelAnimationFrame(meteorRAF);meteorRAF=null}
-    if(meteorResize){window.removeEventListener('resize',meteorResize);meteorResize=null}
-    const cv=document.getElementById('meteorCanvas');
-    if(cv){try{const ctx=cv.getContext('2d');ctx&&ctx.clearRect(0,0,cv.width,cv.height)}catch(e){}}
+  let forced = 'auto';
+  let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
+  let weatherTheme = null;
+  let audioEl = null;
+  let muted = localStorage.getItem('dgxen_atm_mute') === '1';
+  function pad(n){ return (n<10?'0':'')+n; }
+  function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function festivalToday(){
+    if (!opts.festival) return null;
+    const md = todayMD();
+    for (let i=0;i<FESTIVAL_MAP.length;i++){ if (FESTIVAL_MAP[i].md === md) return FESTIVAL_MAP[i]; }
+    return null;
   }
-  function startMeteorCanvas(){
-    stopMeteorCanvas();
-    const cv=document.getElementById('meteorCanvas');if(!cv)return;
-    const ctx=cv.getContext('2d');
-    const rnd=(a,b)=>a+Math.random()*(b-a);
-    const reduced=opts.reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const SCALE=reduced?0.35:Math.max(.35,Math.min(1.7,(opts.particles||60)/60));
-    let W=0,H=0,DPR=1;
-    function resize(){DPR=Math.min(window.devicePixelRatio||1,2);W=window.innerWidth;H=window.innerHeight;cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
-    resize();meteorResize=resize;window.addEventListener('resize',resize);
-
-    function makeGlow(r,g,b){const s=document.createElement('canvas');s.width=s.height=64;const c=s.getContext('2d');const gr=c.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,246,235,1)');gr.addColorStop(0.25,'rgba('+r+','+g+','+b+',0.9)');gr.addColorStop(1,'rgba('+r+','+g+','+b+',0)');c.fillStyle=gr;c.fillRect(0,0,64,64);return s}
-    const headSpr=makeGlow(255,170,80),sparkSpr=makeGlow(255,195,95),dustSpr=makeGlow(150,190,255);
-    const smokeSpr=(function(){const s=document.createElement('canvas');s.width=s.height=256;const c=s.getContext('2d');const gr=c.createRadialGradient(128,128,10,128,128,128);gr.addColorStop(0,'rgba(115,130,165,1)');gr.addColorStop(0.55,'rgba(95,105,140,0.45)');gr.addColorStop(1,'rgba(90,100,135,0)');c.fillStyle=gr;c.fillRect(0,0,256,256);return s})();
-
-    const meteors=[],sparks=[],embers=[],dust=[],smoke=[];
-    let flash=0,fireIn=rnd(260,520);
-    const clampN=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v)));
-    function newSmoke(){return{x:rnd(-100,W+100),y:rnd(-60,H+60),s:rnd(220,560),vx:rnd(-.12,.12),vy:rnd(-.05,.05),a:rnd(.02,.05)}}
-    function newEmber(any){return{x:rnd(0,W),y:any?rnd(0,H):H+rnd(0,40),z:rnd(.3,1),vy:-rnd(.12,.5),ph:rnd(0,6.28),sp:rnd(.01,.03),sz:rnd(.8,2.4)}}
-    function newDust(){return{x:rnd(0,W),y:rnd(0,H),vx:rnd(-.1,.1),vy:rnd(-.06,.06),sz:rnd(.5,1.4),a:rnd(.06,.3),tw:rnd(0,6.28)}}
-    function newMeteor(fire){const z=fire?1:rnd(.3,1);const ang=rnd(0.55,0.95);const sp=(fire?rnd(13,16):rnd(6.5,12))*(0.45+z*0.75);return{x:rnd(W*0.15,W*1.2),y:rnd(-H*0.2,H*0.18),vx:-Math.cos(ang)*sp,vy:Math.sin(ang)*sp,z,fire:!!fire,trail:rnd(9,14)+z*8,size:fire?3.4:rnd(1.1,2.2)*z}}
-    for(let i=0;i<9;i++)smoke.push(newSmoke());
-    for(let i=0;i<clampN(W*H/42000,12,36)*SCALE;i++)embers.push(newEmber(true));
-    for(let i=0;i<clampN(W*H/22000,20,55)*SCALE;i++)dust.push(newDust());
-
-    function tick(){
-      meteorRAF=requestAnimationFrame(tick);
-      if(!document.body.classList.contains('atm-meteor')&&!document.body.classList.contains('atm-fest_diwali')&&!document.body.classList.contains('atm-fest_newyear')){stopMeteorCanvas();return}
-      if(document.hidden)return;
-      ctx.clearRect(0,0,W,H);
-      ctx.globalCompositeOperation='source-over';
-      for(const s of smoke){s.x+=s.vx;s.y+=s.vy;if(s.x<-s.s)s.x=W+s.s*.5;if(s.x>W+s.s)s.x=-s.s*.5;if(s.y<-s.s)s.y=H+s.s*.5;if(s.y>H+s.s)s.y=-s.s*.5;ctx.globalAlpha=s.a;ctx.drawImage(smokeSpr,s.x-s.s/2,s.y-s.s/2,s.s,s.s)}
-      ctx.globalCompositeOperation='lighter';
-      for(const p of dust){p.x+=p.vx;p.y+=p.vy;p.tw+=0.02;if(p.x<-5)p.x=W+5;if(p.x>W+5)p.x=-5;if(p.y<-5)p.y=H+5;if(p.y>H+5)p.y=-5;const d=p.sz*5;ctx.globalAlpha=p.a*(0.6+0.4*Math.sin(p.tw));ctx.drawImage(dustSpr,p.x-d/2,p.y-d/2,d,d)}
-      for(const e of embers){e.ph+=e.sp;e.x+=Math.sin(e.ph*0.7)*0.25;e.y+=e.vy*e.z;if(e.y<-14)Object.assign(e,newEmber(false));const a=(0.3+0.6*(0.5+0.5*Math.sin(e.ph)))*e.z*0.85;const d=e.sz*7*(0.6+e.z);ctx.globalAlpha=a;ctx.drawImage(headSpr,e.x-d/2,e.y-d/2,d,d)}
-      fireIn--;
-      if(fireIn<=0){meteors.push(newMeteor(true));flash=0.9;fireIn=rnd(300,620)}
-      const maxM=Math.max(3,Math.round(7*SCALE));
-      if(meteors.length<maxM&&Math.random()<0.03)meteors.push(newMeteor(false));
-      for(let i=meteors.length-1;i>=0;i--){
-        const m=meteors[i];m.x+=m.vx;m.y+=m.vy;
-        if(m.x<-160||m.y>H+160){meteors.splice(i,1);continue}
-        if(sparks.length<260&&Math.random()<0.5*m.z){const t=Math.random();sparks.push({x:m.x-m.vx*t*3,y:m.y-m.vy*t*3,vx:m.vx*0.06+rnd(-.7,.7),vy:m.vy*0.06+rnd(-.7,.7),life:rnd(20,55),max:55,sz:rnd(.6,1.8)*m.z})}
-        const z=m.z,tx=m.x-m.vx*m.trail,ty=m.y-m.vy*m.trail;
-        const g=ctx.createLinearGradient(tx,ty,m.x,m.y);
-        g.addColorStop(0,'rgba(255,110,30,0)');g.addColorStop(0.55,'rgba(255,130,45,'+(0.35*z)+')');g.addColorStop(0.85,'rgba(255,190,110,'+(0.85*z)+')');g.addColorStop(1,'rgba(255,245,230,'+Math.min(1,z)+')');
-        ctx.globalAlpha=1;ctx.lineCap='round';ctx.strokeStyle=g;ctx.lineWidth=m.size*2.2;
-        ctx.beginPath();ctx.moveTo(tx,ty);ctx.lineTo(m.x,m.y);ctx.stroke();
-        ctx.lineWidth=m.size*0.9;ctx.strokeStyle='rgba(255,250,240,'+(0.9*z)+')';
-        ctx.beginPath();ctx.moveTo(m.x-m.vx*2.2,m.y-m.vy*2.2);ctx.lineTo(m.x,m.y);ctx.stroke();
-        const hd=(10+22*z)*(m.fire?1.7:1);ctx.globalAlpha=z;ctx.drawImage(headSpr,m.x-hd/2,m.y-hd/2,hd,hd)
-      }
-      for(let i=sparks.length-1;i>=0;i--){const s=sparks[i];s.vx*=0.985;s.vy=s.vy*0.985+0.012;s.x+=s.vx;s.y+=s.vy;s.life--;if(s.life<=0){sparks.splice(i,1);continue}const a=s.life/s.max,d=s.sz*6*(0.5+a);ctx.globalAlpha=a*0.9;ctx.drawImage(sparkSpr,s.x-d/2,s.y-d/2,d,d)}
-      if(flash>0.004){ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='rgba(205,215,255,'+(flash*0.10)+')';ctx.fillRect(0,0,W,H);flash*=0.90}
-      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over'
+  function hourTheme(){
+    const h = new Date().getHours();
+    if (h >= 5 && h < 11) return 'morning';
+    if (h >= 11 && h < 16) return 'day_sunny';
+    if (h >= 16 && h < 19) return 'golden';
+    return 'night_stars';
+  }
+  function clearAtm(){
+    THEMES.forEach(t => document.body.classList.remove('atm-'+t));
+    document.body.className.split(/\s+/).forEach(c => { if (c.indexOf('skin-')===0) document.body.classList.remove(c); });
+  }
+  function buildRain(){
+    const box = document.getElementById('skyRain');
+    if (!box) return;
+    const n = Math.max(28, Math.round((opts.particles||60)/100*55));
+    let html = '';
+    for (let i=0;i<n;i++){
+      html += '<i style="left:'+(Math.random()*100).toFixed(2)+'%;height:'+(12+Math.random()*14).toFixed(0)+'px;animation-duration:'+(0.55+Math.random()*0.9).toFixed(2)+'s;animation-delay:'+(Math.random()*2.2).toFixed(2)+'s"></i>';
     }
-    tick()
+    box.innerHTML = html;
   }
-  function stopSound(){try{if(audioEl){audioEl.pause();audioEl.currentTime=0}}catch(e){}}
-  function startSound(theme){stopSound();if(isNativeApp||!opts.sound||!userSoundEnabled)return;const map={morning:'soft',day_sunny:'soft',day_haze:'soft',golden:'evening',rain:'rain',night_stars:'night',night_aurora:'night',ocean:'ocean',ember:'ember',sakura:'soft',fest_diwali:'diwali',fest_holi:'holi',fest_republic:'patriot',fest_independence:'patriot',fest_christmas:'soft',fest_teachers:'soft',fest_children:'soft',cyber:'cyber',meteor:'cyber',metroid:'cyber',apex:'cyber'};const file=map[theme]||'soft';try{if(!audioEl){audioEl=new Audio();audioEl.loop=true;audioEl.volume=.22}audioEl.src='./sounds/atm/'+file+'.mp3';const p=audioEl.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
-  function updateMuteBtn(){const b=document.getElementById('atmMuteBtn');if(!b)return;if(isNativeApp){b.classList.remove('show');return}const playing=userSoundEnabled&&opts.sound;b.classList.add('show');b.classList.toggle('on',playing);b.classList.toggle('off',!playing);b.innerHTML='<span class="mute-ring" aria-hidden="true"></span><span class="sound-icon">'+(userSoundEnabled?'🔊':'🔇')+'</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="sound-state" aria-hidden="true"></span>';const label=!opts.sound?'Atmosphere sound disabled by admin':(userSoundEnabled?'Disable atmosphere sound':'Enable atmosphere sound');b.title=label;b.setAttribute('aria-label',label);b.dataset.adminSound=opts.sound?'on':'off'}
-  function retryAutoplay(){if(isNativeApp||!opts.sound||!userSoundEnabled||!audioEl)return;try{const p=audioEl.play();if(p&&p.catch)p.catch(()=>{})}catch(e){}}
-  window.applyLoginAtmosphere=function(theme){let t=String(theme||'auto').trim();try{const q=new URLSearchParams(location.search).get('atm');if(q)t=q}catch(e){}if(t==='metroid'||t==='apex')t='meteor';if(t==='auto'||!t){const fest=festivalToday();if(fest)t=fest.id;else t=weatherTheme||hourTheme()}if(THEMES.indexOf(t)<0)t=hourTheme();clearAtm();document.body.classList.add('atm-'+t);if(opts.reduceMotion)document.body.classList.add('atm-reduce');else document.body.classList.remove('atm-reduce');if(opts.cardSkin&&t!=='native'&&t!=='minimal')document.body.classList.add('skin-'+t);if(t==='rain')buildRain();if(t==='morning')buildMorningLeaves();if(t==='night_stars'||t==='night_aurora'||t==='fest_christmas')buildStars();if(t==='sakura'||t==='fest_holi')buildPetals();if(t==='meteor'||t==='fest_diwali'||t==='fest_newyear')startMeteorCanvas();else stopMeteorCanvas();const sky=document.getElementById('skyLayer');if(sky)sky.style.opacity=String(Math.max(.4,Math.min(1,(opts.intensity||80)/100)));startSound(t);updateMuteBtn();    try{document.documentElement.setAttribute('data-atm',t)}catch(e){}
-    try{localStorage.setItem('dgxen_last_theme', t)}catch(e){} // <-- UPDATE: Yahan current theme ko cache me save kiya
+  function buildStars(){
+    const box = document.getElementById('skyStars');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*48);
+    for (let i=0;i<n;i++) html += '<span class="star" style="left:'+(Math.random()*100)+'%;top:'+(Math.random()*70)+'%;--d:'+(2+Math.random()*4).toFixed(1)+'s;animation-delay:'+(Math.random()*3).toFixed(1)+'s"></span>';
+    box.innerHTML = html;
+  }
+  function buildPetals(){
+    const box = document.getElementById('skyPetals');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*28);
+    for (let i=0;i<n;i++) html += '<span style="left:'+(Math.random()*100)+'%;animation-duration:'+(6+Math.random()*8).toFixed(1)+'s;animation-delay:'+(Math.random()*5).toFixed(1)+'s"></span>';
+    box.innerHTML = html;
+  }
+  function buildMorningLeaves(){
+    const box = document.getElementById('morningLeaves');
+    if (!box) return;
+    let html='';
+    const n=Math.max(10,Math.round((opts.particles||60)/100*20));
+    for(let i=0;i<n;i++) html+='<span style="left:'+(Math.random()*100).toFixed(1)+'%;animation-duration:'+(7+Math.random()*8).toFixed(1)+'s;animation-delay:-'+(Math.random()*10).toFixed(1)+'s"></span>';
+    box.innerHTML=html;
+  }
+  function buildShards(){
+    const box = document.getElementById('skyShards');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*22);
+    for (let i=0;i<n;i++){
+      const size = (10+Math.random()*16).toFixed(0);
+      html += '<b style="left:'+(Math.random()*100).toFixed(1)+'%;width:'+size+'px;height:'+size+'px;animation-duration:'+(4+Math.random()*5).toFixed(1)+'s;animation-delay:'+(Math.random()*4).toFixed(1)+'s"></b>';
+    }
+    box.innerHTML = html;
+  }
+  function buildSparks(){
+    const box = document.getElementById('skySparks');
+    if (!box) return;
+    let html='';
+    const n = Math.round((opts.particles||60)/100*24);
+    for (let i=0;i<n;i++){
+      const sx=((Math.random()-0.5)*80).toFixed(0)+'px', sy=((Math.random()-0.5)*80).toFixed(0)+'px';
+      html += '<i style="left:'+(Math.random()*100).toFixed(1)+'%;top:'+(20+Math.random()*60).toFixed(1)+'%;--sx:'+sx+';--sy:'+sy+';animation-duration:'+(1.2+Math.random()*1.5).toFixed(1)+'s;animation-delay:'+(Math.random()*2).toFixed(1)+'s"></i>';
+    }
+    box.innerHTML = html;
+  }
+  function stopSound(){ try { if (audioEl) { audioEl.pause(); audioEl.currentTime=0; } } catch(e){} }
+  function startSound(theme){
+    stopSound();
+    if (!opts.sound || muted) return;
+    const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
+    const file = map[theme] || 'soft';
+    try {
+      if (!audioEl) { audioEl = new Audio(); audioEl.loop = true; audioEl.volume = 0.22; }
+      audioEl.src = './sounds/atm/' + file + '.mp3';
+      const p = audioEl.play(); if (p && p.catch) p.catch(function(){});
+    } catch(e) {}
+  }
+  function updateMuteBtn(){
+    const b = document.getElementById('atmMuteBtn');
+    if (!b) return;
+    if (opts.sound) b.classList.add('show'); else b.classList.remove('show');
+    b.textContent = muted ? '🔇' : '🔊';
+  }
+  window.applyLoginAtmosphere = function(theme){
+    let t = String(theme || 'auto').trim();
+    try { const q = new URLSearchParams(location.search).get('atm'); if (q) t = q; } catch(e){}
+    if (t === 'auto' || !t) {
+      const fest = festivalToday();
+      if (fest) t = fest.id;
+      else t = weatherTheme || hourTheme();
+    }
+    if (THEMES.indexOf(t) < 0) t = hourTheme();
+    clearAtm();
+    document.body.classList.add('atm-' + t);
+    if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
+    if (opts.cardSkin && t !== 'native' && t !== 'minimal') document.body.classList.add('skin-' + t);
+    if (t === 'rain') buildRain();
+    if (t === 'morning') buildMorningLeaves();
+    if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
+    if (t === 'sakura' || t === 'fest_holi') buildPetals();
+    if (t === 'metroid' || t === 'apex') buildShards();
+    if (t === 'metroid' || t === 'apex') buildSparks();
+    if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
+    const sky = document.getElementById('skyLayer');
+    if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
+    startSound(t); updateMuteBtn();
+        try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
+    try { localStorage.setItem('dgxen_last_theme', t); } catch(e){} // <-- UPDATE 1: Yahan current theme ko cache me save kiya
+  };
+
+  async function fetchWeatherHint(){
+    if (!opts.weather || !navigator.geolocation) return;
+    try {
+      await new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          try {
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=weather_code,is_day&timezone=auto');
+            const data = await res.json();
+            const code = data && data.current && data.current.weather_code;
+            const isDay = data && data.current && data.current.is_day;
+            if (code >= 51 && code <= 67) weatherTheme = 'rain';
+            else if (code >= 0 && code <= 1 && isDay) weatherTheme = 'day_sunny';
+            else if (code >= 2 && code <= 3 && isDay) weatherTheme = 'day_haze';
+            else if (!isDay) weatherTheme = 'night_stars';
+            else weatherTheme = null;
+            if (forced === 'auto') applyLoginAtmosphere('auto');
+          } catch(e){}
+          resolve();
+        }, () => resolve(), { timeout: 6000, maximumAge: 600000 });
+      });
+    } catch(e){}
   }
 
-  async function fetchWeatherHint(){if(!opts.weather||!navigator.geolocation)return;try{await new Promise(resolve=>{navigator.geolocation.getCurrentPosition(async pos=>{try{const lat=pos.coords.latitude,lon=pos.coords.longitude;const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=weather_code,is_day&timezone=auto');const data=await res.json(),code=data&&data.current&&data.current.weather_code,isDay=data&&data.current&&data.current.is_day;if(code>=51&&code<=67)weatherTheme='rain';else if(code>=0&&code<=1&&isDay)weatherTheme='day_sunny';else if(code>=2&&code<=3&&isDay)weatherTheme='day_haze';else if(!isDay)weatherTheme='night_stars';else weatherTheme=null;if(forced==='auto')applyLoginAtmosphere('auto')}catch(e){}resolve()},()=>resolve(),{timeout:6000,maximumAge:600000})})}catch(e){}}
-  
-  function resolveAndApply(){applyLoginAtmosphere(forced||'auto')}
-  
-  try{onValue(ref(db,'settings/notice'),snap=>{const v=snap.exists()?(snap.val()||{}):{};forced=v.loginTheme?String(v.loginTheme):'auto';opts={intensity:v.atmIntensity!=null?Number(v.atmIntensity):80,particles:v.atmParticles!=null?Number(v.atmParticles):60,reduceMotion:!!v.atmReduceMotion,season:v.atmSeason!==false,weather:v.atmWeather!==false,sound:!!v.atmSound,cardSkin:v.atmCardSkin!==false,festival:v.atmFestival!==false};if(isNativeApp)stopSound();resolveAndApply();if(forced==='auto'&&opts.weather)fetchWeatherHint()})}catch(e){applyLoginAtmosphere('auto')}
-  
-  setInterval(()=>{if(forced==='auto')applyLoginAtmosphere('auto')},15*60*1000);
-  
-  const muteBtn=document.getElementById('atmMuteBtn');if(muteBtn&&!isNativeApp)muteBtn.addEventListener('click',()=>{userSoundEnabled=!userSoundEnabled;try{localStorage.setItem('dgxen_atm_sound_enabled',userSoundEnabled?'1':'0')}catch(e){}if(userSoundEnabled){startSound(document.documentElement.getAttribute('data-atm')||'native')}else{stopSound()}updateMuteBtn()});
-  
-  ['pointerdown','touchstart','keydown'].forEach(ev=>document.addEventListener(ev,()=>{if(opts.sound&&userSoundEnabled&&!isNativeApp)retryAutoplay()},{passive:true}));
-  
-  // Resume automatically when the user comes back (tab/app foregrounded) — no need to toggle mute off/on.
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')retryAutoplay()});
-  window.addEventListener('pageshow',()=>retryAutoplay());
-  window.addEventListener('focus',()=>retryAutoplay());
-  window.stopLoginAtmosphereSound=stopSound;
-  
-  window.__DGXEN_FESTIVALS=FESTIVAL_MAP;
-  
-  // <-- UPDATE: Puraani line (applyLoginAtmosphere('auto');) hatakar yeh cache reader daal diya
+  function resolveAndApply(){ applyLoginAtmosphere(forced || 'auto'); }
+
+  try {
+    onValue(ref(db, 'settings/notice'), function(snap){
+      const v = snap.exists() ? (snap.val() || {}) : {};
+      forced = v.loginTheme ? String(v.loginTheme) : 'auto';
+      opts = {
+        intensity: v.atmIntensity != null ? Number(v.atmIntensity) : 80,
+        particles: v.atmParticles != null ? Number(v.atmParticles) : 60,
+        reduceMotion: !!(v.atmReduceMotion),
+        season: v.atmSeason !== false,
+        weather: v.atmWeather !== false,
+        sound: !!(v.atmSound),
+        cardSkin: v.atmCardSkin !== false,
+        festival: v.atmFestival !== false
+      };
+      resolveAndApply();
+      if (forced === 'auto' && opts.weather) fetchWeatherHint();
+    });
+  } catch (e) { applyLoginAtmosphere('auto'); }
+
+  setInterval(function(){ if (forced === 'auto') applyLoginAtmosphere('auto'); }, 15*60*1000);
+
+  const muteBtn = document.getElementById('atmMuteBtn');
+  if (muteBtn) {
+    muteBtn.addEventListener('click', function(){
+      muted = !muted;
+      localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0');
+      if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
+      updateMuteBtn();
+    });
+  }
+  document.body.addEventListener('pointerdown', function(){
+    if (opts.sound && !muted && audioEl) { try { audioEl.play().catch(function(){}); } catch(e){} }
+  }, { once:true });
+
+  window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
+
+  // <-- UPDATE 2: Puraani line (applyLoginAtmosphere('auto');) hatakar yeh cache reader daal diya
   try {
     const cached = localStorage.getItem('dgxen_last_theme');
     if (cached) applyLoginAtmosphere(cached);
@@ -2013,3 +2038,4 @@ document.addEventListener('visibilitychange', function(){
 </script>
 </body>
 </html>
+
