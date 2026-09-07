@@ -1794,14 +1794,13 @@ document.addEventListener('visibilitychange', function(){
     return 'night_stars';
   }
 
-  function seasonTheme(){
+    function seasonTheme(){
     if (!opts.season) return null;
     const m = new Date().getMonth() + 1, d = new Date().getDate();
-    // rough festive windows (India-focused)
-    if (m === 3 && d >= 8 && d <= 20) return 'sakura'; // Holi season soft
-    if (m === 10 || m === 11) return 'ember'; // Diwali-ish warm
+    if (m === 3 && d >= 8 && d <= 20) return 'sakura'; // Holi
+    if (m === 10 || m === 11) return 'ember'; // Diwali
     if (m === 12 || m === 1) return 'night_stars';
-    if (m >= 6 && m <= 9) return 'rain'; // monsoon lean
+    // Removed forced rain for June-Sept to allow real weather API to work
     return null;
   }
 
