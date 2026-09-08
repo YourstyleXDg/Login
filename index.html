@@ -37,15 +37,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{
-  width:min(380px,100%); /* slightly wider */
-  perspective:1500px;
-  position:relative;
-  isolation:isolate;
-  will-change:transform;
-  transition:transform .55s cubic-bezier(.22,1,.36,1);
-  transform:translateZ(0)
-}
+.scene{width:min(360px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1);transform:translateZ(0)}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -131,9 +123,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 }
 
 .glass{
-  position:relative;overflow:hidden;border-radius:var(--card-radius);
-  padding:43px 34px 34px; /* slightly wider sides */
-  text-align:center;
+  position:relative;overflow:hidden;border-radius:var(--card-radius);padding:43px 29px 34px;text-align:center;
   background:linear-gradient(145deg,rgba(255,255,255,.105),rgba(255,255,255,.034) 52%,rgba(255,255,255,.018));
   border:1px solid rgba(255,255,255,.13);
   box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(255,255,255,.04),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.35);
@@ -170,96 +160,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
-h2{
-  color:var(--accent);
-  margin:0 0 6px;
-  font-size:22px;
-  letter-spacing:.3px;
-  text-shadow:0 0 22px rgba(0,255,136,.3);
-  position:relative;
-  cursor:pointer;
-  display:inline-block;
-  touch-action:manipulation;
-}
-/* Swirl-ring for world entry feedback */
-h2 .swirl-ring{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:0;
-  height:0;
-  pointer-events:none;
-  opacity:0;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  border:2px solid rgba(0,255,136,.3);
-  box-shadow:0 0 20px rgba(0,255,136,.2),inset 0 0 20px rgba(0,255,136,.1);
-  transition:opacity .2s,width .1s,height .1s;
-}
-h2 .swirl-ring::before{
-  content:'';
-  position:absolute;
-  inset:-8px;
-  border-radius:50%;
-  border:1px dashed rgba(0,255,136,.2);
-  animation:spinRing 3s linear infinite;
-}
-h2 .swirl-ring .orb{
-  position:absolute;
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:var(--accent);
-  box-shadow:0 0 12px var(--accent-glow);
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  animation:orbPulse 1.2s ease-in-out infinite;
-}
-h2 .swirl-ring .spark{
-  position:absolute;
-  width:3px;
-  height:3px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 0 8px #fff;
-  top:50%;
-  left:50%;
-}
-@keyframes spinRing{
-  to{transform:rotate(360deg);}
-}
-@keyframes orbPulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8;}
-  50%{transform:translate(-50%,-50%) scale(1.6);opacity:1;}
-}
-h2.holding .swirl-ring{
-  opacity:1;
-  width:140px;
-  height:140px;
-  animation:portalExpand 3s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes portalExpand{
-  0%{width:0;height:0;opacity:0;border-width:2px;}
-  30%{width:60px;height:60px;opacity:.8;border-width:3px;}
-  70%{width:180px;height:180px;opacity:1;border-width:1px;border-color:rgba(0,255,136,.6);}
-  100%{width:200px;height:200px;opacity:1;border-width:1px;border-color:rgba(0,255,136,.8);box-shadow:0 0 60px rgba(0,255,136,.4),inset 0 0 60px rgba(0,255,136,.2);}
-}
-h2 .world-hint{
-  position:absolute;
-  bottom:-32px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  color:var(--accent);
-  white-space:nowrap;
-  opacity:0;
-  transition:opacity .3s;
-  text-shadow:0 0 10px rgba(0,255,136,.5);
-}
-h2.holding .world-hint{opacity:1;}
+h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3)}
 .tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
 
 .key-wrap{position:relative;margin-bottom:16px}
@@ -607,26 +508,6 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 .offline-banner,.admin-notice,.recall-hint{z-index:120}
 .revoke-overlay{z-index:99999}
 
-/* ===== 3D WORLD OVERLAY ===== */
-#apex-world-container{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  z-index:1;
-  pointer-events:none;
-  display:none;
-  background:#04050a;
-}
-#apex-world-container.active{
-  display:block;
-  pointer-events:auto;
-}
-/* ensure login card stays above world */
-.scene, .offline-banner, .admin-notice, .recall-hint, .revoke-overlay, .atm-mute-btn{position:relative;z-index:5;}
-.sky-layer{position:fixed;z-index:0;}
-
 </style>
 </head>
 <body>
@@ -651,9 +532,6 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 <canvas id="fx" aria-hidden="true"></canvas>
 
-<!-- DGXEN 3D World Container -->
-<div id="apex-world-container"></div>
-
 <button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Mute atmosphere">🔊</button>
 <div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
@@ -668,11 +546,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-        <h2 id="dgxenTitle">
-          DGXEN VIP
-          <span class="swirl-ring"><span class="orb"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></span>
-          <span class="world-hint">✦ HOLD TO ENTER INFINITE WORLD ✦</span>
-        </h2>
+        <h2>DGXEN VIP</h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
@@ -2383,123 +2257,7 @@ document.addEventListener('visibilitychange', function(){
 
 
 
-// ===== DGXEN INFINITE WORLD (3D) – Hold "DGXEN VIP" for 3s =====
-(function(){
-  const title = document.getElementById('dgxenTitle');
-  if (!title) return;
-  let holdTimer = null;
-  let worldActive = false;
-  let worldScriptLoaded = false;
-  let worldContainer = document.getElementById('apex-world-container');
-  let worldRunning = false;
-
-  function startWorld() {
-    if (worldRunning) return;
-    // Show container and hide sky-layer
-    worldContainer.style.display = 'block';
-    worldContainer.classList.add('active');
-    document.getElementById('skyLayer').style.opacity = '0';
-    // Load world script if not loaded
-    if (!worldScriptLoaded) {
-      // Inject the entire world code from dgxen world.txt
-      const script = document.createElement('script');
-      script.textContent = `
-        // ==== DGXEN ∞ INFINITE WORLD — PINCH SPEED + GYRO (drop-in) ====
-        (function(){
-          var cv=document.createElement('canvas');
-          cv.id='apex4d';
-          cv.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;';
-          var container=document.getElementById('apex-world-container');
-          container.innerHTML='';
-          container.appendChild(cv);
-          var ov=document.createElement('div');
-          ov.id='apex4d-ov';
-          ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 58%, rgba(8,16,36,.5) 100%);';
-          container.appendChild(ov);
-          var hint=document.createElement('div');
-          hint.id='apex-hint';
-          hint.style.cssText='position:fixed;bottom:112px;left:50%;transform:translateX(-50%);z-index:9;width:88%;text-align:center;color:#9be8ff;font:700 10px/1.8 Arial,sans-serif;letter-spacing:2.5px;pointer-events:none;text-shadow:0 0 14px rgba(60,220,255,.8);animation:hintPulse 2.2s ease-in-out infinite;transition:opacity .8s;';
-          hint.textContent='◇ DRAG / GYRO LOOK · 2×TAP FLY · PINCH-IN ⚡ SPEED · 3×TAP TELEPORT ◇';
-          container.appendChild(hint);
-          var statusEl=document.createElement('div');
-          statusEl.id='apex-status';
-          statusEl.style.cssText='position:fixed;top:74px;left:0;width:100%;text-align:center;z-index:9;font:800 13px/1.4 Arial,sans-serif;letter-spacing:5px;pointer-events:none;opacity:0;transition:opacity .35s;text-shadow:0 0 16px currentColor;';
-          container.appendChild(statusEl);
-          var hudEl=document.createElement('div');
-          hudEl.id='apex-hud';
-          hudEl.style.cssText='position:fixed;left:14px;bottom:12px;z-index:9;pointer-events:none;font:400 9.5px/1.7 monospace;letter-spacing:1.5px;color:rgba(160,220,255,.85);text-shadow:0 0 10px rgba(60,220,255,.5);';
-          container.appendChild(hudEl);
-          // ---- THE FULL WORLD ENGINE (from dgxen world.txt) ----
-          // We'll embed the entire JavaScript code here.
-          // Since it's large, we'll reference the content from the file.
-          // For this implementation, we copy the entire script from dgxen world.txt.
-          // (The full code is already provided in the file; we'll just embed it.)
-          // For brevity in this generated HTML, we use a placeholder but the actual file contains the full engine.
-          // In practice, you'd paste the entire script content here.
-          console.log('DGXEN World engine loaded.');
-        })();
-      `;
-      document.body.appendChild(script);
-      worldScriptLoaded = true;
-    }
-    worldRunning = true;
-    // feedback on title
-    title.style.color = '#ff6b9d';
-    title.style.textShadow = '0 0 30px rgba(255,107,157,0.7)';
-  }
-
-  function stopWorld() {
-    if (!worldRunning) return;
-    worldRunning = false;
-    worldContainer.classList.remove('active');
-    worldContainer.style.display = 'none';
-    document.getElementById('skyLayer').style.opacity = '1';
-    title.style.color = '';
-    title.style.textShadow = '';
-    // Remove canvas? leave for next time.
-  }
-
-  function toggleWorld() {
-    if (worldRunning) {
-      stopWorld();
-    } else {
-      startWorld();
-    }
-  }
-
-  // Long press on title
-  let titleHoldTimer = null;
-  title.addEventListener('pointerdown', function(e) {
-    e.stopPropagation();
-    titleHoldTimer = setTimeout(() => {
-      titleHoldTimer = null;
-      title.classList.add('holding');
-      setTimeout(() => {
-        title.classList.remove('holding');
-        toggleWorld();
-      }, 100);
-    }, 3000);
-  });
-
-  title.addEventListener('pointerup', function(e) {
-    if (titleHoldTimer) {
-      clearTimeout(titleHoldTimer);
-      titleHoldTimer = null;
-      title.classList.remove('holding');
-    }
-  });
-
-  title.addEventListener('pointerleave', function(e) {
-    if (titleHoldTimer) {
-      clearTimeout(titleHoldTimer);
-      titleHoldTimer = null;
-      title.classList.remove('holding');
-    }
-  });
-
-  title.addEventListener('contextmenu', e => e.preventDefault());
-})();
-
 </script>
 </body>
 </html>
+
