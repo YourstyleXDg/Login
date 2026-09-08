@@ -160,8 +160,9 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
-h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center}
+h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;gap:7px}
 .dgxen-word{position:relative;display:inline-block;cursor:pointer;user-select:none;-webkit-user-select:none;transition:text-shadow .3s ease,color .3s ease;overflow:visible;touch-action:none}
+.vip-word{display:inline-block}
 .dgxen-word.charging{color:#eaffef;text-shadow:0 0 18px rgba(0,255,136,.85),0 0 36px rgba(0,255,136,.5)}
 .dgxen-orb{position:absolute;top:50%;left:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;
   background:radial-gradient(circle,#fff 0%,#7dffb0 45%,rgba(0,255,136,0) 75%);
@@ -449,12 +450,13 @@ body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
   position:relative;display:none;align-items:center;justify-content:center;
-  width:26px;height:26px;margin-left:8px;padding:0;flex-shrink:0;
+  width:26px;height:26px;padding:0;flex-shrink:0;
   background:transparent;border:none;cursor:pointer;vertical-align:middle;
   color:rgba(255,255,255,.32);opacity:.4;
   transition:color .3s ease,filter .3s ease,opacity .3s ease;
 }
-.atm-mute-btn.show{display:inline-flex;animation:atmBtnPopIn .5s cubic-bezier(.22,1.4,.36,1) both}
+.atm-mute-btn.show{display:inline-flex;opacity:0}
+.atm-mute-btn.show.unfolded{animation:atmBtnPopIn .5s cubic-bezier(.22,1.4,.36,1) both}
 @keyframes atmBtnPopIn{
   0%{opacity:0;transform:scale(.4) rotate(-25deg)}
   60%{opacity:1;transform:scale(1.12) rotate(4deg)}
@@ -464,7 +466,7 @@ body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
   content:"";position:absolute;inset:-7px;border-radius:50%;
   border:1.5px solid rgba(0,255,136,.55);opacity:0;pointer-events:none;
 }
-.atm-mute-btn.show:not(.is-muted)::after{animation:atmBtnPulse 2.2s ease-out infinite}
+.atm-mute-btn.show:not(.is-muted)::after{animation:atmBtnPulse 2.2s ease-out 1}
 @keyframes atmBtnPulse{
   0%{opacity:.55;transform:scale(.85)}
   80%{opacity:0;transform:scale(1.35)}
@@ -485,7 +487,7 @@ body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
   color:var(--accent,#00ff88);
   opacity:1;
   filter:drop-shadow(0 0 6px rgba(0,255,136,.55));
-  animation:atmBtnBreathe 2.6s ease-in-out infinite;
+  animation:atmBtnBreathe 2.6s ease-in-out 1 forwards;
 }
 @keyframes atmBtnBreathe{
   0%,100%{transform:scale(1);filter:drop-shadow(0 0 6px rgba(0,255,136,.45))}
@@ -601,12 +603,37 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   #apex4d-ov{position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;opacity:0;transition:opacity 1.1s ease;
     background:radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 58%, rgba(8,16,36,.5) 100%)}
   #apex4d-ov.show{opacity:1}
-  #apex-hud{display:none}
+  #apex-hint{
+    position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:50;
+    pointer-events:none;max-width:calc(100vw - 32px);text-align:center;
+    font:700 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    letter-spacing:.5px;color:rgba(210,255,235,.85);white-space:nowrap;
+    text-shadow:0 0 12px rgba(0,255,136,.35),0 1px 3px rgba(0,0,0,.65);
+    opacity:0;transition:opacity .8s ease;
+  }
+  html[data-dgxen-world="1"] #apex-hint{opacity:1}
+  html[data-dgxen-world="1"] #apex-hint.gone{opacity:0}
+  #apex-status{
+    position:fixed;left:50%;top:20%;transform:translateX(-50%);z-index:50;
+    pointer-events:none;text-align:center;white-space:nowrap;
+    font:800 14px/1.3 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    letter-spacing:1px;text-shadow:0 0 16px currentColor,0 2px 6px rgba(0,0,0,.65);
+    opacity:0;transition:opacity .3s ease;
+  }
+  #apex-status.show{opacity:1}
+  #apex-hud{
+    position:fixed;left:14px;bottom:14px;z-index:50;pointer-events:none;
+    font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.4px;color:rgba(200,225,255,.72);
+    text-shadow:0 1px 3px rgba(0,0,0,.65);
+    opacity:0;transition:opacity .6s ease;
+  }
+  html[data-dgxen-world="1"] #apex-hud{opacity:1}
 </style>
 <canvas id="apex4d" aria-hidden="true"></canvas>
 <div id="apex4d-ov" aria-hidden="true"></div>
-<div id="apex-hint" style="display:none"></div>
-<div id="apex-status" style="display:none"></div>
+<div id="apex-hint"></div>
+<div id="apex-status"></div>
 <div id="apex-hud"></div>
 <div id="worldFlyOverlay" aria-hidden="true"></div>
 
@@ -718,8 +745,15 @@ body[data-atm-intensity] .sky-layer{opacity:1}
                                     b:makeGlow(TH[i].glowB[0],TH[i].glowB[1],TH[i].glowB[2])};
     return glowCache[i];
   }
+  var hintTimer=null;
   function hintHide(){ if(!hintGone){hintGone=true;hint.className='gone';} }
-  setTimeout(hintHide,15000);
+  function hintShow(){
+    hintGone=false;
+    hint.textContent='◇ DRAG LOOK · 2×TAP FLY · 2-FINGER PINCH · ⚡ SPEED TIERS · 3×TAP TELEPORT ◇';
+    hint.className='';
+    clearTimeout(hintTimer);
+    hintTimer=setTimeout(hintHide,15000);
+  }
   function showLabel(txt,col,ms){
     statusEl.textContent=txt;
     statusEl.style.color='rgb('+col[0]+','+col[1]+','+col[2]+')';
@@ -1678,6 +1712,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     start:function(){
       if(running) return;
       running=true;
+      hintShow();
       resize();
       tick();
     },
@@ -1685,6 +1720,10 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       running=false;
       if(rafId) cancelAnimationFrame(rafId);
       try{ ctx.clearRect(0,0,W,H); }catch(e){}
+      clearTimeout(hintTimer);
+      hint.className='gone';
+      statusEl.className='';
+      clearTimeout(stT);
     }
   };
 })();
@@ -1704,7 +1743,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-        <h2><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span> VIP <button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></h2>
+        <h2><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
@@ -2399,6 +2438,17 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   const muteBtn = document.getElementById('atmMuteBtn');
   if (muteBtn) {
+    (function revealMuteBtnOnUnfold(){
+      let revealed = false;
+      function reveal(){ if (revealed) return; revealed = true; muteBtn.classList.add('unfolded'); }
+      const shellEl = document.getElementById('cardShell');
+      if (shellEl) {
+        shellEl.addEventListener('animationend', function(e){
+          if (e.animationName === 'unrollCorner4D') reveal();
+        });
+      }
+      setTimeout(reveal, 2100); // safety net in case the unfold animationend never fires
+    })();
     muteBtn.addEventListener('click', function(){
       if (isNativeTheme || !opts.sound) return;
       muted = !muted;
@@ -2419,7 +2469,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 </script>
 
 <script>
-// ===== DGXEN — hold "DGXEN" for 3s to enter/exit the 3D world =====
+// ===== DGXEN — hold "DGXEN" for 4s to enter/exit the 3D world =====
 (function(){
   const target = document.getElementById('dgxenHoldTarget');
   const flyOverlay = document.getElementById('worldFlyOverlay');
@@ -2427,7 +2477,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const worldOv = document.getElementById('apex4d-ov');
   if (!target) return;
 
-  const HOLD_MS = 3000;
+  const HOLD_MS = 4000;
   let holdTimer = null;
   let holdStartT = 0;
   let inWorld = false;
