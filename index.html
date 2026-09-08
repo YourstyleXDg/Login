@@ -236,6 +236,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 @keyframes testBounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-9px)}}
 
 /* Admin broadcast notice (bottom) */
+/* Admin broadcast notice (bottom) */
 .admin-notice{
   position:fixed;left:50%;bottom:max(12px, env(safe-area-inset-bottom, 0px));
   z-index:120;width:min(calc(100vw - 24px), 340px);
@@ -246,7 +247,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
   box-shadow:0 8px 28px rgba(0,0,0,.45);
   opacity:0;pointer-events:none;transform:translate(-50%,20px);transition:opacity .3s,transform .3s;
 }
-.admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,40px)}
+.admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,25px)}
 body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 @media (max-height:700px){
   .admin-notice{max-height:18vh;font-size:11px;padding:8px 32px 8px 12px}
