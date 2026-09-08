@@ -37,7 +37,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(376px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1);transform:translateZ(0)}
+.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1);transform:translateZ(0)}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -159,7 +159,8 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
-.logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
+.brand-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:0;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
 h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center}
 .dgxen-word{position:relative;display:inline-block;cursor:pointer;user-select:none;-webkit-user-select:none;transition:text-shadow .3s ease,color .3s ease;overflow:visible;touch-action:none}
 .dgxen-word.charging{color:#eaffef;text-shadow:0 0 18px rgba(0,255,136,.85),0 0 36px rgba(0,255,136,.5)}
@@ -449,10 +450,10 @@ body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
   position:relative;display:none;align-items:center;justify-content:center;
-  width:26px;height:26px;margin-left:8px;padding:0;flex-shrink:0;
+  width:26px;height:26px;margin:0;padding:0;flex-shrink:0;
   background:transparent;border:none;cursor:pointer;vertical-align:middle;
-  color:rgba(255,255,255,.32);
-  transition:color .3s ease,filter .3s ease;
+  color:rgba(255,255,255,.32);opacity:.4;
+  transition:color .3s ease,filter .3s ease,opacity .3s ease;
 }
 .atm-mute-btn.show{display:inline-flex;animation:atmBtnPopIn .5s cubic-bezier(.22,1.4,.36,1) both}
 @keyframes atmBtnPopIn{
@@ -478,11 +479,20 @@ body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
   70%{transform:scale(1.15) rotate(4deg)}
   100%{transform:scale(1) rotate(0)}
 }
-.atm-mute-btn.is-muted{ color:rgba(255,255,255,.32); }
+/* muted = dim / transparent outline */
+.atm-mute-btn.is-muted{ color:rgba(255,255,255,.32); opacity:.4; filter:none; animation:none; }
+/* playing = filled accent colour + subtle breathing animation */
 .atm-mute-btn:not(.is-muted){
   color:var(--accent,#00ff88);
+  opacity:1;
   filter:drop-shadow(0 0 6px rgba(0,255,136,.55));
+  animation:atmBtnBreathe 2.6s ease-in-out infinite;
 }
+@keyframes atmBtnBreathe{
+  0%,100%{transform:scale(1);filter:drop-shadow(0 0 6px rgba(0,255,136,.45))}
+  50%{transform:scale(1.08);filter:drop-shadow(0 0 11px rgba(0,255,136,.75))}
+}
+.atm-mute-btn.toggle-pop{animation:atmBtnToggle .38s cubic-bezier(.22,1.4,.36,1)}
 .atm-mute-btn svg{display:block}
 
 
@@ -620,6 +630,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   }
   window.addEventListener('resize',resize);
 
+  /* ================== THEMES ================== */
   var TH=[
     {name:'DEEP SPACE',grid:'34,211,238',grid2:'56,189,248',beam:'129,140,248',
      stars:[[125,211,252],[96,165,250],[167,139,250],[230,245,254]],
@@ -681,10 +692,11 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   ];
   function tierOf(b){ return b<0.12?0:b<0.30?1:b<0.50?2:b<0.70?3:b<0.88?4:b<0.97?5:6; }
 
+  /* ================== STATE ================== */
   var camX=0,camY=0,camZ=0;
-  var tyaw=0,tpitch=0,cyaw=0,cpitch=0,vyaw=0,vpitch=0;
+  var tyaw=0,tpitch=0,cyaw=0,cpitch=0,vyaw=0,vpitch=0,gx=0,gy=0;
   var dragT=null,downInfo=null,idle=0;
-  var cruising=true; // ambient mode: gentle constant drift, no gesture input drives this
+  var cruising=false,holding=false;
   var boost=0,spd=0,tierIdx=0;
   var whiteMix=0,blinkNext=40,blinkDur=0;
   var taps=0,tapTimer=null,flashA=0,t=0,hintGone=false,stT=null;
@@ -718,7 +730,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   }
   function toggleCruise(){
     cruising=!cruising;
-    showLabel(cruising?'◇ FLYING — STEER WITH HAND / GYRO ◇':'◇ STOPPED ◇',WS.glowA,1400);
+    showLabel(cruising?'◇ FLYING — DRAG TO STEER ◇':'◇ STOPPED ◇',WS.glowA,1400);
   }
   function teleport(){
     camX+=rnd(-14000,14000); camZ+=rnd(-14000,14000);
@@ -727,10 +739,8 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   }
   function isUI(el){ return el&&el.closest&&el.closest('button,a,input,label,select,textarea,.card'); }
 
-  /* ============ INPUT — hand drag + GYRO look + PINCH-IN speed ============ */
-  var tPts=[], pinching=false, pinchD=0, spaceHold=false;
-  var gyroOn=false, gG=0, gB=0;
-
+  /* ================== INPUT — touch + mouse (WebView-safe) ================== */
+  var tPts=[];   /* active fingers */
   function lookMove(nx,ny){
     if(!dragT) return;
     var dx=nx-dragT.x, dy=ny-dragT.y;
@@ -748,27 +758,77 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     }
     downInfo=null;
   }
-  function pinchDist(){
-    if(tPts.length<2) return 0;
-    var dx=tPts[0].x-tPts[1].x, dy=tPts[0].y-tPts[1].y;
-    return Math.sqrt(dx*dx+dy*dy);
-  }
-  var iosPermDone=false;
-  function askGyro(){                       /* iOS 13+ needs permission inside a gesture */
-    if(iosPermDone) return; iosPermDone=true;
-    try{
-      if(typeof DeviceOrientationEvent!=='undefined' && DeviceOrientationEvent.requestPermission){
-        DeviceOrientationEvent.requestPermission().then(function(){}).catch(function(){});
-      }
-    }catch(e){}
-  }
+  function boostOn(){ holding=true; showLabel('⚡ '+TIERS[tierOf(boost)].n+' ⚡',TIERS[tierOf(boost)].c,0); }
+  function boostOff(){ if(holding){ holding=false; showLabel('◇ DECELERATING ◇',WS.glowA,900); } }
 
-  /* GYROSCOPE look — tilt to look around (works with hand drag together) */
+  document.addEventListener('touchstart',function(e){
+    if(isUI(e.target)) return;                      /* login UI keeps working */
+    for(var i=0;i<e.changedTouches.length;i++){
+      var tc=e.changedTouches[i];
+      tPts.push({id:tc.identifier,x:tc.clientX,y:tc.clientY});
+    }
+    hintHide();
+    if(tPts.length===1){
+      dragT={x:tPts[0].x,y:tPts[0].y};
+      downInfo={x:tPts[0].x,y:tPts[0].y,t:Date.now(),moved:false};
+      idle=0; vyaw=vpitch=0;
+    }else if(tPts.length>=2){
+      dragT=null; downInfo=null; taps=0; clearTimeout(tapTimer);
+      boostOn();
+    }
+    e.preventDefault();
+  },{passive:false});
+  document.addEventListener('touchmove',function(e){
+    for(var i=0;i<e.changedTouches.length;i++){
+      var tc=e.changedTouches[i];
+      for(var k=0;k<tPts.length;k++){
+        if(tPts[k].id===tc.identifier){ tPts[k].x=tc.clientX; tPts[k].y=tc.clientY; }
+      }
+    }
+    idle=0;
+    if(tPts.length===1&&dragT) lookMove(tPts[0].x,tPts[0].y);
+    if(tPts.length>0) e.preventDefault();
+  },{passive:false});
+  function touchEnd(e){
+    for(var i=0;i<e.changedTouches.length;i++){
+      var id=e.changedTouches[i].identifier;
+      for(var k=0;k<tPts.length;k++){ if(tPts[k].id===id){ tPts.splice(k,1); break; } }
+    }
+    if(holding&&tPts.length<2) boostOff();
+    if(tPts.length===1){ dragT={x:tPts[0].x,y:tPts[0].y}; downInfo=null; }
+    if(tPts.length===0){ dragT=null; tapEval(); }
+  }
+  document.addEventListener('touchend',touchEnd);
+  document.addEventListener('touchcancel',touchEnd);
+  document.addEventListener('gesturestart',function(e){e.preventDefault();});
+
+  var mouseMode=false;
+  document.addEventListener('mousedown',function(e){
+    if(isUI(e.target)) return;
+    mouseMode=true; hintHide();
+    dragT={x:e.clientX,y:e.clientY};
+    downInfo={x:e.clientX,y:e.clientY,t:Date.now(),moved:false};
+    idle=0; vyaw=vpitch=0;
+  });
+  document.addEventListener('mousemove',function(e){
+    if(mouseMode&&tPts.length===0){ idle=0; lookMove(e.clientX,e.clientY); }
+  });
+  document.addEventListener('mouseup',function(){
+    if(!mouseMode) return;
+    mouseMode=false; dragT=null; tapEval();
+  });
+  /* desktop boost: hold SPACE */
+  document.addEventListener('keydown',function(e){
+    if(e.code==='Space'&&!e.repeat&&!isUI(e.target)){ boostOn(); e.preventDefault(); }
+  });
+  document.addEventListener('keyup',function(e){
+    if(e.code==='Space') boostOff();
+  });
+  document.addEventListener('contextmenu',function(e){ if(holding||dragT) e.preventDefault(); });
   window.addEventListener('deviceorientation',function(e){
     if(e.gamma==null) return;
-    gyroOn=true;
-    gG=Math.max(-1,Math.min(1,e.gamma/28));          /* tilt left/right → yaw */
-    gB=Math.max(-1,Math.min(1,((e.beta||45)-45)/28));/* tilt fwd/back  → pitch */
+    gx=Math.max(-1,Math.min(1,e.gamma/30))*0.30;
+    gy=Math.max(-1,Math.min(1,((e.beta||45)-45)/30))*0.20;
   });
 
   /* ================== 3D MATH ================== */
@@ -813,6 +873,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     ctx.closePath();
   }
 
+  /* ================== SKY LAYERS ================== */
   var stars=[];
   for(var i0=0;i0<(reduced?140:300);i0++){
     var u0=rnd(-1,1),th0=rnd(0,6.283),sr0=Math.sqrt(1-u0*u0);
@@ -943,6 +1004,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     }
   }
 
+  /* ================== 16 ELEMENT TYPES ================== */
   function drawElement(type,x,z,h1,h2,h3){
     var dx=x-camX,dz=z-camZ,dist=dist2(dx,dz);
     if(dist>5200) return;
@@ -1369,6 +1431,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     }
   }
 
+  /* ================== WEATHER ================== */
   function setWP(p,kind,init){
     p.x=rnd(0,Math.max(W,300));
     p.y=init?rnd(0,Math.max(H,300)):rnd(-60,-10);
@@ -1460,11 +1523,6 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     if(document.hidden) return;
     t++; idle++;
 
-    /* GYRO look: tilt = turn (adds on top of hand drag) */
-    if(gyroOn&&!reduced){
-      tyaw  += gG*0.020;
-      tpitch+= gB*0.014;
-    }
     if(!dragT){
       tyaw+=vyaw; tpitch+=vpitch;
       vyaw*=0.94; vpitch*=0.94;
@@ -1472,25 +1530,24 @@ body[data-atm-intensity] .sky-layer{opacity:1}
         tpitch+=(Math.sin(t*0.0013)*0.06-tpitch)*0.003; }
     }
     tpitch=Math.max(-0.7,Math.min(0.7,tpitch));
-    cyaw+=((tyaw)-cyaw)*0.08;
-    cpitch+=((tpitch)-cpitch)*0.08;
+    cyaw+=((tyaw+gx)-cyaw)*0.08;
+    cpitch+=((tpitch+gy)-cpitch)*0.08;
     cosY=Math.cos(cyaw); sinY=Math.sin(cyaw);
     cosP=Math.cos(cpitch); sinP=Math.sin(cpitch);
 
-    /* boost: pinch-in adds directly; space charges; otherwise smooth decay */
-    if(spaceHold) boost=Math.min(1,boost+0.005);
-    else if(!pinching) boost=Math.max(0,boost-0.008);
+    if(holding) boost=Math.min(1,boost+0.005);
+    else boost=Math.max(0,boost-0.008);
     var nt=tierOf(boost);
     if(nt!==tierIdx){
       if(nt>tierIdx){
-        showLabel('⚡ '+TIERS[nt].n+' ⚡',TIERS[nt].c,(pinching||spaceHold)?0:1200);
+        showLabel('⚡ '+TIERS[nt].n+' ⚡',TIERS[nt].c,holding?0:1200);
         flashA=Math.max(flashA,0.25+nt*0.12);
         pulses.push({x:W/2,y:H/2,r:10,max:180+nt*70});
       }else if(tierIdx>=5&&nt<5) showLabel('◇ STABILIZING ◇',WS.glowA,1200);
       tierIdx=nt;
     }
 
-    var spdTarget=boost>0.01?BASE*(1+boost*14):(cruising?BASE:0);
+    var spdTarget=holding?BASE*(1+boost*14):(cruising?BASE:0);
     spd+=(spdTarget-spd)*0.05;
     camX+=Math.sin(cyaw)*spd;
     camZ+=Math.cos(cyaw)*spd;
@@ -1638,8 +1695,11 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
-        <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-        <h2><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span> VIP <button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><path d="M4 14a2 2 0 0 1 2-2h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2z"/><path d="M20 14a2 2 0 0 0-2-2h-1a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1a2 2 0 0 0 2-2z"/></svg></button></h2>
+        <div class="brand-row">
+          <button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button>
+          <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
+        </div>
+        <h2><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span> VIP</h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
@@ -2125,8 +2185,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     { md:'12-25', id:'fest_christmas', name:'Christmas' }
   ];
   let isNativeTheme = false; // true only when the current atmosphere theme is 'native' — updated on every theme apply
-  const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><path d="M17 8.5a5 5 0 0 1 0 7"></path><path d="M19.5 6a8.5 8.5 0 0 1 0 12"></path></svg>';
-  const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><line x1="17" y1="9" x2="22" y2="14"></line><line x1="22" y1="9" x2="17" y2="14"></line></svg>';
+  const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg>';
+  const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
   let forced = 'auto';
   let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
   let weatherTheme = null;
