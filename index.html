@@ -1031,7 +1031,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     { md:'11-14', id:'fest_children', name:"Children's Day" },
     { md:'12-25', id:'fest_christmas', name:'Christmas' }
   ];
-  const isNativeApp = !!(window.Android);
+  const isNativeApp = false; // was: !!(window.Android) — speaker button + sound are now enabled in the app's WebView too, per request
   const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><path d="M17 8.5a5 5 0 0 1 0 7"></path><path d="M19.5 6a8.5 8.5 0 0 1 0 12"></path></svg>';
   const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><line x1="17" y1="9" x2="22" y2="14"></line><line x1="22" y1="9" x2="17" y2="14"></line></svg>';
   let forced = 'auto';
