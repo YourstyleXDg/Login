@@ -1040,6 +1040,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let weatherTheme = null;
   let audioEl = null;
   let muted = true;
+ { console.warn('[atm] localStorage unavailable, defaulting muted=false:', e); }
   function pad(n){ return (n<10?'0':'')+n; }
   function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function festivalToday(){
@@ -1461,48 +1462,7 @@ function toggleAutoLogin(){
 autoNotch.addEventListener('click',toggleAutoLogin);
 autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAutoLogin()}});
 const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
-window.addEventListener('load',()=>{
-
-    muted = true;
-
-    try{
-        if(audioEl){
-            audioEl.pause();
-            audioEl.currentTime = 0;
-        }
-    }catch(e){}
-
-    updateMuteBtn();
-    updateNotchUI();
-
-    const p=new URLSearchParams(location.search);
-
-    const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');
-
-    if(urlDid&&urlDid.trim()){
-        try{
-            localStorage.setItem('deviceId',urlDid.trim());
-        }catch(e){}
-    }
-
-    const urlKey=p.get('key')||p.get('token');
-    const saved=urlKey||localStorage.getItem('dgxen_saved_key');
-
-    if(saved){
-        input.value=saved.trim();
-        save.checked=true;
-
-        if(isAutoLoginEnabled&&!urlKey){
-            setTimeout(function(){
-                if(!btn.disabled) verifyKey();
-            },500);
-        }
-    }
-
-    paintOffline&&paintOffline();
-
-});
-
+window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey){setTimeout(function(){try{window.unlockAudio&&window.unlockAudio();}catch(e){}if(!btn.disabled)verifyKey();},500);}}paintOffline&&paintOffline();});
 btn.addEventListener('click',verifyKey);
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
 
