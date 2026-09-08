@@ -246,7 +246,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
   box-shadow:0 8px 28px rgba(0,0,0,.45);
   opacity:0;pointer-events:none;transform:translate(-50%,20px);transition:opacity .3s,transform .3s;
 }
-.admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,25px)}
+.admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 @media (max-height:700px){
   .admin-notice{max-height:18vh;font-size:11px;padding:8px 32px 8px 12px}
@@ -1038,7 +1038,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
   let weatherTheme = null;
   let audioEl = null;
-  let muted = true;
+  let muted = true; // sound always starts muted on every app open/reopen — no saved preference (per request)
   function pad(n){ return (n<10?'0':'')+n; }
   function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function festivalToday(){
@@ -1244,7 +1244,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     muteBtn.addEventListener('click', function(){
       if (isNativeTheme || !opts.sound) return;
       muted = !muted;
-      try { localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0'); } catch(e) { console.warn('[atm] could not persist mute state:', e); }
       if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
       updateMuteBtn();
     });
