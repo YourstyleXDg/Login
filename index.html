@@ -88,9 +88,8 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 }
 
 .hang{
-  position:absolute;top:-51px;right:22px;width:78px;height:54px;
-  display:flex;flex-direction:column;align-items:center;z-index:12;
-  transform-origin:50% 100%;animation:sway 5.2s ease-in-out 1.55s infinite;
+  ...
+  animation:sway 5.2s ease-in-out .2s infinite;
 }
 
 @keyframes sway{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
@@ -160,7 +159,22 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
-h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;gap:7px}
+h2{
+  color:var(--accent);
+  margin:0 0 6px;
+  font-size:22px;
+  letter-spacing:.3px;
+  text-shadow:0 0 22px rgba(0,255,136,.3);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+}
+.vip-word{
+  display:inline-flex;
+  align-items:center;
+}
 .dgxen-word{position:relative;display:inline-block;cursor:pointer;user-select:none;-webkit-user-select:none;transition:text-shadow .3s ease,color .3s ease;overflow:visible;touch-action:none}
 .vip-word{display:inline-block}
 .dgxen-word.charging{color:#eaffef;text-shadow:0 0 18px rgba(0,255,136,.85),0 0 36px rgba(0,255,136,.5)}
@@ -449,7 +463,8 @@ body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
-  position:relative;display:none;align-items:center;justify-content:center;
+  position:relative;
+  margin-left:2px;display:none;align-items:center;justify-content:center;
   width:26px;height:26px;padding:0;flex-shrink:0;
   background:transparent;border:none;cursor:pointer;vertical-align:middle;
   color:rgba(255,255,255,.32);opacity:.4;
@@ -2447,7 +2462,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
           if (e.animationName === 'unrollCorner4D') reveal();
         });
       }
-      setTimeout(reveal, 2100); // safety net in case the unfold animationend never fires
+      setTimeout(reveal, 300); // safety net in case the unfold animationend never fires
     })();
     muteBtn.addEventListener('click', function(){
       if (isNativeTheme || !opts.sound) return;
