@@ -129,12 +129,6 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 50px rgba(255,255,255,.04),inset 0 1.5px rgba(255,255,255,.28),inset 0 -1px rgba(0,0,0,.35);
   backdrop-filter:blur(30px) saturate(175%) contrast(108%);-webkit-backdrop-filter:blur(30px) saturate(175%) contrast(108%);
   transform-style:preserve-3d;transition:transform .2s ease-out;
-  /* ----- breath effect widened horizontally ----- */
-  animation:breathWiden 4s ease-in-out infinite;
-}
-@keyframes breathWiden{
-  0%,100%{transform:scaleX(1);}
-  50%{transform:scaleX(1.015);}
 }
 .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.4px;background:linear-gradient(135deg,rgba(0,255,136,.55),rgba(255,255,255,.78) 18%,transparent 42%,rgba(90,160,255,.45) 75%,rgba(255,255,255,.85));-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;z-index:6}
 .glass::after{
@@ -166,96 +160,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
-h2{
-  color:var(--accent);
-  margin:0 0 6px;
-  font-size:22px;
-  letter-spacing:.3px;
-  text-shadow:0 0 22px rgba(0,255,136,.3);
-  position:relative;
-  cursor:pointer;
-  display:inline-block;
-  touch-action:manipulation;
-}
-/* ---- Cinematic Swirl for World Entry ---- */
-h2 .swirl-ring{
-  position:absolute;
-  top:50%;
-  left:50%;
-  width:0;
-  height:0;
-  pointer-events:none;
-  opacity:0;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  border:2px solid rgba(0,255,136,.3);
-  box-shadow:0 0 20px rgba(0,255,136,.2),inset 0 0 20px rgba(0,255,136,.1);
-  transition:opacity .2s,width .1s,height .1s;
-}
-h2 .swirl-ring::before{
-  content:'';
-  position:absolute;
-  inset:-8px;
-  border-radius:50%;
-  border:1px dashed rgba(0,255,136,.2);
-  animation:spinRing 3s linear infinite;
-}
-h2 .swirl-ring .orb{
-  position:absolute;
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:var(--accent);
-  box-shadow:0 0 12px var(--accent-glow);
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  animation:orbPulse 1.2s ease-in-out infinite;
-}
-h2 .swirl-ring .spark{
-  position:absolute;
-  width:3px;
-  height:3px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 0 8px #fff;
-  top:50%;
-  left:50%;
-}
-@keyframes spinRing{
-  to{transform:rotate(360deg);}
-}
-@keyframes orbPulse{
-  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8;}
-  50%{transform:translate(-50%,-50%) scale(1.6);opacity:1;}
-}
-h2.holding .swirl-ring{
-  opacity:1;
-  width:140px;
-  height:140px;
-  animation:portalExpand 3s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes portalExpand{
-  0%{width:0;height:0;opacity:0;border-width:2px;}
-  30%{width:60px;height:60px;opacity:.8;border-width:3px;}
-  70%{width:180px;height:180px;opacity:1;border-width:1px;border-color:rgba(0,255,136,.6);}
-  100%{width:200px;height:200px;opacity:1;border-width:1px;border-color:rgba(0,255,136,.8);box-shadow:0 0 60px rgba(0,255,136,.4),inset 0 0 60px rgba(0,255,136,.2);}
-}
-h2 .world-hint{
-  position:absolute;
-  bottom:-32px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:1.5px;
-  color:var(--accent);
-  white-space:nowrap;
-  opacity:0;
-  transition:opacity .3s;
-  text-shadow:0 0 10px rgba(0,255,136,.5);
-}
-h2.holding .world-hint{opacity:1;}
+h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3)}
 .tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
 
 .key-wrap{position:relative;margin-bottom:16px}
@@ -273,30 +178,7 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--acc
 .checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
 .checkbox-container input:checked+.checkbox-box .spark{animation:sparkOut .55s ease-out forwards}
 
-.recall-hint{
-  position:fixed;
-  left:50%;
-  bottom:28px;
-  z-index:100;
-  max-width:calc(100vw - 36px);
-  padding:10px 15px;
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:999px;
-  background:rgba(12,15,13,.82);
-  color:#d8dedb;
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:.15px;
-  text-align:center;
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  box-shadow:0 10px 30px rgba(0,0,0,.35);
-  opacity:0;
-  pointer-events:none;
-  transform:translate(-50%,12px);
-  transition:opacity .25s,transform .25s;
-  will-change:transform,opacity;
-}
+.recall-hint{position:fixed;left:50%;bottom:28px;z-index:100;max-width:calc(100vw - 36px);padding:10px 15px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(12,15,13,.82);color:#d8dedb;font-size:12px;font-weight:700;letter-spacing:.15px;text-align:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .25s,transform .25s}
 .recall-hint.show{opacity:1;transform:translate(-50%,0)}
 body.recall-ready{cursor:crosshair}
 
@@ -531,68 +413,25 @@ body.skin-ocean .glass{border-color:rgba(60,180,220,.3)!important}
 body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
-
-/* ---- Enhanced Sound Button with animation ---- */
 .atm-mute-btn{
   position:fixed;right:14px;top:max(14px, env(safe-area-inset-top));z-index:130;
-  width:52px;height:52px;border-radius:18px;border:1px solid rgba(255,255,255,.16);
-  background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 55%,rgba(0,255,136,.05));
-  color:#fff;font-size:18px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:0;
-  backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
-  box-shadow:0 14px 36px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.28),inset 0 0 0 1px rgba(255,255,255,.04);
-  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .3s ease,border-color .3s ease,background .3s ease;
-  overflow:visible;
+  width:44px;height:44px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.14);
+  background:linear-gradient(155deg,rgba(255,255,255,.10),rgba(0,0,0,.55) 60%),rgba(10,14,12,.6);
+  color:var(--accent,#00ff88);cursor:pointer;display:none;
+  backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);
+  box-shadow:0 4px 18px rgba(0,0,0,.35),0 0 0 1px rgba(0,255,136,.08) inset,0 0 14px rgba(0,255,136,.18);
+  transition:transform .18s ease,box-shadow .25s ease,color .25s ease,border-color .25s ease;
 }
-.atm-mute-btn.show{display:flex}
-.atm-mute-btn::before{
-  content:"";position:absolute;inset:0;border-radius:18px;padding:1px;
-  background:linear-gradient(135deg,rgba(255,255,255,.35),rgba(255,255,255,0) 40%,rgba(0,255,136,.28) 100%);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;
-}
-.atm-mute-btn .mute-ring{
-  position:absolute;inset:-6px;border-radius:22px;pointer-events:none;
-  border:1px solid rgba(0,255,136,.35);opacity:0;transform:scale(.85);
-}
-.atm-mute-btn.on .mute-ring{animation:muteRingPulse 2.2s ease-out infinite}
-@keyframes muteRingPulse{0%{opacity:.55;transform:scale(.85)}75%{opacity:0;transform:scale(1.18)}100%{opacity:0;transform:scale(1.18)}}
-.atm-mute-btn.on{border-color:rgba(0,255,136,.48);box-shadow:0 14px 38px rgba(0,0,0,.45),0 0 26px rgba(0,255,136,.16),inset 0 1px rgba(255,255,255,.32)}
-.atm-mute-btn.off{border-color:rgba(255,255,255,.13);opacity:.88}
-.atm-mute-btn:hover{transform:translateY(-1px)}
+.atm-mute-btn.show{display:grid;place-items:center}
 .atm-mute-btn:active{transform:scale(.9)}
-.atm-mute-btn .sound-icon{font-size:19px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));transition:transform .25s ease}
-.atm-mute-btn.off .sound-icon{transform:scale(.92);opacity:.85}
-.atm-mute-btn .eq{position:absolute;left:50%;bottom:7px;transform:translateX(-50%);display:none;align-items:flex-end;gap:2px;height:8px;pointer-events:none}
-.atm-mute-btn.on .eq{display:flex}
-.atm-mute-btn .eq i{width:2.5px;border-radius:2px;background:linear-gradient(180deg,#7dffc0,#00ff88);animation:eqBar 1s ease-in-out infinite}
-.atm-mute-btn .eq i:nth-child(1){animation-delay:-.6s}
-.atm-mute-btn .eq i:nth-child(2){animation-delay:-.3s}
-.atm-mute-btn .eq i:nth-child(3){animation-delay:0s}
-@keyframes eqBar{0%,100%{height:3px}50%{height:8px}}
-.atm-mute-btn .sound-state{position:absolute;right:-2px;bottom:-2px;width:13px;height:13px;border-radius:50%;border:2px solid #050706;background:#00ff88;box-shadow:0 0 9px rgba(0,255,136,.55)}
-.atm-mute-btn.off .sound-state{background:#69716d;box-shadow:none}
-body.native-app .atm-mute-btn{display:none!important}
-@media (prefers-reduced-motion: reduce){.atm-mute-btn .mute-ring{animation:none!important;opacity:0!important}.atm-mute-btn .eq i{animation:none!important;height:5px!important}}
+.atm-mute-btn:hover{box-shadow:0 4px 22px rgba(0,0,0,.4),0 0 0 1px rgba(0,255,136,.14) inset,0 0 20px rgba(0,255,136,.3)}
+.atm-mute-btn.is-muted{
+  color:#9ca5a0;
+  box-shadow:0 4px 18px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.06) inset;
+}
+.atm-mute-btn svg{display:block}
 
-/* ===== 3D WORLD OVERLAY ===== */
-#apex-world-container{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  z-index:1;
-  pointer-events:none;
-  display:none;
-  background:#04050a;
-}
-#apex-world-container.active{
-  display:block;
-  pointer-events:auto;
-}
-/* ensure login card and UI stay above world */
-.scene, .offline-banner, .admin-notice, .recall-hint, .revoke-overlay, .atm-mute-btn{position:relative;z-index:5;}
-.sky-layer{position:fixed;z-index:0;}
 
 body.atm-sakura .sky-layer .haze{opacity:1}
 body.atm-sakura .sky-layer .orb-tl{opacity:.85;background:rgba(255,150,190,.35)}
@@ -693,15 +532,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 <canvas id="fx" aria-hidden="true"></canvas>
 
-<!-- DGXEN 3D World Container -->
-<div id="apex-world-container"></div>
-
-<button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Mute atmosphere" aria-label="Mute atmosphere">
-  <span class="mute-ring" aria-hidden="true"></span>
-  <span class="sound-icon">🔊</span>
-  <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
-  <span class="sound-state" aria-hidden="true"></span>
-</button>
+<button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Mute atmosphere">🔊</button>
 <div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
@@ -715,11 +546,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-        <h2 id="dgxenTitle">
-          DGXEN VIP
-          <span class="swirl-ring"><span class="orb"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></span>
-          <span class="world-hint">✦ HOLD TO ENTER INFINITE WORLD ✦</span>
-        </h2>
+        <h2>DGXEN VIP</h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
@@ -748,9 +575,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 <div class="admin-notice" id="adminNotice" role="status"><button type="button" class="an-close" id="adminNoticeClose" aria-label="Close">×</button><span id="adminNoticeText"></span><span class="an-count" id="adminNoticeCount"></span></div>
 <div class="recall-hint" id="recallHint" role="status" aria-live="polite">Hold anywhere to call the block back</div>
-
 <script>
-// ==================== CARD DRAG / RECALL (ONE‑FINGER ONLY) ====================
 const scene=document.getElementById('scene');
 const glass=document.getElementById('glass');
 const cardShell=document.getElementById('cardShell');
@@ -761,6 +586,7 @@ const CARD_POSITION_KEY='dgxen_card_position_v1';
 const INTERACTIVE='#keyInput';
 
 // --- PRE-LOADED AUDIO OBJECTS ---
+// Primary names use "success" spelling; fallback to older "sucess" filename
 window.sfxSuccess = new Audio('./sounds/success login.mp3'); window.sfxSuccess.preload='auto';
 window.sfxFailed = new Audio('./sounds/failed login.mp3'); window.sfxFailed.preload='auto';
 window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preload='auto';
@@ -820,6 +646,7 @@ window.playSound = function(obj){
       }catch(e){ window.__pendingSound=obj; }
     };
     tryPlay();
+    // Auto-login / WebView: a few retries help after unlock
     setTimeout(tryPlay, 120);
     setTimeout(tryPlay, 400);
   }catch(e){ window.__pendingSound=obj; }
@@ -827,6 +654,7 @@ window.playSound = function(obj){
 window.playSoundReliable = function(obj){
   window.__pendingSound=obj;
   window.playSound(obj);
+  // After any next user gesture, ensure it plays (auto-login case)
   const flush=function(){
     if(!window.__pendingSound) return;
     const o=window.__pendingSound;
@@ -943,7 +771,7 @@ cardShell.addEventListener('pointerup',finishDrag);
 cardShell.addEventListener('pointercancel',finishDrag);
 cardShell.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false}},true);
 
-/* rAF recall travel — only 1 finger allowed */
+/* rAF recall travel. New pointer coordinates update the destination without restarting the animation. */
 function beginRecallTravel(clientX,clientY){
   const r=scene.getBoundingClientRect();
   travelFromX=dragX;travelFromY=dragY;
@@ -964,60 +792,41 @@ function beginRecallTravel(clientX,clientY){
   travelFrame=requestAnimationFrame(tick);
 }
 
-// ----- ONE‑FINGER RECALL (only one pointer) -----
-let recallActivePointer = null;
-document.addEventListener('pointerdown',function(e){
+document.addEventListener('pointerdown',e=>{
   if(cardShell.contains(e.target)||(e.button!==undefined&&e.button!==0)||e.target.closest(INTERACTIVE))return;
-  // If any pointer is already down for recall, ignore new ones (prevent multi‑finger)
-  if(recallActivePointer !== null) return;
-  recallActivePointer = e.pointerId;
-  recallStartX=e.clientX; recallStartY=e.clientY; recallFollowing=false;
+  recallPointer=e.pointerId;recallStartX=e.clientX;recallStartY=e.clientY;recallFollowing=false;
   document.body.classList.add('recall-ready');
-  recallTimer=setTimeout(function(){
-    if(recallActivePointer!==e.pointerId) return;
-    beginRecallTravel(e.clientX,e.clientY);
-    recallHint.classList.remove('show');
-    document.body.classList.remove('recall-ready');
+  recallTimer=setTimeout(()=>{
+    if(recallPointer!==e.pointerId)return;
+    beginRecallTravel(e.clientX,e.clientY);recallHint.classList.remove('show');document.body.classList.remove('recall-ready');
     if(navigator.vibrate)navigator.vibrate(12);
     window.playSound(window.sfxRecall);
-    recallActivePointer = null;
+    recallPointer=null;
   },HOLD_MS);
-});
+},{passive:true});
 
-document.addEventListener('pointermove',function(e){
-  if(recallActivePointer!==e.pointerId) return;
+document.addEventListener('pointermove',e=>{
+  if(recallPointer!==e.pointerId)return;
   if(!recallFollowing){
-    if(Math.hypot(e.clientX-recallStartX,e.clientY-recallStartY)>12){
-      clearTimeout(recallTimer);
-      recallActivePointer = null;
-      document.body.classList.remove('recall-ready');
-    }
+    if(Math.hypot(e.clientX-recallStartX,e.clientY-recallStartY)>12){clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready')}
     return;
   }
   const r=scene.getBoundingClientRect();
   travelTargetX += (dragX + e.clientX - (r.left + r.width/2) - travelTargetX) * 0.18;
   travelTargetY += (dragY + e.clientY - (r.top + r.height/2) - travelTargetY) * 0.18;
-});
+},{passive:true});
 
 function finishRecall(e){
-  if(recallActivePointer!==e.pointerId) return;
-  clearTimeout(recallTimer);
-  recallActivePointer = null;
-  document.body.classList.remove('recall-ready');
-  if(recallFollowing){
-    recallFollowing = false;
-    saveCardPosition();
-  }else{
-    setMoveMode('is-recalling',false);
-    scene.classList.remove('drag-active');
-  }
+  if(recallPointer!==e.pointerId)return;
+  clearTimeout(recallTimer);recallPointer=null;document.body.classList.remove('recall-ready');
+  if(recallFollowing){recallFollowing=false;saveCardPosition()}
+  else{setMoveMode('is-recalling',false);scene.classList.remove('drag-active')}
 }
 document.addEventListener('pointerup',finishRecall);
 document.addEventListener('pointercancel',finishRecall);
 window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
 </script>
-
 <script>
 // ===== METEOR FX (used by the metroid / apex themes) =====
 (function(){
@@ -1222,7 +1031,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     { md:'11-14', id:'fest_children', name:"Children's Day" },
     { md:'12-25', id:'fest_christmas', name:'Christmas' }
   ];
-  let isNativeTheme = false;
+  let isNativeTheme = false; // true only when the current atmosphere theme is 'native' — updated on every theme apply
   const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><path d="M17 8.5a5 5 0 0 1 0 7"></path><path d="M19.5 6a8.5 8.5 0 0 1 0 12"></path></svg>';
   const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><line x1="17" y1="9" x2="22" y2="14"></line><line x1="22" y1="9" x2="17" y2="14"></line></svg>';
   let forced = 'auto';
@@ -1336,12 +1145,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (isNativeTheme || !opts.sound) { b.classList.remove('show'); b.style.display = 'none'; return; }
     b.style.display = '';
     b.classList.add('show');
-    const isOn = !muted && opts.sound && !isNativeTheme;
-    b.classList.toggle('on', isOn);
-    b.classList.toggle('off', !isOn);
-    b.innerHTML = '<span class="mute-ring" aria-hidden="true"></span><span class="sound-icon">'+(isOn?'🔊':'🔇')+'</span><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span class="sound-state" aria-hidden="true"></span>';
-    b.setAttribute('aria-label', isOn ? 'Mute atmosphere sound' : 'Unmute atmosphere sound');
-    b.title = isOn ? 'Mute atmosphere sound' : 'Unmute atmosphere sound';
+    b.classList.toggle('is-muted', muted);
+    b.setAttribute('aria-label', muted ? 'Unmute atmosphere sound' : 'Mute atmosphere sound');
+    b.innerHTML = muted ? SPEAKER_OFF_SVG : SPEAKER_ON_SVG;
   }
   window.applyLoginAtmosphere = function(theme){
     let t = String(theme || 'auto').trim();
@@ -1371,7 +1177,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
     startSound(t); updateMuteBtn();
         try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
-    try { localStorage.setItem('dgxen_last_theme', t); } catch(e){}
+    try { localStorage.setItem('dgxen_last_theme', t); } catch(e){} // <-- UPDATE 1: Yahan current theme ko cache me save kiya
   };
 
   async function fetchWeatherHint(){
@@ -1400,6 +1206,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   function resolveAndApply(){ applyLoginAtmosphere(forced || 'auto'); }
 
+  // Firebase is loaded separately in a module script that may fail (network/CSP/ad-block).
+  // This theme engine must not depend on it to function, so it exposes a hook instead of
+  // importing/calling Firebase directly. If Firebase loads, it calls this with the admin config.
   window.__dgxenApplyRemoteAtmConfig = function(v){
     v = v || {};
     forced = v.loginTheme ? String(v.loginTheme) : 'auto';
@@ -1419,6 +1228,10 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (forced === 'auto' && opts.weather) fetchWeatherHint();
   };
 
+  // Apply immediately with local defaults (or a cached theme if we have one) so there's
+  // no flash-of-wrong-theme before Firebase responds. This is a temporary paint only —
+  // whatever Firebase sends via __dgxenApplyRemoteAtmConfig always wins once it arrives,
+  // and only that live remote value is written back to the cache from then on.
   try {
     const cached = localStorage.getItem('dgxen_last_theme');
     if (cached) applyLoginAtmosphere(cached); else resolveAndApply();
@@ -1469,6 +1282,7 @@ function getDeviceFingerprint() {
         return false;
     };
 
+    // 1. URL param (Auth.smali now injects ?deviceId=ANDROID_ID)
     try {
         const p = new URLSearchParams(location.search);
         const urlKeys = ['deviceId', 'uuid', 'id', 'device', 'userId'];
@@ -1481,6 +1295,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 2. localStorage / sessionStorage
     try {
         const keys = [
             'deviceId', 'device_id', 'uuid', 'userId', 'user_id',
@@ -1493,6 +1308,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 3. Android bridge
     try {
         if (window.Android) {
             const methods = ['getDeviceId', 'getId', 'getUniqueId', 'getAndroidId', 'getUUID', 'getUuid'];
@@ -1509,6 +1325,7 @@ function getDeviceFingerprint() {
         }
     } catch (e) {}
 
+    // 4. Last resort fingerprint
     const str = navigator.userAgent + screen.width + 'x' + screen.height + (navigator.hardwareConcurrency || '');
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -1539,6 +1356,7 @@ async function reportAppVersion(preferredUid) {
     const ver = getAppVersion();
     if (!devId) return;
     const safeDev = String(devId).replace(/[.#$\[\]\/]/g, '_');
+    // knownDevices map (device → version)
     try {
       await set(ref(db, 'settings/knownDevices/' + safeDev), {
         lastSeen: Date.now(),
@@ -1555,11 +1373,13 @@ async function reportAppVersion(preferredUid) {
       } catch (e2) { console.warn('user version write', e2); }
     };
 
+    // Preferred uid (from successful key match) always wins
     if (preferredUid) {
       await writeUser(preferredUid);
       return;
     }
 
+    // Direct path users/{deviceId}
     try {
       const userSnap = await get(ref(db, 'users/' + devId));
       if (userSnap.exists()) {
@@ -1568,6 +1388,7 @@ async function reportAppVersion(preferredUid) {
       }
     } catch (e) {}
 
+    // Scan all users for matching device fields
     try {
       const all = await get(ref(db, 'users'));
       if (all.exists()) {
@@ -1596,10 +1417,12 @@ async function reportAppVersion(preferredUid) {
 }
 
 
+// Global registry of this device ID on load
 window.addEventListener('load', async () => {
     try { await reportAppVersion(); } catch (e) {}
 });
 
+// Single Tap "Get Key" → copy native device ID + Send directly to Admin
 const getKeyLink = document.getElementById('getKeyLink');
 if (getKeyLink) {
     getKeyLink.addEventListener('click', async (e) => {
@@ -1619,11 +1442,13 @@ if (getKeyLink) {
           });
           try{ sessionStorage.setItem('dgxen_pending_getkey', safe); }catch(e){}
         } catch(err) {}
+        // Does not prevent default, so the link still successfully opens!
     });
 }
 
 function updateNotchUI(){autoNotch.classList.toggle('active',isAutoLoginEnabled);autoNotch.setAttribute('aria-pressed',String(isAutoLoginEnabled))}
 
+// --- SOUND TRIGGER: AUTO LOGIN (ONLY WHEN ENABLED) ---
 function toggleAutoLogin(){
     isAutoLoginEnabled=!isAutoLoginEnabled;
     localStorage.setItem('dgxen_auto_login',String(isAutoLoginEnabled));
@@ -1639,10 +1464,10 @@ btn.addEventListener('click',verifyKey);
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
 
 
-// ===== LIVE SESSION GUARD =====
+// ===== LIVE SESSION GUARD (ban / key ban / master key delete) =====
 window.__sessionGuardStarted = false;
 window.__sessionRevoked = false;
-window.__sessionMeta = null;
+window.__sessionMeta = null; // { kind, key, uid, deviceId }
 
 function formatMMSS(ms){
   const s = Math.max(0, Math.ceil(ms/1000));
@@ -1671,6 +1496,7 @@ function triggerSessionRevoke(title, message){
     countEl.classList.remove('show');
     countEl.textContent = '01:30';
   }
+  // Background total ~2:00 until process kill
   try {
     if (window.Android && typeof window.Android.setRevokeMessage === 'function') {
       window.Android.setRevokeMessage(title);
@@ -1682,6 +1508,8 @@ function triggerSessionRevoke(title, message){
     }
   } catch(e) {}
 
+  // Phase 1: message only for 30s
+  // Phase 2: smooth reveal 01:30 countdown, then close
   const phase2At = Date.now() + 30000;
   const endAt = Date.now() + 120000;
   let phase2 = false;
@@ -1757,9 +1585,10 @@ async function startSessionGuard(meta){
   const deviceId = meta.deviceId || (typeof getDeviceFingerprint === 'function' ? getDeviceFingerprint() : '');
   const key = (meta.key || '').trim();
   const uid = meta.uid || null;
-  const kind = meta.kind || 'normal';
+  const kind = meta.kind || 'normal'; // master | normal
 
   try {
+    // 1) User / device ban
     const checkUserBan = (data) => {
       if (!data) return;
       const norm = (s) => String(s||'').trim().toLowerCase().replace(/\s+/g,'');
@@ -1783,6 +1612,7 @@ async function startSessionGuard(meta){
       if (snap.exists()) checkUserBan(snap.val());
     });
 
+    // 2) Key banned (normal keys)
     if (kind === 'normal' && key) {
       onValue(ref(db, 'settings/bannedKeys/' + key), (snap) => {
         if (window.__sessionRevoked) return;
@@ -1793,11 +1623,14 @@ async function startSessionGuard(meta){
       });
     }
 
+    // 2b) Normal key deleted OR expired (while session open)
+    // Watches owning user (uid) or any user still holding this lastGeneratedKey
     if (kind === 'normal' && key) {
       const wantKey = String(key).trim();
       const watchUid = meta.uid || null;
       const expHint = meta.expiresAt != null ? Number(meta.expiresAt) : null;
 
+      // Local timer if we already know expiry at login
       if (expHint && expHint > Date.now()) {
         const delay = expHint - Date.now() + 200;
         setTimeout(function(){
@@ -1811,6 +1644,7 @@ async function startSessionGuard(meta){
       onValue(ref(db, 'users'), (snap) => {
         if (window.__sessionRevoked) return;
         if (!snap.exists()) {
+          // All users wiped — treat as key inactive
           triggerSessionRevoke('Key deleted', 'Your key is no longer active. App will close.');
           return;
         }
@@ -1831,6 +1665,7 @@ async function startSessionGuard(meta){
           return;
         }
 
+        // No uid: find any owner of this key
         let owner = null;
         for (const id in all) {
           const u = all[id] || {};
@@ -1849,6 +1684,7 @@ async function startSessionGuard(meta){
       });
     }
 
+    // 3) Master key deleted / expired (all types) from settings/masterKeys
     if (kind === 'master' && key) {
       const wantKey = String(key).trim();
       const expHint = meta.expiresAt != null ? Number(meta.expiresAt) : null;
@@ -1881,6 +1717,7 @@ async function startSessionGuard(meta){
           triggerSessionRevoke('Master key revoked by admin', 'Master key revoked by admin. App will close.');
           return;
         }
+        // Time-limited types: expire while session is open
         const t = String(found.type || 'pure');
         if ((t === 'time' || t === 'device_time') && found.expiresAt) {
           if (Date.now() > Number(found.expiresAt)) {
@@ -1890,6 +1727,7 @@ async function startSessionGuard(meta){
       });
     }
 
+    // 4) Global kill switch from admin
     onValue(ref(db, 'settings/globalKill'), (snap) => {
       if (window.__sessionRevoked) return;
       if (!snap.exists()) return;
@@ -1918,6 +1756,7 @@ async function verifyKey(){
     let timeLeftText="";
     const deviceId = getDeviceFingerprint();
 
+    // Banned device check (blocks master keys too)
     try {
       const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
       const myN = norm(deviceId);
@@ -1952,9 +1791,11 @@ async function verifyKey(){
 
     const safeKey = btoa(unescape(encodeURIComponent(userInput))).replace(/[.#$\[\]/]/g,'_');
 
+    // ========== MASTER KEYS ==========
     try{
       const snap=await get(ref(db,'settings/masterKeys'));
       if(snap.exists()){
+        // Find matching key
         let mkEntry = null;
         for (const val of Object.values(snap.val())) {
           const keyStr = (typeof val === 'string') ? val.trim() : String((val && val.key) || '').trim();
@@ -1969,6 +1810,7 @@ async function verifyKey(){
         if (mkEntry) {
           const mkType = mkEntry.type || 'pure';
 
+          // --- TIME CHECK (time / device_time) ---
           if ((mkType === 'time' || mkType === 'device_time') && mkEntry.expiresAt) {
             if (Date.now() > Number(mkEntry.expiresAt)) {
               show('This master key has expired.', 'var(--error)');
@@ -1979,6 +1821,7 @@ async function verifyKey(){
             }
           }
 
+          // --- DEVICE LOCKED (device or device_time) ---
           if (mkType === 'device' || mkType === 'device_time') {
             let liveId = getDeviceFingerprint();
 
@@ -1986,6 +1829,8 @@ async function verifyKey(){
             const currentRaw = String(liveId || '').trim();
             const allowedId = allowedRaw.toLowerCase().replace(/\s+/g, '');
             const currentId = currentRaw.toLowerCase().replace(/\s+/g, '');
+
+            console.log('[MK-DEVICE] allowed=', allowedRaw, 'current=', currentRaw);
 
             if (!allowedRaw) {
               show('Device lock misconfigured (no ID saved on key). Delete & recreate the key.', 'var(--error)');
@@ -2016,6 +1861,7 @@ async function verifyKey(){
             timeLeftText = ' (Device Locked)';
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
+          // --- TIME LIMITED (any device, unlimited uses until expiry) ---
           else if (mkType === 'time') {
             const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
             const usage = await get(usageRef);
@@ -2026,6 +1872,7 @@ async function verifyKey(){
             timeLeftText = mins > 0 ? ` (Time left ~${mins}m)` : ' (Time Limited)';
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
+          // --- LIMITED USES ---
           else if (mkType === 'limited') {
             const maxUses = Number(mkEntry.maxUses) || 0;
             const usageRef = ref(db, 'settings/mkUsage/' + safeKey);
@@ -2045,6 +1892,7 @@ async function verifyKey(){
             timeLeftText = ` (${currentUses + 1}/${maxUses} uses)`;
             show('Master Key Accepted! Unlocking...' + timeLeftText, 'var(--accent)');
           }
+          // --- PURE / UNLIMITED ---
           else {
             const trackRef = ref(db, `settings/mkDeviceTrack/${safeKey}/${deviceId}`);
             const trackSnap = await get(trackRef);
@@ -2077,6 +1925,7 @@ async function verifyKey(){
       }
     }catch(e){console.error('Master key fetch error:',e)}
 
+    // ========== NORMAL KEYS ==========
     if(!isValid&&userInput.startsWith('DGXEN-')){
       let banned=false,reason='';
       try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
@@ -2085,6 +1934,7 @@ async function verifyKey(){
       const usersSnap=await get(ref(db,'users'));
       let found=false;
       if(usersSnap.exists()){
+        // Collect all owners of this exact key; prefer non-expired / active
         const owners=[];
         for(const uid in usersSnap.val()){
           const user=usersSnap.val()[uid];
@@ -2111,6 +1961,8 @@ async function verifyKey(){
                   let hrs = Math.floor(remainingMs / (1000 * 60 * 60));
                   let mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
                   timeLeftText = hrs > 0 ? ` (Valid for ${hrs}h ${mins}m)` : ` (Valid for ${mins} mins)`;
+                  
+                  // 🔥 NATIVE TRACKING: Android System ko seedha bhej diya. Pura Live Timer/Crash ab Smali dekhega
                   try { if(window.Android && typeof window.Android.startNativeTimer === 'function') window.Android.startNativeTimer(remainingMs.toString()); } catch(e) {}
               }
             }
@@ -2125,6 +1977,7 @@ async function verifyKey(){
                 try {
                   const generatorName = (user && user.name) ? user.name : (uid || "Unknown Generator");
                   const generatorId = uid || "";
+                                    // Receiver: registered name if known, else device id (updates later when they register)
                   let receiverName = null;
                   let receiverId = deviceId;
                   let isRegisteredReceiver = false;
@@ -2160,6 +2013,7 @@ async function verifyKey(){
                     receiverName = 'unknown user';
                     receiverId = deviceId;
                   }
+                  // Never show generator as receiver
                   if (receiverId === generatorId || (receiverName && generatorName && receiverName === generatorName && isRegisteredReceiver === false)) {
                     receiverName = 'unknown user';
                     receiverId = deviceId;
@@ -2181,6 +2035,7 @@ async function verifyKey(){
                     timestamp: Date.now(),
                     type: 'normal'
                   };
+                  // Create once; allow name upgrade if receiver registers later
                   if (!existingLogSnap.exists()) {
                     await set(existingLogRef, payload);
                   } else {
@@ -2228,6 +2083,7 @@ async function verifyKey(){
             });
           }
         } catch (eWrite) { console.warn('native id write', eWrite); }
+        // Start live session guard (ban / key ban / master delete) while user uses app
         const isMaster = !userInput.startsWith('DGXEN-');
         try {
           let expAt = null;
@@ -2298,7 +2154,7 @@ async function verifyKey(){
     if(!noticeEl||!noticeText) return;
     const text=String(msg||'').trim();
     if(!text){ hideNotice(); return; }
-    if(isShowing) return;
+    if(isShowing) return; // never restart mid-countdown
     isShowing=true;
     let left=Math.max(1, Math.floor(Number(seconds)||8));
     noticeText.textContent=text;
@@ -2338,6 +2194,7 @@ async function verifyKey(){
       shownForId=null;
       return;
     }
+    // New broadcast id from admin → allow one new show after current ends
     if(shownForId===id) return;
     if(isShowing) return;
     shownForId=id || ('msg:'+msg);
@@ -2364,6 +2221,11 @@ async function verifyKey(){
   setTimeout(function(){ if(!bootDone) bootNotice(); }, 2000);
 })();
 
+
+
+
+
+
 async function cleanupSkippedGetKey(){
   try{
     let safe='';
@@ -2373,6 +2235,7 @@ async function cleanupSkippedGetKey(){
     if(!pathSafe) return;
     const snap=await get(ref(db,'deviceRequests/'+pathSafe));
     if(!snap.exists()) return;
+    // If this device already registered, always clear pending
     try{
       const u=await get(ref(db,'users/'+id));
       if(u.exists()){ await set(ref(db,'deviceRequests/'+pathSafe), null); try{sessionStorage.removeItem('dgxen_pending_getkey');}catch(e){} return; }
@@ -2392,126 +2255,9 @@ document.addEventListener('visibilitychange', function(){
   if(document.visibilityState==='visible') cleanupSkippedGetKey();
 });
 
-// ===== DGXEN INFINITE WORLD (3D) – Hold "DGXEN VIP" for 3s =====
-(function(){
-  const title = document.getElementById('dgxenTitle');
-  if (!title) return;
-  let holdTimer = null;
-  let worldActive = false;
-  let worldScriptLoaded = false;
-  let worldContainer = document.getElementById('apex-world-container');
-  let worldRunning = false;
-  let worldRAF = null;
 
-  function startWorld() {
-    if (worldRunning) return;
-    // Show container and hide sky-layer
-    worldContainer.style.display = 'block';
-    worldContainer.classList.add('active');
-    document.getElementById('skyLayer').style.opacity = '0';
-    // Load world script if not loaded
-    if (!worldScriptLoaded) {
-      // Load the world code from the attached dgxen world.txt (full script)
-      const script = document.createElement('script');
-      script.textContent = `
-        // ==== DGXEN ∞ INFINITE WORLD — WEBVIEW-SAFE (drop-in) ====
-        (function(){
-          var cv=document.createElement('canvas');
-          cv.id='apex4d';
-          cv.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;pointer-events:none;';
-          var container=document.getElementById('apex-world-container');
-          container.innerHTML='';
-          container.appendChild(cv);
-          // overlay
-          var ov=document.createElement('div');
-          ov.id='apex4d-ov';
-          ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;pointer-events:none;background:radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 58%, rgba(8,16,36,.5) 100%);';
-          container.appendChild(ov);
-          var hint=document.createElement('div');
-          hint.id='apex-hint';
-          hint.style.cssText='position:fixed;bottom:112px;left:50%;transform:translateX(-50%);z-index:9;width:88%;text-align:center;color:#9be8ff;font:700 10px/1.8 Arial,sans-serif;letter-spacing:2.5px;pointer-events:none;text-shadow:0 0 14px rgba(60,220,255,.8);animation:hintPulse 2.2s ease-in-out infinite;transition:opacity .8s;';
-          hint.textContent='◇ DRAG LOOK · 2×TAP FLY · 2-FINGER HOLD ⚡ SPEED TIERS · 3×TAP TELEPORT ◇';
-          container.appendChild(hint);
-          var statusEl=document.createElement('div');
-          statusEl.id='apex-status';
-          statusEl.style.cssText='position:fixed;top:74px;left:0;width:100%;text-align:center;z-index:9;font:800 13px/1.4 Arial,sans-serif;letter-spacing:5px;pointer-events:none;opacity:0;transition:opacity .35s;text-shadow:0 0 16px currentColor;';
-          container.appendChild(statusEl);
-          var hudEl=document.createElement('div');
-          hudEl.id='apex-hud';
-          hudEl.style.cssText='position:fixed;left:14px;bottom:12px;z-index:9;pointer-events:none;font:400 9.5px/1.7 monospace;letter-spacing:1.5px;color:rgba(160,220,255,.85);text-shadow:0 0 10px rgba(60,220,255,.5);';
-          container.appendChild(hudEl);
-
-          // ---- THE FULL WORLD ENGINE (from dgxen world.txt) ----
-          // (the complete script content is here; for brevity we include the full code from the file)
-          // Since it's large, we reference the existing content from the file.
-          // For this implementation, the world script is already embedded in this file above.
-          // We'll just use the already-injected script.
-          // In practice, you'd copy the entire world code here.
-          // For now, we'll call the existing global function if available.
-          console.log('DGXEN World loaded');
-        })();
-      `;
-      document.body.appendChild(script);
-      worldScriptLoaded = true;
-    }
-    worldRunning = true;
-    // additional visual feedback
-    title.style.color = '#ff6b9d';
-    title.style.textShadow = '0 0 30px rgba(255,107,157,0.7)';
-  }
-
-  function stopWorld() {
-    if (!worldRunning) return;
-    worldRunning = false;
-    worldContainer.classList.remove('active');
-    worldContainer.style.display = 'none';
-    document.getElementById('skyLayer').style.opacity = '1';
-    title.style.color = '';
-    title.style.textShadow = '';
-    // destroy canvas? leave for next time.
-  }
-
-  function toggleWorld() {
-    if (worldRunning) {
-      stopWorld();
-    } else {
-      startWorld();
-    }
-  }
-
-  // Long press on title
-  let titleHoldTimer = null;
-  title.addEventListener('pointerdown', function(e) {
-    e.stopPropagation();
-    titleHoldTimer = setTimeout(() => {
-      titleHoldTimer = null;
-      title.classList.add('holding');
-      setTimeout(() => {
-        title.classList.remove('holding');
-        toggleWorld();
-      }, 100);
-    }, 3000);
-  });
-
-  title.addEventListener('pointerup', function(e) {
-    if (titleHoldTimer) {
-      clearTimeout(titleHoldTimer);
-      titleHoldTimer = null;
-      title.classList.remove('holding');
-    }
-  });
-
-  title.addEventListener('pointerleave', function(e) {
-    if (titleHoldTimer) {
-      clearTimeout(titleHoldTimer);
-      titleHoldTimer = null;
-      title.classList.remove('holding');
-    }
-  });
-
-  title.addEventListener('contextmenu', e => e.preventDefault());
-})();
 
 </script>
 </body>
 </html>
+
