@@ -1038,7 +1038,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
   let weatherTheme = null;
   let audioEl = null;
-  let muted = localStorage.getItem('dgxen_atm_mute') === '1';
+  let muted = false;
+  try { muted = localStorage.getItem('dgxen_atm_mute') === '1'; } catch(e) { console.warn('[atm] localStorage unavailable, defaulting muted=false:', e); }
   function pad(n){ return (n<10?'0':'')+n; }
   function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function festivalToday(){
@@ -1239,7 +1240,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   if (muteBtn && !isNativeApp) {
     muteBtn.addEventListener('click', function(){
       muted = !muted;
-      localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0');
+      try { localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0'); } catch(e) { console.warn('[atm] could not persist mute state:', e); }
       if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
       updateMuteBtn();
     });
