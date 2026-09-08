@@ -749,9 +749,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   function hintHide(){ if(!hintGone){hintGone=true;hint.className='gone';} }
   function hintShow(){
     hintGone=false;
-    hint.textContent='◇ DRAG LOOK · 2×TAP FLY · 
-    2-FINGER PINCH · ⚡ SPEED TIERS · 
-    3×TAP TELEPORT ◇';
+    hint.textContent='◇ DRAG LOOK · 2×TAP FLY · 2-FINGER PINCH · ⚡ SPEED TIERS · 3×TAP TELEPORT ◇';
     hint.className='';
     clearTimeout(hintTimer);
     hintTimer=setTimeout(hintHide,15000);
