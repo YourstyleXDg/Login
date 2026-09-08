@@ -824,8 +824,8 @@ function finishRecall(e){
 }
 document.addEventListener('pointerup',finishRecall);
 document.addEventListener('pointercancel',finishRecall);
-window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
+window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition();try{if(window.__dgxenStopAtmSound)window.__dgxenStopAtmSound();}catch(e){}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition();try{if(window.__dgxenStopAtmSound)window.__dgxenStopAtmSound();}catch(e){}}});
 </script>
 <script>
 // ===== METEOR FX (used by the metroid / apex themes) =====
@@ -1114,19 +1114,29 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     }
     box.innerHTML = html;
   }
-  function stopSound(){ try { if (audioEl) { audioEl.pause(); audioEl.currentTime=0; } } catch(e){} }
+  function stopSound(){
+    try {
+      if (audioEl) {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+        audioEl.removeAttribute('src');
+        audioEl.load();
+      }
+    } catch(e){}
+  }
   window.__dgxenStopAtmSound = stopSound;
   function startSound(theme){
     stopSound();
     if (isNativeApp) return;
-    if (!opts.sound || muted) return;
+    if (muted) return;
     const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
     const file = map[theme] || 'soft';
     try {
       if (!audioEl) { audioEl = new Audio(); audioEl.loop = true; audioEl.volume = 0.22; }
       audioEl.src = './sounds/atm/' + file + '.mp3';
-      const p = audioEl.play(); if (p && p.catch) p.catch(function(){});
-    } catch(e) {}
+      audioEl.onerror = function(){ console.warn('[atm-sound] failed to load:', audioEl.src, '— check the file exists on the server at that exact path.'); };
+      const p = audioEl.play(); if (p && p.catch) p.catch(function(err){ console.warn('[atm-sound] play() blocked/failed:', err && err.message); });
+    } catch(e) { console.warn('[atm-sound] startSound error:', e); }
   }
   function updateMuteBtn(){
     const b = document.getElementById('atmMuteBtn');
@@ -2005,16 +2015,4 @@ async function verifyKey(){
                   // Never show generator as receiver
                   if (receiverId === generatorId || (receiverName && generatorName && receiverName === generatorName && isRegisteredReceiver === false)) {
                     receiverName = 'unknown user';
-                    receiverId = deviceId;
-                    isRegisteredReceiver = false;
-                  }
-
-                  const logKey = safeKey + '_' + String(deviceId).replace(/[.#$\[\]\/]/g,'_');
-                  const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
-                  const existingLogSnap = await get(existingLogRef);
-
-                  const payload = {
-                    generatorName,
-                    generatorId,
-                    key: userInput,
-                    receiverName: isRegist
+                   
