@@ -237,7 +237,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 
 /* Admin broadcast notice (bottom) */
 .admin-notice{
-  position:fixed;left:50%;bottom:max(74px, calc(env(safe-area-inset-bottom, 0px) + 74px));
+  position:fixed;left:50%;bottom:max(12px, env(safe-area-inset-bottom, 0px));
   z-index:120;width:min(calc(100vw - 24px), 340px);
   max-height:22vh;overflow:auto;
   padding:10px 36px 10px 14px;border:1px solid rgba(0,255,136,.28);border-radius:14px;
@@ -249,7 +249,7 @@ body.is-dragging .join-badge,body.is-recalling .join-badge{animation-play-state:
 .admin-notice.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
 body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 @media (max-height:700px){
-  .admin-notice{max-height:18vh;font-size:11px;padding:8px 32px 8px 12px;bottom:max(68px, calc(env(safe-area-inset-bottom, 0px) + 68px))}
+  .admin-notice{max-height:18vh;font-size:11px;padding:8px 32px 8px 12px}
 }
 .admin-notice .an-close{position:absolute;top:6px;right:10px;border:0;background:transparent;color:#9ca5a0;font-size:16px;cursor:pointer;line-height:1}
 .admin-notice .an-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(0,255,136,.15);color:var(--accent);font-variant-numeric:tabular-nums;font-size:11px;font-weight:900}
@@ -414,7 +414,7 @@ body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
-  position:fixed;right:14px;bottom:max(14px, env(safe-area-inset-bottom));z-index:130;
+  position:fixed;right:14px;top:max(14px, env(safe-area-inset-top));z-index:130;
   width:44px;height:44px;border-radius:50%;
   border:1px solid rgba(255,255,255,.14);
   background:linear-gradient(155deg,rgba(255,255,255,.10),rgba(0,0,0,.55) 60%),rgba(10,14,12,.6);
@@ -1031,7 +1031,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     { md:'11-14', id:'fest_children', name:"Children's Day" },
     { md:'12-25', id:'fest_christmas', name:'Christmas' }
   ];
-  const isNativeApp = false; // was: !!(window.Android) — speaker button + sound are now enabled in the app's WebView too, per request
+  let isNativeTheme = false; // true only when the current atmosphere theme is 'native' — updated on every theme apply
   const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><path d="M17 8.5a5 5 0 0 1 0 7"></path><path d="M19.5 6a8.5 8.5 0 0 1 0 12"></path></svg>';
   const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="4 9 9 9 13 5 13 19 9 15 4 15 4 9"></polygon><line x1="17" y1="9" x2="22" y2="14"></line><line x1="22" y1="9" x2="17" y2="14"></line></svg>';
   let forced = 'auto';
@@ -1128,7 +1128,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   window.__dgxenStopAtmSound = stopSound;
   function startSound(theme){
     stopSound();
-    if (isNativeApp) return;
+    if (isNativeTheme) return;
+    if (!opts.sound) return;
     if (muted) return;
     const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
     const file = map[theme] || 'soft';
@@ -1142,7 +1143,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   function updateMuteBtn(){
     const b = document.getElementById('atmMuteBtn');
     if (!b) return;
-    if (isNativeApp) { b.classList.remove('show'); b.style.display = 'none'; return; }
+    if (isNativeTheme || !opts.sound) { b.classList.remove('show'); b.style.display = 'none'; return; }
+    b.style.display = '';
     b.classList.add('show');
     b.classList.toggle('is-muted', muted);
     b.setAttribute('aria-label', muted ? 'Unmute atmosphere sound' : 'Mute atmosphere sound');
@@ -1157,6 +1159,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       else t = weatherTheme || hourTheme();
     }
     if (THEMES.indexOf(t) < 0) t = hourTheme();
+    isNativeTheme = (t === 'native');
     clearAtm();
     document.body.classList.add('atm-' + t);
     if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
@@ -1221,6 +1224,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       festival: v.atmFestival !== false
     };
     resolveAndApply();
+    if (!opts.sound) stopSound();
     updateMuteBtn();
     if (forced === 'auto' && opts.weather) fetchWeatherHint();
   };
@@ -1237,18 +1241,17 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   setInterval(function(){ if (forced === 'auto') applyLoginAtmosphere('auto'); }, 15*60*1000);
 
   const muteBtn = document.getElementById('atmMuteBtn');
-  if (muteBtn && !isNativeApp) {
+  if (muteBtn) {
     muteBtn.addEventListener('click', function(){
+      if (isNativeTheme || !opts.sound) return;
       muted = !muted;
       try { localStorage.setItem('dgxen_atm_mute', muted ? '1' : '0'); } catch(e) { console.warn('[atm] could not persist mute state:', e); }
       if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
       updateMuteBtn();
     });
-  } else if (muteBtn) {
-    muteBtn.style.display = 'none';
   }
   document.body.addEventListener('pointerdown', function(){
-    if (!isNativeApp && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
+    if (!isNativeTheme && opts.sound && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
   });
 
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
