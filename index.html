@@ -824,8 +824,8 @@ function finishRecall(e){
 }
 document.addEventListener('pointerup',finishRecall);
 document.addEventListener('pointercancel',finishRecall);
-window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition();try{if(window.__dgxenStopAtmSound)window.__dgxenStopAtmSound();}catch(e){}});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition();try{if(window.__dgxenStopAtmSound)window.__dgxenStopAtmSound();}catch(e){}}});
+window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
 </script>
 <script>
 // ===== METEOR FX (used by the metroid / apex themes) =====
@@ -1224,9 +1224,14 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (forced === 'auto' && opts.weather) fetchWeatherHint();
   };
 
-  // Apply immediately with local defaults so the theme + sound button work even if
-  // Firebase never responds. If Firebase does respond later, it overrides via the hook above.
-  resolveAndApply();
+  // Apply immediately with local defaults (or a cached theme if we have one) so there's
+  // no flash-of-wrong-theme before Firebase responds. This is a temporary paint only —
+  // whatever Firebase sends via __dgxenApplyRemoteAtmConfig always wins once it arrives,
+  // and only that live remote value is written back to the cache from then on.
+  try {
+    const cached = localStorage.getItem('dgxen_last_theme');
+    if (cached) applyLoginAtmosphere(cached); else resolveAndApply();
+  } catch(e) { resolveAndApply(); }
 
   setInterval(function(){ if (forced === 'auto') applyLoginAtmosphere('auto'); }, 15*60*1000);
 
@@ -1246,12 +1251,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   });
 
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
-
-  // <-- UPDATE 2: Puraani line (applyLoginAtmosphere('auto');) hatakar yeh cache reader daal diya
-  try {
-    const cached = localStorage.getItem('dgxen_last_theme');
-    if (cached) applyLoginAtmosphere(cached);
-  } catch(e) {}
 
 })();
 </script>
@@ -2015,4 +2014,5 @@ async function verifyKey(){
                   // Never show generator as receiver
                   if (receiverId === generatorId || (receiverName && generatorName && receiverName === generatorName && isRegisteredReceiver === false)) {
                     receiverName = 'unknown user';
-                   
+                    receiverId = deviceId;
+                    isRegisteredRec
