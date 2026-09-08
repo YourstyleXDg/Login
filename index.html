@@ -1038,8 +1038,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
   let weatherTheme = null;
   let audioEl = null;
-  let muted = false;
-  try { muted = localStorage.getItem('dgxen_atm_mute') === '1'; } catch(e) { console.warn('[atm] localStorage unavailable, defaulting muted=false:', e); }
+  let muted = true;
   function pad(n){ return (n<10?'0':'')+n; }
   function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function festivalToday(){
