@@ -2015,4 +2015,247 @@ async function verifyKey(){
                   if (receiverId === generatorId || (receiverName && generatorName && receiverName === generatorName && isRegisteredReceiver === false)) {
                     receiverName = 'unknown user';
                     receiverId = deviceId;
-                    isRegisteredRec
+                    isRegisteredReceiver = false;
+                  }
+
+                  const logKey = safeKey + '_' + String(deviceId).replace(/[.#$\[\]\/]/g,'_');
+                  const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
+                  const existingLogSnap = await get(existingLogRef);
+
+                  const payload = {
+                    generatorName,
+                    generatorId,
+                    key: userInput,
+                    receiverName: isRegisteredReceiver ? receiverName : 'unknown user',
+                    receiverDevice: receiverId,
+                    receiverFingerprint: deviceId,
+                    originalDevices: existing,
+                    timestamp: Date.now(),
+                    type: 'normal'
+                  };
+                  // Create once; allow name upgrade if receiver registers later
+                  if (!existingLogSnap.exists()) {
+                    await set(existingLogRef, payload);
+                  } else {
+                    const prev = existingLogSnap.val() || {};
+                    if (isRegisteredReceiver && prev.receiverName === 'unknown user') {
+                      await set(existingLogRef, Object.assign({}, prev, {
+                        receiverName: receiverName,
+                        receiverDevice: receiverId,
+                        timestamp: prev.timestamp || Date.now()
+                      }));
+                    }
+                  }
+                } catch (logErr) {
+                  console.error('Share log write failed:', logErr);
+                }
+
+                show('This key is already used on another device','var(--error)');
+                window.playSound(window.sfxFailed);
+                localStorage.removeItem('dgxen_saved_key');
+                btn.disabled=false;
+                return;
+              }
+            } else {
+              await set(ref(db, `settings/keyDeviceTrack/${safeKey}/${deviceId}`), true);
+            }
+            
+            isValid=true;window.__lastMatchedUserId=uid;show('Live Key Verified! Access Granted.' + timeLeftText,'var(--accent)');
+          }
+        }
+      }
+      if(!found){show('Deleted, Unregistered or Fake Key!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+    }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
+
+    if(isValid){
+      try {
+        const matchedUid = window.__lastMatchedUserId || null;
+        await reportAppVersion(matchedUid);
+        try {
+          const liveFp = getDeviceFingerprint();
+          if (matchedUid && liveFp) {
+            await update(ref(db, 'users/' + matchedUid), {
+              lastDeviceId: liveFp,
+              fingerprint: liveFp,
+              lastLoginDevice: liveFp
+            });
+          }
+        } catch (eWrite) { console.warn('native id write', eWrite); }
+        // Start live session guard (ban / key ban / master delete) while user uses app
+        const isMaster = !userInput.startsWith('DGXEN-');
+        try {
+          let expAt = null;
+          try {
+            if (!isMaster && matchedUid) {
+              const us = await get(ref(db, 'users/' + matchedUid));
+              if (us.exists() && us.val() && us.val().keyExpiresAt) expAt = Number(us.val().keyExpiresAt);
+            } else if (isMaster) {
+              const mk = await get(ref(db, 'settings/masterKeys'));
+              if (mk.exists()) {
+                const val = mk.val() || {};
+                for (const k in val) {
+                  const entry = val[k];
+                  const keyStr = (typeof entry === 'string') ? entry.trim() : String((entry && entry.key) || '').trim();
+                  if (keyStr === userInput) {
+                    if (entry && entry.expiresAt) expAt = Number(entry.expiresAt);
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (eExp) {}
+          await startSessionGuard({
+            kind: isMaster ? 'master' : 'normal',
+            key: userInput,
+            uid: matchedUid,
+            deviceId: getDeviceFingerprint(),
+            expiresAt: expAt
+          });
+        } catch (gErr) { console.warn('guard start', gErr); }
+        window.__lastMatchedUserId=null;
+      } catch(e) {}
+      window.playSoundReliable(window.sfxSuccess);
+      btn.classList.add('success');btn.textContent='ACCESS GRANTED';
+      save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
+      try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
+      setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
+    }
+  }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
+}
+
+
+// ===== ADMIN NOTICE + JOIN FINGER =====
+(function(){
+  const finger=document.getElementById('joinFinger');
+  const noticeEl=document.getElementById('adminNotice');
+  const noticeText=document.getElementById('adminNoticeText');
+  const noticeCount=document.getElementById('adminNoticeCount');
+  const noticeClose=document.getElementById('adminNoticeClose');
+  let noticeTimer=null;
+  let tickTimer=null;
+  let shownForId=null;
+  let isShowing=false;
+  let bootDone=false;
+
+  function setFinger(on){
+    if(!finger) return;
+    if(on) finger.classList.add('show'); else finger.classList.remove('show');
+  }
+  function hideNotice(){
+    if(noticeEl) noticeEl.classList.remove('show');
+    if(noticeTimer){ clearTimeout(noticeTimer); noticeTimer=null; }
+    if(tickTimer){ clearInterval(tickTimer); tickTimer=null; }
+    if(noticeCount) noticeCount.textContent='';
+    isShowing=false;
+  }
+  function showNotice(msg, seconds){
+    if(!noticeEl||!noticeText) return;
+    const text=String(msg||'').trim();
+    if(!text){ hideNotice(); return; }
+    if(isShowing) return; // never restart mid-countdown
+    isShowing=true;
+    let left=Math.max(1, Math.floor(Number(seconds)||8));
+    noticeText.textContent=text;
+    if(noticeCount) noticeCount.textContent=String(left)+'s';
+    noticeEl.classList.add('show');
+    if(noticeTimer) clearTimeout(noticeTimer);
+    if(tickTimer) clearInterval(tickTimer);
+    tickTimer=setInterval(function(){
+      left-=1;
+      if(noticeCount) noticeCount.textContent=left>0?(String(left)+'s'):'';
+      if(left<=0){ clearInterval(tickTimer); tickTimer=null; }
+    }, 1000);
+    noticeTimer=setTimeout(hideNotice, left*1000 + 80);
+  }
+  if(noticeClose) noticeClose.addEventListener('click', hideNotice);
+
+  function applyNotice(v){
+    v=v||{};
+    setFinger(v.fingerHint===true||v.fingerHint==='on'||v.fingerHint===1);
+    try{
+      const tag=document.querySelector('.tagline');
+      if(tag){
+        if(!tag.dataset.defaultTagline) tag.dataset.defaultTagline=tag.textContent;
+        if(v.taglineEnabled && v.tagline) tag.textContent=String(v.tagline);
+        else tag.textContent=tag.dataset.defaultTagline||tag.textContent;
+      }
+    }catch(e){}
+
+    const bc=v.broadcast||{};
+    const enabled = bc.enabled===true || bc.enabled==='on' || bc.enabled===1 || bc.enabled==='true';
+    const msg=String(bc.message||'').trim();
+    const sec = (bc.seconds!=null && bc.seconds!=='') ? Number(bc.seconds) : 10;
+    const id = String(bc.id || bc.updatedAt || '');
+
+    if(!enabled || !msg){
+      hideNotice();
+      shownForId=null;
+      return;
+    }
+    // New broadcast id from admin → allow one new show after current ends
+    if(shownForId===id) return;
+    if(isShowing) return;
+    shownForId=id || ('msg:'+msg);
+    showNotice(msg, sec);
+  }
+
+  try{
+    onValue(ref(db,'settings/notice'), function(snap){
+      const v = snap.exists() ? snap.val() : {};
+      applyNotice(v);
+      try{ if (window.__dgxenApplyRemoteAtmConfig) window.__dgxenApplyRemoteAtmConfig(v); }catch(e){}
+    });
+  }catch(e){ console.warn('notice listen', e); }
+
+  async function bootNotice(){
+    if(bootDone) return;
+    try{
+      const snap=await get(ref(db,'settings/notice'));
+      if(snap.exists()) applyNotice(snap.val());
+      bootDone=true;
+    }catch(e){ console.warn('notice boot', e); }
+  }
+  bootNotice();
+  setTimeout(function(){ if(!bootDone) bootNotice(); }, 2000);
+})();
+
+
+
+
+
+
+async function cleanupSkippedGetKey(){
+  try{
+    let safe='';
+    try{ safe=sessionStorage.getItem('dgxen_pending_getkey')||''; }catch(e){}
+    const id=typeof getDeviceFingerprint==='function'?getDeviceFingerprint():'';
+    const pathSafe=safe||String(id||'').replace(/[.#$\[\]\/]/g,'_');
+    if(!pathSafe) return;
+    const snap=await get(ref(db,'deviceRequests/'+pathSafe));
+    if(!snap.exists()) return;
+    // If this device already registered, always clear pending
+    try{
+      const u=await get(ref(db,'users/'+id));
+      if(u.exists()){ await set(ref(db,'deviceRequests/'+pathSafe), null); try{sessionStorage.removeItem('dgxen_pending_getkey');}catch(e){} return; }
+    }catch(e){}
+    const v=snap.val()||{};
+    const exp=Number(v.expiresAt||0);
+    const age=Date.now()-Number(v.time||0);
+    if((exp && Date.now()>exp) || age>12*60*1000){
+      await set(ref(db,'deviceRequests/'+pathSafe), null);
+      try{ sessionStorage.removeItem('dgxen_pending_getkey'); }catch(e){}
+    }
+  }catch(e){}
+}
+cleanupSkippedGetKey();
+setTimeout(cleanupSkippedGetKey, 8000);
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible') cleanupSkippedGetKey();
+});
+
+
+
+</script>
+</body>
+</html>
+
