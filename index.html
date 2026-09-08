@@ -1040,7 +1040,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let weatherTheme = null;
   let audioEl = null;
   let muted = true;
-  try { muted = localStorage.setltem('dgxen_atm_mute') === '1'; } catch(e) { console.warn('[atm] localStorage unavailable, defaulting muted=false:', e); }
+ { console.warn('[atm] localStorage unavailable, defaulting muted=false:', e); }
   function pad(n){ return (n<10?'0':'')+n; }
   function todayMD(){ const d=new Date(); return pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
   function festivalToday(){
@@ -1464,11 +1464,13 @@ autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.prev
 const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
 window.addEventListener('load',()=>{
 
-    // Always start muted
     muted = true;
+
     try{
-        localStorage.setItem('dgxen_atm_mute','1');
-        if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound();
+        if(audioEl){
+            audioEl.pause();
+            audioEl.currentTime = 0;
+        }
     }catch(e){}
 
     updateMuteBtn();
