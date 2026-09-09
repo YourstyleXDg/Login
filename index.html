@@ -37,7 +37,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1);transform:translateZ(0)}
+.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translateZ(0)}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -160,12 +160,9 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
 .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
-h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:grid;grid-template-columns:26px 1fr 26px;align-items:center;justify-content:center;gap:7px}
-h2 .atm-mute-btn{grid-column:3;justify-self:end;display:inline-flex!important;visibility:hidden}
-h2 .atm-mute-btn.show{visibility:visible}
-h2 .title-group{grid-column:2;display:inline-flex;align-items:center;justify-content:center;gap:7px}
-h2 .hdr-spacer{grid-column:1;width:26px;height:1px}
+h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;gap:7px}
 .dgxen-word{position:relative;display:inline-block;cursor:pointer;user-select:none;-webkit-user-select:none;transition:text-shadow .3s ease,color .3s ease;overflow:visible;touch-action:none}
+.dgxen-vip-wrap{position:relative;display:inline-flex;align-items:center;gap:7px}
 .vip-word{display:inline-block}
 .dgxen-word.charging{color:#eaffef;text-shadow:0 0 18px rgba(0,255,136,.85),0 0 36px rgba(0,255,136,.5)}
 .dgxen-orb{position:absolute;top:50%;left:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;
@@ -192,20 +189,13 @@ h2 .hdr-spacer{grid-column:1;width:26px;height:1px}
   background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95) 0%,rgba(0,255,136,.55) 35%,rgba(0,20,15,0) 72%);
   opacity:0;transform:scale(.02);
 }
-#worldFlyOverlay.fly{animation:dgxenFlyBurst .85s cubic-bezier(.2,.8,.2,1) forwards}
+#worldFlyOverlay.fly{animation:dgxenFlyBurst .95s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes dgxenFlyBurst{
-  0%{opacity:0;transform:scale(.02)}
-  35%{opacity:1;transform:scale(1.4)}
-  100%{opacity:0;transform:scale(3.2)}
+  0%{opacity:0;transform:scale(.02) rotate(0deg);filter:blur(0px)}
+  30%{opacity:1;transform:scale(1.3) rotate(5deg);filter:blur(0px)}
+  55%{opacity:.82;transform:scale(1.95) rotate(8deg);filter:blur(2px)}
+  100%{opacity:0;transform:scale(3.4) rotate(12deg);filter:blur(7px)}
 }
-/* Real cross-dissolve between the login card and the 3D world: the card genuinely
-   disintegrates to one side (like a page being drawn away) while the world forms in,
-   instead of relying only on the flash to hide a hard cut. */
-.scene{transition:opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1),filter .7s ease}
-.scene.dissolve-out{opacity:0;filter:blur(6px);transform:translate3d(-6%,0,-60px) rotateY(-14deg) scale(.92)}
-.scene.dissolve-in{opacity:0;filter:blur(6px);transform:translate3d(6%,0,-60px) rotateY(14deg) scale(.92);transition:none}
-#apex4d,#apex4d-ov{transition:opacity 1.1s ease,filter 1.1s ease,transform 1.1s cubic-bezier(.4,0,.2,1);filter:blur(4px);transform:scale(1.05)}
-#apex4d.show,#apex4d-ov.show{filter:blur(0);transform:scale(1)}
 .tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
 
 .key-wrap{position:relative;margin-bottom:16px}
@@ -313,6 +303,7 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 .sky-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease,background 1.2s ease}
 html[data-dgxen-world="1"] .sky-layer{opacity:.12;transition:opacity 1.1s ease}
 html[data-dgxen-world="1"] #fx{opacity:0!important}
+html[data-dgxen-world="1"] .scene{opacity:0}
 #fx{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .6s ease}
 #fx.show{opacity:1}
 .scene{z-index:5}
@@ -461,14 +452,15 @@ body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
 .atm-mute-btn{
-  position:relative;display:none;align-items:center;justify-content:center;
+  position:absolute;left:100%;top:0;bottom:0;margin-top:auto;margin-bottom:auto;margin-left:8px;
+  display:none;align-items:center;justify-content:center;
   width:26px;height:26px;padding:0;flex-shrink:0;
   background:transparent;border:none;cursor:pointer;vertical-align:middle;
   color:rgba(255,255,255,.32);opacity:.4;
   transition:color .3s ease,filter .3s ease,opacity .3s ease;
 }
 .atm-mute-btn.show{display:inline-flex;opacity:0}
-.atm-mute-btn.show.unfolded{animation:atmBtnPopIn var(--unfold-pop-ms,.5s) cubic-bezier(.22,1.4,.36,1) both}
+.atm-mute-btn.show.unfolded{animation:atmBtnPopIn .5s cubic-bezier(.22,1.4,.36,1) both}
 @keyframes atmBtnPopIn{
   0%{opacity:0;transform:scale(.4) rotate(-25deg)}
   60%{opacity:1;transform:scale(1.12) rotate(4deg)}
@@ -617,13 +609,12 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   #apex4d-ov.show{opacity:1}
   #apex-hint{
     position:fixed;left:50%;bottom:44px;transform:translateX(-50%);z-index:50;
-    pointer-events:none;width:calc(100vw - 32px);max-width:520px;text-align:center;
-    font:700 11px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    pointer-events:none;max-width:calc(100vw - 32px);text-align:center;
+    font:700 11px/1.4 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
     letter-spacing:.5px;color:rgba(210,255,235,.85);white-space:normal;
     text-shadow:0 0 12px rgba(0,255,136,.35),0 1px 3px rgba(0,0,0,.65);
     opacity:0;transition:opacity .8s ease;
   }
-  @media (max-width:400px){#apex-hint{font-size:10.5px;bottom:38px}}
   html[data-dgxen-world="1"] #apex-hint{opacity:1}
   html[data-dgxen-world="1"] #apex-hint.gone{opacity:0}
   #apex-status{
@@ -1756,7 +1747,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-        <h2><span class="hdr-spacer" aria-hidden="true"></span><span class="title-group"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span></span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></h2>
+        <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
@@ -2454,29 +2445,11 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     (function revealMuteBtnOnUnfold(){
       let revealed = false;
       function reveal(){ if (revealed) return; revealed = true; muteBtn.classList.add('unfolded'); }
-      const shellEl = document.getElementById('cardShell');
-      // Sync the icon's pop-in to the card's ACTUAL unfold speed rather than a hardcoded
-      // guess: read the real computed animation-duration off the shell (it can vary with
-      // reduced-motion settings or future CSS tweaks) and fire the icon exactly as the
-      // unfold settles, scaling the icon's own pop-in animation to match that pace —
-      // so a fast unfold gets a fast icon "shoot in", and a slow unfold gets a slow one.
-      if (shellEl) {
-        let unfoldMs = 1850;
-        try {
-          const dur = getComputedStyle(shellEl).animationDuration;
-          const parsed = parseFloat(dur);
-          if (!isNaN(parsed) && parsed > 0) unfoldMs = dur.indexOf('ms') > -1 ? parsed : parsed * 1000;
-        } catch(e){}
-        // Scale the icon pop-in animation relative to the card's unfold pace (baseline 1.85s -> .5s pop).
-        const popMs = Math.max(220, Math.min(650, 500 * (unfoldMs / 1850)));
-        muteBtn.style.setProperty('--unfold-pop-ms', popMs + 'ms');
-        shellEl.addEventListener('animationend', function(e){
-          if (e.animationName === 'unrollCorner4D') reveal();
-        });
-        setTimeout(reveal, unfoldMs + 250); // safety net, scaled to the real duration
-      } else {
-        setTimeout(reveal, 2100);
-      }
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // unrollCorner4D's main motion lands around 70% of its 1.85s run (~1.3s);
+      // the remaining time is just an imperceptible settle wobble, so reveal there
+      // instead of waiting for the animation to fully end (which reads as "late").
+      setTimeout(reveal, reduced ? 60 : 1300);
     })();
     muteBtn.addEventListener('click', function(){
       if (isNativeTheme || !opts.sound) return;
@@ -2506,7 +2479,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const worldOv = document.getElementById('apex4d-ov');
   if (!target) return;
 
-  const HOLD_MS = 3000; // user must physically keep holding for the full 3s — no early release
+  const HOLD_MS = 4000;
   let holdTimer = null;
   let holdStartT = 0;
   let inWorld = false;
@@ -2527,17 +2500,22 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     pointerActive = true;
     holdStartT = Date.now();
     startX = e.clientX; startY = e.clientY;
+    // keep receiving move/up events on `target` even if the finger drifts off
+    // its small hit area during the hold — otherwise a release outside the text
+    // never reaches these listeners and the timer fires regardless of the release.
+    try { if (e.pointerId != null && target.setPointerCapture) target.setPointerCapture(e.pointerId); } catch(err){}
     setOrbitSpeedForHold();
     target.classList.add('charging');
     holdTimer = setTimeout(completeHold, HOLD_MS);
   }
 
-  function cancelCharge(){
+  function cancelCharge(e){
     if (!pointerActive) return;
     pointerActive = false;
     clearTimeout(holdTimer);
     holdTimer = null;
     target.classList.remove('charging');
+    try { if (e && e.pointerId != null && target.hasPointerCapture && target.hasPointerCapture(e.pointerId)) target.releasePointerCapture(e.pointerId); } catch(err){}
   }
 
   function onMove(e){
@@ -2552,8 +2530,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (inWorld) exitWorld(); else enterWorld();
   }
 
-  const sceneEl = document.getElementById('scene');
-
   function enterWorld(){
     inWorld = true;
     try { if (window.__dgxenMeteorFX) window.__dgxenMeteorFX.stop(); } catch(e){}
@@ -2561,15 +2537,11 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     flyOverlay.classList.remove('fly');
     void flyOverlay.offsetWidth;
     flyOverlay.classList.add('fly');
-    // The card genuinely dissolves away to one side (not just hidden behind the flash) —
-    // real artist-style transition: old scene disintegrates as the new world forms.
-    if (sceneEl) sceneEl.classList.add('dissolve-out');
     setTimeout(function(){
       try { if (window.__dgxenWorld) window.__dgxenWorld.start(); } catch(e){}
       worldCanvas.classList.add('show');
       worldOv.classList.add('show');
       document.documentElement.setAttribute('data-dgxen-world', '1');
-      if (sceneEl) sceneEl.style.display = 'none';
     }, 260); // swap happens near the peak-brightness point of the burst, hidden by the flash
   }
 
@@ -2578,13 +2550,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     flyOverlay.classList.remove('fly');
     void flyOverlay.offsetWidth;
     flyOverlay.classList.add('fly');
-    // Prep the card to fade/form back in from the opposite side, mirroring the exit.
-    if (sceneEl) {
-      sceneEl.style.display = '';
-      sceneEl.classList.remove('dissolve-out');
-      sceneEl.classList.add('dissolve-in');
-      void sceneEl.offsetWidth;
-    }
     setTimeout(function(){
       worldCanvas.classList.remove('show');
       worldOv.classList.remove('show');
@@ -2594,11 +2559,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
         const t = document.documentElement.getAttribute('data-atm');
         if ((t === 'metroid' || t === 'apex') && window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
       } catch(e){}
-      if (sceneEl) {
-        sceneEl.style.transition = 'opacity .7s cubic-bezier(.4,0,.2,1),transform .7s cubic-bezier(.4,0,.2,1),filter .7s ease';
-        requestAnimationFrame(function(){ sceneEl.classList.remove('dissolve-in'); });
-        setTimeout(function(){ if (sceneEl) sceneEl.style.transition = ''; }, 750);
-      }
     }, 260);
   }
 
@@ -2606,6 +2566,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   target.addEventListener('pointerup', cancelCharge);
   target.addEventListener('pointercancel', cancelCharge);
   target.addEventListener('pointermove', onMove);
+  // belt-and-suspenders: if for any reason the events above don't fire on `target`
+  // (older WebView pointer-capture quirks, etc.), catch the release here too.
+  document.addEventListener('pointerup', function(e){ if (pointerActive) cancelCharge(e); }, true);
+  document.addEventListener('pointercancel', function(e){ if (pointerActive) cancelCharge(e); }, true);
+  window.addEventListener('blur', function(){ if (pointerActive) cancelCharge(); });
+  document.addEventListener('visibilitychange', function(){ if (document.hidden && pointerActive) cancelCharge(); });
   // prevent text-selection / long-press context menu from interrupting the hold on mobile
   target.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 })();
