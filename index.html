@@ -184,17 +184,33 @@ h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-sh
   0%{width:14px;height:14px;opacity:.9}
   100%{width:230px;height:60px;opacity:0}
 }
-#worldFlyOverlay{
-  position:fixed;inset:0;z-index:200;pointer-events:none;
-  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.95) 0%,rgba(0,255,136,.55) 35%,rgba(0,20,15,0) 72%);
-  opacity:0;transform:scale(.02);
+#worldFlyOverlay{position:fixed;inset:0;z-index:200;pointer-events:none;overflow:hidden}
+#worldFlyOverlay .wv-core,#worldFlyOverlay .wv-ring{
+  position:absolute;left:50%;top:50%;border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);opacity:0;will-change:transform,opacity;
 }
-#worldFlyOverlay.fly{animation:dgxenFlyBurst .95s cubic-bezier(.2,.8,.2,1) forwards}
-@keyframes dgxenFlyBurst{
-  0%{opacity:0;transform:scale(.02) rotate(0deg);filter:blur(0px)}
-  30%{opacity:1;transform:scale(1.3) rotate(5deg);filter:blur(0px)}
-  55%{opacity:.82;transform:scale(1.95) rotate(8deg);filter:blur(2px)}
-  100%{opacity:0;transform:scale(3.4) rotate(12deg);filter:blur(7px)}
+#worldFlyOverlay .wv-core{
+  width:60px;height:60px;
+  background:radial-gradient(circle,rgba(255,255,255,.98) 0%,rgba(0,255,136,.72) 45%,rgba(0,255,136,0) 76%);
+  filter:blur(1px);
+}
+#worldFlyOverlay .wv-ring{
+  width:40px;height:40px;
+  border:2px solid rgba(140,255,205,.9);
+  box-shadow:0 0 22px 4px rgba(0,255,136,.45),inset 0 0 22px 4px rgba(190,255,228,.35);
+}
+#worldFlyOverlay.fly .wv-core{animation:dgxenWaveCore .8s cubic-bezier(.16,.84,.32,1) forwards}
+#worldFlyOverlay.fly .wv-ring{animation:dgxenWaveRing 1.05s cubic-bezier(.16,.84,.32,1) forwards;animation-delay:var(--d,0s)}
+@keyframes dgxenWaveCore{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.05)}
+  22%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(2.6)}
+}
+@keyframes dgxenWaveRing{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}
+  12%{opacity:.95}
+  60%{opacity:.4}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(48)}
 }
 .tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
 
@@ -303,7 +319,6 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 .sky-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease,background 1.2s ease}
 html[data-dgxen-world="1"] .sky-layer{opacity:.12;transition:opacity 1.1s ease}
 html[data-dgxen-world="1"] #fx{opacity:0!important}
-html[data-dgxen-world="1"] .scene{opacity:0}
 #fx{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .6s ease}
 #fx.show{opacity:1}
 .scene{z-index:5}
@@ -639,7 +654,12 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 <div id="apex-hint"></div>
 <div id="apex-status"></div>
 <div id="apex-hud"></div>
-<div id="worldFlyOverlay" aria-hidden="true"></div>
+<div id="worldFlyOverlay" aria-hidden="true">
+  <span class="wv-core"></span>
+  <span class="wv-ring" style="--d:0s"></span>
+  <span class="wv-ring" style="--d:.12s"></span>
+  <span class="wv-ring" style="--d:.24s"></span>
+</div>
 
 <script>
 (function(){
@@ -2471,7 +2491,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 </script>
 
 <script>
-// ===== DGXEN — hold "DGXEN" for 4s to enter/exit the 3D world =====
+// ===== DGXEN — hold "DGXEN" for 3s to enter/exit the 3D world =====
 (function(){
   const target = document.getElementById('dgxenHoldTarget');
   const flyOverlay = document.getElementById('worldFlyOverlay');
@@ -2479,7 +2499,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const worldOv = document.getElementById('apex4d-ov');
   if (!target) return;
 
-  const HOLD_MS = 4000;
+  const HOLD_MS = 3000;
   let holdTimer = null;
   let holdStartT = 0;
   let inWorld = false;
