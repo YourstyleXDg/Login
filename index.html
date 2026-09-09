@@ -2373,6 +2373,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     } catch(e){}
   }
   window.__dgxenStopAtmSound = stopSound;
+  window.__dgxenIsMuted = function(){ return muted; };
   function startSound(theme){
     stopSound();
     if (isNativeTheme) return;
@@ -2502,6 +2503,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       if (isNativeTheme || !opts.sound) return;
       muted = !muted;
       if (muted) stopSound(); else startSound(document.documentElement.getAttribute('data-atm')||'native');
+      try { if (window.__dgxenWorldSoundSync) window.__dgxenWorldSoundSync(muted); } catch(e){}
       updateMuteBtn();
       muteBtn.classList.remove('toggle-pop');
       void muteBtn.offsetWidth; // restart animation
@@ -2531,6 +2533,42 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   let holdStartT = 0;
   let inWorld = false;
   let pointerActive = false;
+
+  // ----- world ambience: plays automatically on entering the 3D world, gated by the speaker button -----
+  const WORLD_SOUND_URL = 'https://raw.githubusercontent.com/YourstyleXDg/Login/main/sounds/atm/ultrasonic.mp3';
+  let worldAudio = null;
+  function getWorldAudio(){
+    if (!worldAudio) {
+      worldAudio = new Audio(WORLD_SOUND_URL);
+      worldAudio.loop = true;
+      worldAudio.preload = 'auto';
+      worldAudio.volume = 0.28;
+      worldAudio.onerror = function(){ console.warn('[world-sound] failed to load:', WORLD_SOUND_URL); };
+      try { worldAudio.load(); } catch(e){}
+    }
+    return worldAudio;
+  }
+  getWorldAudio(); // prime it immediately on page load so it's already buffered — "ready to play" — well before anyone holds DGXEN
+
+  function speakerIsOn(){
+    try { return window.__dgxenIsMuted && !window.__dgxenIsMuted(); } catch(e){ return false; }
+  }
+  function playWorldSound(fresh){
+    const a = getWorldAudio();
+    if (fresh) { try { a.currentTime = 0; } catch(e){} }
+    const p = a.play();
+    if (p && p.catch) p.catch(function(err){ console.warn('[world-sound] play() blocked/failed:', err && err.message); });
+  }
+  function pauseWorldSound(reset){
+    if (!worldAudio) return;
+    worldAudio.pause();
+    if (reset) { try { worldAudio.currentTime = 0; } catch(e){} }
+  }
+  // called by the speaker-button click handler (a separate closure) whenever it's toggled
+  window.__dgxenWorldSoundSync = function(isMutedNow){
+    if (!inWorld) return; // the speaker still controls the ambient theme sound outside the world — this is world-only
+    if (isMutedNow) pauseWorldSound(false); else playWorldSound(false);
+  };
 
   function setOrbitSpeedForHold(){
     // slightly speed up the orbiting lights as a subtle "charging up" cue
@@ -2589,6 +2627,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       worldCanvas.classList.add('show');
       worldOv.classList.add('show');
       document.documentElement.setAttribute('data-dgxen-world', '1');
+      if (speakerIsOn()) playWorldSound(true); // else: left preloaded, ready the moment the speaker is turned on
     }, 260); // swap happens near the peak-brightness point of the burst, hidden by the flash
   }
 
@@ -2602,6 +2641,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       worldOv.classList.remove('show');
       document.documentElement.removeAttribute('data-dgxen-world');
       try { if (window.__dgxenWorld) window.__dgxenWorld.stop(); } catch(e){}
+      pauseWorldSound(true);
       try {
         const t = document.documentElement.getAttribute('data-atm');
         if ((t === 'metroid' || t === 'apex') && window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
