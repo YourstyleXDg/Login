@@ -2392,6 +2392,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   };
   window.__dgxenIsMuted = function(){ return muted; };
   function startSound(theme){
+    if (window.__dgxenLoggedIn) return; // no background sound is ever restarted after a successful login
     stopSound();
     if (isNativeTheme) return;
     if (!opts.sound) return;
@@ -2540,7 +2541,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   }
   document.body.addEventListener('pointerdown', function(){
     const inWorldNow = !!(window.__dgxenInWorld && window.__dgxenInWorld());
-    if (!inWorldNow && !isNativeTheme && opts.sound && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
+    if (!window.__dgxenLoggedIn && !inWorldNow && !isNativeTheme && opts.sound && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
   });
 
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
@@ -2583,6 +2584,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     try { return window.__dgxenIsMuted && !window.__dgxenIsMuted(); } catch(e){ return false; }
   }
   function playWorldSound(fresh){
+    if (window.__dgxenLoggedIn) return; // no background sound is ever restarted after a successful login
     const a = getWorldAudio();
     if (fresh) { try { a.currentTime = 0; } catch(e){} }
     const p = a.play();
@@ -2593,6 +2595,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     worldAudio.pause();
     if (reset) { try { worldAudio.currentTime = 0; } catch(e){} }
   }
+  // Lets other flows (e.g. successful login) hard-stop the ultrasonic world track
+  // even if it happens to still be playing, regardless of current hold/world state.
+  window.__dgxenStopWorldSound = function(){ pauseWorldSound(true); };
   // called by the speaker-button click handler (a separate closure) whenever it's toggled
   window.__dgxenWorldSoundSync = function(isMutedNow){
     if (!inWorld) return; // the speaker still controls the ambient theme sound outside the world — this is world-only
@@ -3564,7 +3569,12 @@ async function verifyKey(){
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
+      // Once logged in, all background/ambient sound stays off for good — both the 2D
+      // theme track and the 3D world's ultrasonic track — and this flag stops either
+      // one from being restarted by a stray tap, theme refresh, or re-entering the world.
+      window.__dgxenLoggedIn = true;
       try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
+      try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
       setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
     }
   }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
