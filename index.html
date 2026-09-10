@@ -1100,7 +1100,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
             if (window.__dgxenSkinBeacons) {
               for (var i=0;i<window.__dgxenSkinBeacons.length;i++) {
                 var b=window.__dgxenSkinBeacons[i];
-                if (b._dist && b._dist < 4800) {
+                if (b._dist && b._dist < 9500) {
                   if (window.__dgxenApplyLoginSkin) window.__dgxenApplyLoginSkin(b.skin, true);
                   showLabel('◇ '+b.label+' EQUIPPED ◇', WS.glowA, 1800);
                   flashA=Math.max(flashA,0.7);
@@ -2826,7 +2826,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
           var bc = beacons[bi];
           var bp = proj(bc.x, bc.y, bc.z);
           if (!bp || bp.z < NEAR) continue;
-          var br = Math.max(10, Math.min(56, 18000/bp.z));
+          var br = Math.max(16, Math.min(72, 32000/bp.z));
           var glow = ctx.createRadialGradient(bp.x, bp.y, 0, bp.x, bp.y, br*2.2);
           if (bc.skin==='futuristic') {
             glow.addColorStop(0,'rgba(180,255,255,0.95)');
@@ -2858,13 +2858,27 @@ body[data-atm-intensity] .sky-layer{opacity:1}
           var bdx=bc.x-camX, bdy=bc.y-camY, bdz=bc.z-camZ;
           var bd=Math.sqrt(bdx*bdx+bdy*bdy+bdz*bdz);
           bc._dist=bd; bc._sx=bp.x; bc._sy=bp.y; bc._r=br;
-          if (bd < 4200 && br>8) {
+          if (bd < 9000 && br>6) {
             ctx.fillStyle='rgba(255,255,255,0.9)';
             ctx.font='700 '+Math.max(9,Math.min(13,br*0.32))+'px Inter,Arial,sans-serif';
             ctx.fillText('2×TAP EQUIP', bp.x, bp.y+ch/2+16);
           }
         }
       }
+
+        /* compass to nearest beacon */
+        try {
+          var nearest=null, nd=1e15;
+          for (var bj=0; bj<beacons.length; bj++) {
+            if (beacons[bj]._dist && beacons[bj]._dist < nd) { nd=beacons[bj]._dist; nearest=beacons[bj]; }
+          }
+          if (nearest && hudEl && nd < 200000) {
+            var extra = ' · BLOCK ' + Math.round(nd/1000) + 'k ' + (nearest.skin==='futuristic'?'ICE':'CLASSIC');
+            if (hudEl.textContent && hudEl.textContent.indexOf('BLOCK') < 0)
+              hudEl.textContent = (hudEl.textContent||'') + extra;
+          }
+        } catch(eNav) {}
+
     } catch (eBeacon) {}
 
       for(var bi=0;bi<BLACK_HOLES.length;bi++) drawBlackHole(BLACK_HOLES[bi]);
@@ -3144,16 +3158,32 @@ function flushPosition(){
   if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=0;dragX=pendingX;dragY=pendingY;renderPosition()}
 }
 function saveCardPosition(){
-  try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
+  try{
+    flushPosition();
+    const payload={x:dragX,y:dragY,t:Date.now()};
+    localStorage.setItem(CARD_POSITION_KEY,JSON.stringify(payload));
+    // WebView sometimes needs sessionStorage mirror
+    try{sessionStorage.setItem(CARD_POSITION_KEY,JSON.stringify(payload));}catch(_s){}
+  }catch(error){console.warn('Card position could not be saved:',error)}
 }
 function restoreCardPosition(){
   try{
-    const saved=JSON.parse(localStorage.getItem(CARD_POSITION_KEY)||'null');
+    let raw=localStorage.getItem(CARD_POSITION_KEY);
+    if(!raw){ try{ raw=sessionStorage.getItem(CARD_POSITION_KEY);}catch(_s){} }
+    const saved=JSON.parse(raw||'null');
     if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y))return;
-    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;renderPosition();
-  }catch(error){localStorage.removeItem(CARD_POSITION_KEY)}
+    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;
+    renderPosition();
+  }catch(error){
+    try{localStorage.removeItem(CARD_POSITION_KEY);}catch(_e){}
+  }
 }
 restoreCardPosition();
+// WebView: re-apply after layout / animation settle
+setTimeout(restoreCardPosition, 80);
+setTimeout(restoreCardPosition, 400);
+setTimeout(restoreCardPosition, 900);
+window.addEventListener('load', function(){ setTimeout(restoreCardPosition, 50); });
 
 function setMoveMode(type,on){
   document.body.classList.toggle(type,on);
@@ -4942,8 +4972,8 @@ document.addEventListener('visibilitychange', function(){
 
   // World-space collectible positions (two floating blocks)
   window.__dgxenSkinBeacons = [
-    { skin:'futuristic', x: 18000, y: -2000, z: 42000, label:'FUTURISTIC BLOCK' },
-    { skin:'classic',    x:-22000, y: -1500, z: 38000, label:'CLASSIC BLOCK' }
+    { skin:'futuristic', x: 5200,  y: -400, z: 9000,  label:'FUTURISTIC BLOCK' },
+    { skin:'classic',    x: -4800, y: -300, z: 8500,  label:'CLASSIC BLOCK' }
   ];
 })();
 
