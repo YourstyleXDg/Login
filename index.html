@@ -716,23 +716,42 @@ html[data-dgxen-block="b"] .ambient-orb{display:block}
 body.is-dragging #sceneB .glass-b{backdrop-filter:blur(18px) saturate(145%);-webkit-backdrop-filter:blur(18px) saturate(145%)}
 
 /* ===== In-world floating login block (the "lost" block, tappable) ===== */
+/* Looks like an actual miniature of the real card — not a generic label — */
+/* so it reads at a glance as "that's a login card" floating in the world. */
 #worldBlockPreview{position:fixed;top:0;left:0;z-index:15;pointer-events:none;display:none;
   transform-origin:50% 50%;will-change:transform,opacity;user-select:none}
 html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-events:auto}
-#worldBlockPreview .wbp-card{width:150px;padding:18px 12px;border-radius:20px;text-align:center;
-  background:linear-gradient(145deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
-  border:1.4px solid rgba(255,255,255,.4);box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 30px rgba(120,220,255,.22),
-  inset 0 1px rgba(255,255,255,.4);backdrop-filter:blur(6px)}
-#worldBlockPreview .wbp-title{font:800 11px/1.3 Inter,Arial,sans-serif;letter-spacing:.6px;color:#eafcff;
-  text-shadow:0 0 12px rgba(140,240,255,.6);margin-bottom:4px}
-#worldBlockPreview .wbp-sub{font:600 8.5px/1.3 Inter,Arial,sans-serif;letter-spacing:.4px;color:rgba(200,225,255,.75)}
-#worldBlockPreview .wbp-ring{position:absolute;inset:-10px;border-radius:26px;border:1.5px solid rgba(140,240,255,.35);
-  animation:wbpPulse 2.4s ease-in-out infinite}
+#worldBlockPreview .wbp-card{width:132px;padding:16px 14px 14px;border-radius:22px;text-align:center;
+  background:linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.045) 55%,rgba(255,255,255,.02));
+  border:1.4px solid rgba(255,255,255,.32);box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 30px rgba(120,220,255,.2),
+  inset 0 1.5px rgba(255,255,255,.45);backdrop-filter:blur(5px);transition:border-color .25s,box-shadow .25s}
+#worldBlockPreview .wbp-ring{position:absolute;inset:-11px;border-radius:30px;border:1.5px solid rgba(140,240,255,.35);
+  animation:wbpPulse 2.4s ease-in-out infinite;pointer-events:none}
 @keyframes wbpPulse{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.06);opacity:.15}}
-#worldBlockPreview.near .wbp-card{border-color:rgba(140,240,255,.85);box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 46px rgba(140,240,255,.5),inset 0 1px rgba(255,255,255,.6)}
-#worldBlockPreview .wbp-tap{margin-top:8px;font:800 9px/1.2 Inter,Arial,sans-serif;letter-spacing:.5px;color:#8ff7ff;
+#worldBlockPreview.near .wbp-card{border-color:rgba(140,240,255,.9);box-shadow:0 12px 40px rgba(0,0,0,.55),0 0 50px rgba(140,240,255,.55),inset 0 1.5px rgba(255,255,255,.6)}
+/* Mini logo dot, standing in for the real card's round logo image */
+#worldBlockPreview .wbp-logo{width:26px;height:26px;margin:0 auto 8px;border-radius:50%;
+  background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.9),rgba(0,255,136,.45) 55%,rgba(0,255,136,.15));
+  border:1px solid rgba(255,255,255,.4);box-shadow:0 0 12px rgba(0,255,136,.35)}
+#worldBlockPreview .wbp-title{font:800 11px/1.25 Inter,Arial,sans-serif;letter-spacing:.4px;color:#eafcff;
+  text-shadow:0 0 12px rgba(140,240,255,.6);margin-bottom:3px}
+#worldBlockPreview .wbp-sub{font:600 7.5px/1.3 Inter,Arial,sans-serif;letter-spacing:.3px;color:rgba(200,225,255,.7);margin-bottom:10px}
+/* Faux input / checkbox / button bars — just enough visual rhythm to read as "a login form" */
+#worldBlockPreview .wbp-bar{height:9px;border-radius:5px;margin:0 auto 6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.16)}
+#worldBlockPreview .wbp-bar.wide{width:92%}
+#worldBlockPreview .wbp-bar.mid{width:60%;height:7px;opacity:.7}
+#worldBlockPreview .wbp-btn{height:16px;border-radius:8px;margin-top:8px;background:linear-gradient(135deg,rgba(255,255,255,.9),rgba(210,225,220,.7));
+  box-shadow:0 3px 10px rgba(0,0,0,.3)}
+#worldBlockPreview .wbp-tap{margin-top:10px;font:800 9px/1.2 Inter,Arial,sans-serif;letter-spacing:.5px;color:#8ff7ff;
   opacity:0;transition:opacity .25s}
 #worldBlockPreview.near .wbp-tap{opacity:1}
+/* Block-B styled variant — cyan/liquid-glass, mirrors the futuristic skin */
+#worldBlockPreview.skin-b .wbp-card{background:linear-gradient(145deg,rgba(255,255,255,.2),rgba(121,173,255,.05));
+  border-color:rgba(255,255,255,.42)}
+#worldBlockPreview.skin-b .wbp-logo{background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.95),rgba(143,247,255,.55) 55%,rgba(143,247,255,.18));
+  box-shadow:0 0 14px rgba(143,247,255,.45)}
+#worldBlockPreview.skin-b .wbp-title{color:#eafcff}
+#worldBlockPreview.skin-b .wbp-btn{background:linear-gradient(135deg,#eafcff,#c9e6ff)}
 
 /* Zoom-dock transition flash, reused for both directions (A->B and B->A) */
 #blockSwapFlash{position:fixed;inset:0;z-index:250;pointer-events:none;opacity:0;
@@ -3033,10 +3052,12 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
       if(gravEl) gravEl.className='';
     },
     getCamera:function(){ return {x:camX,y:camY,z:camZ,yaw:cyaw}; },
-    setBlockLabel:function(title,sub){
+    setBlockLabel:function(title,sub,skin){
       var te=document.getElementById('wbpTitle'), se=document.getElementById('wbpSub');
+      var el=getBlockEl();
       if(te&&title) te.textContent=title;
       if(se&&sub) se.textContent=sub;
+      if(el){ el.classList.toggle('skin-b', skin==='b'); }
     },
     isRunning:function(){ return running; }
   };
@@ -3105,8 +3126,12 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
   <div id="worldBlockPreview" aria-hidden="true">
     <div class="wbp-ring"></div>
     <div class="wbp-card">
-      <div class="wbp-title" id="wbpTitle">◇ LOGIN NODE</div>
+      <div class="wbp-logo"></div>
+      <div class="wbp-title" id="wbpTitle">DGXEN VIP</div>
       <div class="wbp-sub" id="wbpSub">drifting · unclaimed</div>
+      <div class="wbp-bar wide"></div>
+      <div class="wbp-bar mid"></div>
+      <div class="wbp-btn"></div>
       <div class="wbp-tap">◉ TAP TO DOCK</div>
     </div>
   </div>
@@ -3949,7 +3974,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     void flyOverlay.offsetWidth;
     flyOverlay.classList.add('fly');
     setTimeout(function(){
-      try { if (window.__dgxenWorld) window.__dgxenWorld.start(); } catch(e){}
+      try { if (window.__dgxenWorld) window.__dgxenWorld.start({freshBlockSpot:true}); } catch(e){}
       worldCanvas.classList.add('show');
       worldOv.classList.add('show');
       document.documentElement.setAttribute('data-dgxen-world', '1');
@@ -5094,8 +5119,6 @@ document.addEventListener('visibilitychange', function(){
   // ----- A -> B: player taps the found floating block while inside the world -----
   function dockToB(clientX, clientY){
     if(activeBlock === 'b') return;
-    grabRealNodesOnce();
-    recordOrigins();
     flashAt(clientX || innerWidth/2, clientY || innerHeight/2, function(){
       sceneA.style.display = 'none';
       moveRealNodesToB();
@@ -5104,6 +5127,7 @@ document.addEventListener('visibilitychange', function(){
       setBodyBlockAttr('b');
       cardB.classList.remove('dock-in'); void cardB.offsetWidth; cardB.classList.add('dock-in');
       activeBlock = 'b';
+      saveActiveBlock('b');
       // Block A's twin is now the "lost" one — keep the floating object visible
       // (still inside the world) but re-point it at the newly-inactive block.
       if(wbp && document.documentElement.getAttribute('data-dgxen-world')==='1'){ wbp.classList.add('active'); }
@@ -5123,6 +5147,7 @@ document.addEventListener('visibilitychange', function(){
       setBodyBlockAttr('a');
       cardA.classList.remove('dock-in'); void cardA.offsetWidth; cardA.classList.add('dock-in');
       activeBlock = 'a';
+      saveActiveBlock('a');
       // Block B's twin is now the "lost" one — keep the floating object visible
       // (still inside the world) but re-point it at the newly-inactive block.
       if(wbp && document.documentElement.getAttribute('data-dgxen-world')==='1'){ wbp.classList.add('active'); }
@@ -5159,9 +5184,9 @@ document.addEventListener('visibilitychange', function(){
   function refreshWorldBlockLabel(){
     if(!window.__dgxenWorld || !window.__dgxenWorld.setBlockLabel) return;
     if(activeBlock === 'a'){
-      window.__dgxenWorld.setBlockLabel('◇ LOGIN NODE — B', 'liquid glass · drifting');
+      window.__dgxenWorld.setBlockLabel('DGXEN VIP', 'liquid glass · drifting', 'b');
     } else {
-      window.__dgxenWorld.setBlockLabel('◇ LOGIN NODE — A', 'native shell · drifting');
+      window.__dgxenWorld.setBlockLabel('DGXEN VIP', 'native shell · drifting', 'a');
     }
   }
 
@@ -5220,6 +5245,30 @@ document.addEventListener('visibilitychange', function(){
   })();
 
   setBodyBlockAttr('a');
+
+  // ----- Persist + restore which block the user last selected -----
+  // "Reopen app -> shows whichever login page user selected last time."
+  var LAST_BLOCK_KEY = 'dgxen_active_block';
+  function saveActiveBlock(which){ try{ localStorage.setItem(LAST_BLOCK_KEY, which); }catch(e){} }
+  function loadActiveBlock(){ try{ return localStorage.getItem(LAST_BLOCK_KEY); }catch(e){ return null; } }
+
+  // Capture Block A's real nodes + their original slots right away, while the
+  // page is still exactly as authored — this must happen before any restore.
+  grabRealNodesOnce();
+  recordOrigins();
+
+  (function restoreLastBlock(){
+    var last = loadActiveBlock();
+    if(last !== 'b') return; // default ('a' or nothing saved) needs no action
+    // Instant restore — no flash/zoom animation, this is a cold page load, not a live tap.
+    sceneA.style.display = 'none';
+    moveRealNodesToB();
+    sceneB.classList.add('show');
+    if(window.__dgxenResetBlockBPos) window.__dgxenResetBlockBPos();
+    setBodyBlockAttr('b');
+    activeBlock = 'b';
+    try { if (window.applyLoginAtmosphere) window.applyLoginAtmosphere('cyber'); } catch(e){}
+  })();
 })();
 </script>
 
