@@ -3114,48 +3114,53 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
       </div>
     </div>
   </section>
-
-  <!-- ============ BLOCK B — futuristic liquid-glass skin ============ -->
-  <!-- Real controls (#keyInput, #unlockBtn, etc.) are MOVED into the      -->
-  <!-- .content-b slots on activation — nothing here duplicates logic.    -->
-  <div id="sceneB" aria-label="DGXEN login (alternate)">
-    <div id="cardShellB">
-      <div class="glass-b" id="glassB">
-        <div class="liquid-rim-b" aria-hidden="true"></div>
-        <div class="prism-spot-b" aria-hidden="true"></div>
-        <div class="content-b">
-          <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
-          <div id="headSlotB"></div>
-          <div id="taglineSlotB"></div>
-          <div id="keySlotB"></div>
-          <div id="checkSlotB"></div>
-          <div id="btnSlotB"></div>
-          <div id="statusSlotB"></div>
-          <div id="getKeySlotB"></div>
-        </div>
-        <div id="notchSlotB"></div>
-      </div>
-    </div>
-  </div>
-  <div class="ambient-orb orb-a" aria-hidden="true"></div>
-  <div class="ambient-orb orb-b" aria-hidden="true"></div>
-  <div class="ambient-orb orb-c" aria-hidden="true"></div>
-
-  <!-- ============ Floating "lost block" object inside the 3D world ============ -->
-  <div id="worldBlockPreview" aria-hidden="true">
-    <div class="wbp-ring"></div>
-    <div class="wbp-card">
-      <div class="wbp-logo"></div>
-      <div class="wbp-title" id="wbpTitle">DGXEN VIP</div>
-      <div class="wbp-sub" id="wbpSub">drifting · unclaimed</div>
-      <div class="wbp-bar wide"></div>
-      <div class="wbp-bar mid"></div>
-      <div class="wbp-btn"></div>
-      <div class="wbp-tap">◉ TAP TO DOCK</div>
-    </div>
-  </div>
-  <div id="blockSwapFlash" aria-hidden="true"></div>
 </main>
+
+<!-- ============ BLOCK B — futuristic liquid-glass skin ============ -->
+<!-- Real controls (#keyInput, #unlockBtn, etc.) are MOVED into the      -->
+<!-- .content-b slots on activation — nothing here duplicates logic.    -->
+<!-- IMPORTANT: this is a SIBLING of <main>, not nested inside it —     -->
+<!-- <main> gets a CSS transform when Block A's card is dragged, and    -->
+<!-- position:fixed descendants of a transformed element stop being    -->
+<!-- anchored to the real viewport. Block A also gets display:none     -->
+<!-- toggled when Block B is active, which would hide any descendant.  -->
+<div id="sceneB" aria-label="DGXEN login (alternate)">
+  <div id="cardShellB">
+    <div class="glass-b" id="glassB">
+      <div class="liquid-rim-b" aria-hidden="true"></div>
+      <div class="prism-spot-b" aria-hidden="true"></div>
+      <div class="content-b">
+        <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
+        <div id="headSlotB"></div>
+        <div id="taglineSlotB"></div>
+        <div id="keySlotB"></div>
+        <div id="checkSlotB"></div>
+        <div id="btnSlotB"></div>
+        <div id="statusSlotB"></div>
+        <div id="getKeySlotB"></div>
+      </div>
+      <div id="notchSlotB"></div>
+    </div>
+  </div>
+</div>
+<div class="ambient-orb orb-a" aria-hidden="true"></div>
+<div class="ambient-orb orb-b" aria-hidden="true"></div>
+<div class="ambient-orb orb-c" aria-hidden="true"></div>
+
+<!-- ============ Floating "lost block" object inside the 3D world ============ -->
+<div id="worldBlockPreview" aria-hidden="true">
+  <div class="wbp-ring"></div>
+  <div class="wbp-card">
+    <div class="wbp-logo"></div>
+    <div class="wbp-title" id="wbpTitle">DGXEN VIP</div>
+    <div class="wbp-sub" id="wbpSub">drifting · unclaimed</div>
+    <div class="wbp-bar wide"></div>
+    <div class="wbp-bar mid"></div>
+    <div class="wbp-btn"></div>
+    <div class="wbp-tap">◉ TAP TO DOCK</div>
+  </div>
+</div>
+<div id="blockSwapFlash" aria-hidden="true"></div>
 
 <div class="revoke-overlay" id="revokeOverlay" aria-live="assertive">
   <div class="revoke-box">
