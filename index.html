@@ -630,17 +630,23 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 .revoke-overlay{z-index:99999}
 
 /* ===================================================================== */
-/* ============ BLOCK B — "found in the 3D world" liquid-glass skin ==== */
+/* ============ BLOCK B — EXACT port of futuristic.html's design ======= */
 /* ===================================================================== */
-/* Reuses the SAME live #keyInput/#unlockBtn/etc nodes as Block A — this   */
-/* is a skin the real controls travel into, not a duplicate login flow.   */
-:root{--ice:#eafcff;--cyan:#8ff7ff;--violet:#b9a7ff}
+/* Every rule below is copied byte-for-byte from futuristic.html (with   */
+/* its own internal cascade already resolved to final values), scoped   */
+/* under #sceneB so it cannot leak into or be overridden by Block A's    */
+/* identical class names. The real #keyInput/#unlockBtn/etc. nodes are   */
+/* moved into this markup — same wiring as Block A, exact futuristic     */
+/* appearance. */
+:root{--ice:#eafcff;--cyan:#8ff7ff;--violet:#b9a7ff;--glass-edge:rgba(255,255,255,.66)}
+#sceneB{--mx:50%;--my:18%}
 #sceneB{width:min(374px,100%);perspective:1800px;position:fixed;top:50%;left:50%;
   transform:translate3d(-50%,-50%,0);z-index:2;isolation:isolate;display:none;
-  touch-action:none;}
+  touch-action:none;will-change:transform}
 #sceneB.show{display:block}
 #sceneB::before{content:"";position:absolute;inset:26px -27px -36px;z-index:-2;
   background:radial-gradient(ellipse at 50% 72%,rgba(0,0,0,.75),transparent 68%);filter:blur(30px)}
+
 .ambient-orb{position:fixed;border-radius:50%;pointer-events:none;z-index:1;opacity:.7;filter:blur(.2px);
   background:radial-gradient(circle at 30% 23%,rgba(255,255,255,.72),rgba(165,230,255,.18) 32%,rgba(132,103,255,.08) 55%,transparent 72%);
   box-shadow:inset -14px -18px 30px rgba(120,110,255,.12),inset 10px 10px 18px rgba(255,255,255,.22),0 28px 60px rgba(0,0,0,.3);
@@ -650,6 +656,7 @@ html[data-dgxen-block="b"] .ambient-orb{display:block}
 .orb-b{width:220px;height:220px;right:-115px;bottom:4%;animation-delay:-3s}
 .orb-c{width:90px;height:90px;right:12%;top:-38px;animation-delay:-6s}
 @keyframes orbFloatB{to{transform:translate3d(10px,-14px,0) rotate(7deg)}}
+
 #cardShellB{position:relative;width:100%;transform-origin:50% 50%;transform-style:preserve-3d;
   touch-action:none;cursor:grab;will-change:transform;backface-visibility:hidden}
 #cardShellB.dock-in{animation:blockDockIn .85s cubic-bezier(.16,.84,.18,1) both}
@@ -659,61 +666,212 @@ html[data-dgxen-block="b"] .ambient-orb{display:block}
   78%{transform:scale(.97) rotateX(2deg) rotateY(-2deg)}
   100%{transform:scale(1) rotateX(0) rotateY(0)}
 }
-.glass-b{position:relative;overflow:hidden;border-radius:38px;padding:48px 28px 32px;text-align:center;
-  background:radial-gradient(circle at var(--mxb,50%) var(--myb,18%),rgba(255,255,255,.27),transparent 28%),
+
+/* .roll-fold — exact visual from futuristic.html's page-load reveal, replayed
+   on every dock-in instead (Block B doesn't exist until it's docked). */
+#sceneB .roll-fold-b{position:absolute;inset:-2px;overflow:hidden;border-radius:38px;pointer-events:none;
+  z-index:8;transform:translateZ(52px);opacity:0}
+#cardShellB.dock-in .roll-fold-b{animation:foldDepthFadeB .85s cubic-bezier(.16,.84,.18,1) both}
+#sceneB .roll-fold-b::before{
+  content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
+  background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.55) 30%,rgba(255,255,255,.10) 39%,rgba(0,0,0,.45) 52%,transparent 64%);
+  filter:blur(9px);transform-origin:0 0;opacity:0}
+#cardShellB.dock-in .roll-fold-b::before{animation:foldReleaseB .85s cubic-bezier(.16,.84,.18,1) both}
+#sceneB .roll-fold-b::after{
+  content:"";position:absolute;inset:-20% -55%;
+  background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.5) 47%,rgba(255,255,255,.22) 52%,transparent 64%);opacity:0}
+#cardShellB.dock-in .roll-fold-b::after{animation:rollShadowB .85s cubic-bezier(.16,.84,.18,1) both}
+@keyframes foldDepthFadeB{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
+@keyframes foldReleaseB{
+  0%{opacity:1;transform:translate(-22%,-24%) rotate(-18deg) skew(-8deg,-5deg) scale(1.48)}
+  28%{opacity:.98;transform:translate(-5%,-7%) rotate(-10deg) skew(-4deg,-2deg) scale(1.2)}
+  62%{opacity:.68;transform:translate(43%,38%) rotate(6deg) skew(2deg,1deg) scale(.88)}
+  84%{opacity:.2;transform:translate(88%,78%) rotate(13deg) scale(.52)}
+  100%{opacity:0;transform:translate(122%,110%) rotate(16deg) scale(.2)}
+}
+@keyframes rollShadowB{
+  0%{opacity:.96;transform:translate3d(-72%,-7%,0) skewX(-18deg) scaleX(1.3)}
+  38%{opacity:.82;transform:translate3d(-25%,0,0) skewX(-14deg) scaleX(1.12)}
+  72%{opacity:.35;transform:translate3d(45%,5%,0) skewX(-9deg) scaleX(.8)}
+  100%{opacity:0;transform:translate3d(92%,8%,0) skewX(-6deg) scaleX(.45)}
+}
+
+/* .glass — exact final cascade from futuristic.html (2nd definition wins) */
+#sceneB .glass-b{
+  position:relative;overflow:hidden;border-radius:38px;padding:48px 28px 32px;text-align:center;
+  background:
+    radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.27),transparent 28%),
     linear-gradient(145deg,rgba(255,255,255,.17),rgba(255,255,255,.068) 36%,rgba(121,173,255,.035) 62%,rgba(255,255,255,.075));
   border:1px solid rgba(255,255,255,.38);
   box-shadow:0 42px 110px rgba(0,0,0,.62),0 0 0 1px rgba(255,255,255,.06),inset 0 1.5px 1px rgba(255,255,255,.72),
     inset 1px 0 1px rgba(255,255,255,.3),inset 0 -1.5px 1px rgba(93,116,166,.3),inset -16px -22px 45px rgba(90,69,214,.065);
   backdrop-filter:blur(34px) saturate(185%) contrast(112%);-webkit-backdrop-filter:blur(34px) saturate(185%) contrast(112%);
-  transform-style:preserve-3d;transition:transform .18s ease-out,background .25s ease}
-.glass-b::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;
-  background:conic-gradient(from 210deg at var(--mxb,50%) var(--myb,18%),rgba(255,255,255,.95),rgba(126,239,255,.65),rgba(169,131,255,.55),rgba(255,255,255,.2),rgba(255,255,255,.92));
+  transform-style:preserve-3d;transition:transform .18s ease-out,background .25s ease;
+}
+#sceneB .glass-b::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;
+  background:conic-gradient(from 210deg at var(--mx) var(--my),rgba(255,255,255,.95),rgba(126,239,255,.65),rgba(169,131,255,.55),rgba(255,255,255,.2),rgba(255,255,255,.92));
   -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
-  opacity:.78;pointer-events:none;z-index:6}
-.glass-b::after{content:"";position:absolute;inset:1px;border-radius:37px;pointer-events:none;z-index:1;
-  background:linear-gradient(116deg,rgba(255,255,255,.19),transparent 24%,transparent 71%,rgba(128,190,255,.08));mix-blend-mode:screen}
-.liquid-rim-b{position:absolute;inset:9px;border-radius:31px;z-index:1;pointer-events:none;border:1px solid rgba(255,255,255,.09);
-  box-shadow:inset 0 0 24px rgba(255,255,255,.06),inset 14px 9px 28px rgba(136,245,255,.04)}
-.prism-spot-b{position:absolute;z-index:1;width:150px;height:105px;left:calc(var(--mxb,50%) - 75px);top:calc(var(--myb,18%) - 52px);
+  opacity:.78;pointer-events:none;z-index:6;
+}
+#sceneB .glass-b::after{
+  display:block;content:"";position:absolute;inset:1px;border-radius:37px;pointer-events:none;z-index:1;
+  background:linear-gradient(116deg,rgba(255,255,255,.19),transparent 24%,transparent 71%,rgba(128,190,255,.08));mix-blend-mode:screen;
+}
+#sceneB .liquid-rim-b{position:absolute;inset:9px;border-radius:31px;z-index:1;pointer-events:none;
+  border:1px solid rgba(255,255,255,.09);box-shadow:inset 0 0 24px rgba(255,255,255,.06),inset 14px 9px 28px rgba(136,245,255,.04)}
+#sceneB .prism-spot-b{position:absolute;z-index:1;width:150px;height:105px;left:calc(var(--mx) - 75px);top:calc(var(--my) - 52px);
   pointer-events:none;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.16),rgba(122,235,255,.06) 35%,transparent 70%);
   filter:blur(13px);transition:left .18s ease-out,top .18s ease-out}
+
+/* .grain — final cascade (2nd definition wins for opacity/mix-blend/animation) */
+#sceneB .grain-b{position:absolute!important;z-index:5!important;inset:-35%;width:170%;height:170%;pointer-events:none;
+  opacity:.105;mix-blend-mode:soft-light;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  transform:translateZ(3px);animation:grainDriftB .42s steps(2) infinite;will-change:transform}
+@keyframes grainDriftB{0%{transform:translate3d(-1%,1%,3px)}50%{transform:translate3d(1%,-1%,3px)}100%{transform:translate3d(0,0,3px)}}
+
+#sceneB .light-cap-b{position:absolute!important;z-index:0!important;top:-25%;left:-20%;width:78%;height:59%;
+  background:radial-gradient(closest-side,rgba(255,255,255,.33),transparent 73%)}
+#sceneB .light-cap-b.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;
+  background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
+#sceneB .iridescent-b{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;
+  background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
+
+/* .glass-shadow-runner — final cascade */
+#sceneB .glass-shadow-runner-b{position:absolute!important;z-index:1!important;top:-10%;bottom:-10%;left:0;width:50%;
+  pointer-events:none;opacity:.25;animation:shadowRunnerB 8.5s linear infinite;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.19),rgba(111,240,255,.08),transparent)}
+@keyframes shadowRunnerB{from{transform:translate3d(-70%,7%,0) skewX(-11deg)}to{transform:translate3d(170%,-7%,0) skewX(-11deg)}}
+
 #sceneB .content-b{position:relative;z-index:2;transform:translateZ(24px)}
-#sceneB .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.24);
-  box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(120,200,255,.18)}
-#sceneB h2{color:var(--cyan);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(140,240,255,.4)}
-#sceneB .tagline{color:#a9c0e0!important;font-size:13px;margin:0 0 25px}
-#sceneB input[type=text]{width:100%;padding:15px;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.22);color:#fff;
-  border-radius:14px;text-align:center;font-size:15px;font-weight:750;letter-spacing:.8px;outline:none;
-  box-shadow:inset 0 2px 8px rgba(0,0,0,.3);transition:.22s;-webkit-user-select:text!important;user-select:text!important}
-#sceneB input[type=text]:focus{border-color:var(--cyan);box-shadow:0 0 0 4px rgba(143,247,255,.18),inset 0 2px 8px rgba(0,0,0,.3)}
-#sceneB .checkbox-container{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 21px;padding:5px;color:#a9c0e0;font-size:13px;cursor:pointer}
-#sceneB .checkbox-box{position:relative;width:21px;height:21px;flex:none;border-radius:7px;border:1.5px solid rgba(255,255,255,.3);
-  background:rgba(0,0,0,.35);display:grid;place-items:center;transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1)}
-#sceneB input:checked+.checkbox-box{background:var(--cyan);border-color:var(--cyan);transform:scale(1.12)}
+#sceneB .logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;
+  border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
+
+/* h2 — final cascade (gradient-text version wins) */
+#sceneB h2{margin:0 0 6px;font-size:24px;letter-spacing:.7px;text-shadow:0 0 26px rgba(106,237,255,.2)}
+#sceneB h2 .dgxen-word,
+#sceneB h2 .vip-word{
+  background:linear-gradient(100deg,#fff 4%,#a9fff0 43%,#aee8ff 68%,#c3b4ff);
+  background-size:280px 100%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+}
+#sceneB h2 .dgxen-word{background-position:0 0}
+#sceneB h2 .vip-word{background-position:-190px 0}
+#sceneB h2 .atm-mute-btn{color:var(--cyan)}
+#sceneB .tagline{color:rgba(231,242,247,.63);font-size:13px;margin:0 0 25px;letter-spacing:.15px}
+
+/* .key-wrap — final cascade (gradient border wrap version wins) */
+#sceneB .key-wrap{position:relative;margin-bottom:16px;padding:1px;border-radius:17px;
+  background:linear-gradient(120deg,rgba(255,255,255,.4),rgba(130,241,255,.2),rgba(173,142,255,.2));
+  box-shadow:0 12px 35px rgba(0,0,0,.2)}
+#sceneB input[type=text]{width:100%;border:0;border-radius:16px;padding:16px;text-align:center;color:#fff;
+  font-size:15px;font-weight:750;letter-spacing:.8px;outline:none;
+  background:linear-gradient(145deg,rgba(2,8,15,.62),rgba(15,22,34,.42));
+  box-shadow:inset 0 1px rgba(255,255,255,.09),inset 0 -1px rgba(0,0,0,.35);
+  transition:box-shadow .25s,transform .25s,background .25s;
+  -webkit-user-select:text!important;-moz-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+#sceneB input[type=text]:focus{transform:translateY(-1px);background:rgba(5,12,21,.68);
+  box-shadow:0 0 0 4px rgba(111,244,255,.12),0 12px 28px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.12)}
+
+#sceneB .checkbox-container{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 21px;
+  padding:5px;color:rgba(231,242,247,.63);font-size:13px;cursor:pointer}
+#sceneB .checkbox-container>input{position:absolute;opacity:0;width:0;height:0}
+#sceneB .checkbox-box{position:relative;width:21px;height:21px;flex:none;border-radius:7px;
+  border:1.5px solid rgba(255,255,255,.34);background:rgba(4,10,17,.52);display:grid;place-items:center;overflow:visible;
+  box-shadow:inset 0 1px rgba(255,255,255,.08);
+  transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1)}
 #sceneB .checkbox-check{width:13px;height:13px;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;
   stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s}
-#sceneB input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
-#sceneB .btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#eafcff,#c9e6ff);color:#020312;
-  font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;
-  transition:transform .15s,box-shadow .25s,background .25s}
-#sceneB .btn:active{transform:scale(.975)}
+@keyframes checkPulseB{0%{box-shadow:0 0 0 0 rgba(143,247,255,.55)}70%{box-shadow:0 0 0 11px rgba(143,247,255,0)}100%{box-shadow:0 0 0 0 rgba(143,247,255,0)}}
+#sceneB .spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--cyan);opacity:0;pointer-events:none}
+@keyframes sparkOutB{0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(0)}}
+#sceneB .spark:nth-of-type(1){--sx:-16px;--sy:-12px}#sceneB .spark:nth-of-type(2){--sx:16px;--sy:-12px}
+#sceneB .spark:nth-of-type(3){--sx:-16px;--sy:12px}#sceneB .spark:nth-of-type(4){--sx:16px;--sy:12px}
+#sceneB .spark:nth-of-type(5){--sx:0;--sy:-18px}#sceneB .spark:nth-of-type(6){--sx:0;--sy:18px}
+#sceneB .checkbox-container input:checked+.checkbox-box{background:var(--cyan);border-color:var(--cyan);transform:scale(1.12);animation:checkPulseB .55s ease}
+#sceneB .checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
+#sceneB .checkbox-container input:checked+.checkbox-box .spark{animation:sparkOutB .55s ease-out forwards}
+
+/* .btn — final cascade (liquid-glass sheen version wins) */
+#sceneB .btn{width:100%;position:relative;overflow:hidden;border-radius:17px;padding:17px;border:0;cursor:pointer;
+  background:linear-gradient(115deg,rgba(255,255,255,.96),rgba(201,250,255,.9) 46%,rgba(206,194,255,.92));
+  box-shadow:0 14px 35px rgba(74,183,219,.18),inset 0 1px #fff;color:#051015;
+  font-size:15px;font-weight:900;letter-spacing:.35px;
+  transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .25s}
+#sceneB .btn::before{content:"";position:absolute;inset:0;
+  background:linear-gradient(110deg,transparent 25%,rgba(255,255,255,.75) 48%,transparent 70%);
+  transform:translateX(-140%);animation:buttonSheenB 5s ease-in-out 2.3s infinite}
+@keyframes buttonSheenB{0%,72%{transform:translateX(-140%)}90%,100%{transform:translateX(140%)}}
+#sceneB .btn:active{transform:scale(.972) translateY(1px)}
 #sceneB .btn:disabled{opacity:.64;cursor:wait}
-#sceneB .btn.success{background:linear-gradient(135deg,#8ff7ff,#4fd8ff);box-shadow:0 10px 30px rgba(80,210,255,.32)}
-#sceneB .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}
-#sceneB .get-key{display:block;margin-top:17px;padding:7px;color:#a9c0e0;font-size:12px;text-decoration:none}
+#sceneB .btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);box-shadow:0 10px 30px rgba(0,255,136,.32)}
+
+#sceneB .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45;color:#fff}
+#sceneB .get-key{display:block;margin-top:17px;padding:7px;color:rgba(231,242,247,.63);font-size:12px;text-decoration:none}
 #sceneB .get-key:hover{color:#fff}
-#sceneB .auto-notch{position:absolute!important;top:0;left:50%;transform:translateX(-50%);z-index:20!important;
-  display:flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid rgba(255,255,255,.24);border-top:0;
-  border-radius:0 0 14px 14px;background:rgba(0,0,0,.45);backdrop-filter:blur(6px);cursor:pointer}
-#sceneB .auto-notch span{font-size:10px;font-weight:800;color:#a9c0e0;letter-spacing:.8px;text-transform:uppercase}
+
+/* .auto-notch — final cascade (pill-shaped floating version wins) */
+#sceneB .auto-notch{position:absolute!important;top:10px;left:50%;transform:translateX(-50%);z-index:20!important;
+  display:flex;align-items:center;gap:8px;padding:7px 13px;border:1px solid rgba(255,255,255,.18);border-radius:999px;
+  background:rgba(5,10,16,.44);box-shadow:inset 0 1px rgba(255,255,255,.08),0 8px 22px rgba(0,0,0,.2);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);cursor:pointer;
+  transition:transform .3s cubic-bezier(.25,.8,.25,1)}
+#sceneB .auto-notch:active{transform:translateX(-50%) scale(.95)}
+#sceneB .auto-notch span{font-size:10px;font-weight:800;color:rgba(231,242,247,.63);letter-spacing:.8px;text-transform:uppercase;transition:color .3s}
 #sceneB .notch-led{width:8px;height:8px;flex:none;border-radius:50%;background:#444;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);transition:background .3s,box-shadow .3s}
 #sceneB .auto-notch.active span{color:var(--cyan)}
-#sceneB .auto-notch.active .notch-led{background:var(--cyan);box-shadow:0 0 10px rgba(140,240,255,.6),inset 0 0 4px #fff}
+#sceneB .auto-notch.active .notch-led{background:var(--cyan);box-shadow:0 0 10px rgba(143,247,255,.6),inset 0 0 4px #fff}
+
 #sceneB .atm-mute-btn{background:none;border:0;color:var(--cyan);cursor:pointer;padding:4px;margin-left:6px;
   vertical-align:middle;display:inline-flex;opacity:.85}
 #sceneB .atm-mute-btn:active{transform:scale(.9)}
+
+/* .join-badge (the "hang"/JOIN pill above the card) — final cascade */
+#sceneB .hang{position:absolute;top:-51px;right:22px;width:78px;height:54px;
+  display:flex;flex-direction:column;align-items:center;z-index:12;
+  transform-origin:50% 100%;animation:swayB 5.2s ease-in-out 1.55s infinite}
+@keyframes swayB{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
+#sceneB .join-badge{order:1;display:inline-flex;align-items:center;justify-content:center;
+  width:auto;height:auto;padding:7px 15px;border-radius:999px;text-decoration:none;
+  font-size:10.5px;font-weight:900;letter-spacing:.6px;color:#03150b;
+  background:linear-gradient(135deg,#d9fff8,#7df6d0);
+  box-shadow:0 8px 24px rgba(74,255,207,.25),inset 0 1px #fff;
+  transform-origin:50% 85%;animation:joinMiniGestureB 3.8s cubic-bezier(.22,1,.36,1) 2.1s infinite;will-change:transform,box-shadow}
+#sceneB .join-badge:hover{animation-play-state:paused;transform:translateY(-2px) scale(1.045);box-shadow:0 9px 20px rgba(74,255,207,.34),inset 0 1px rgba(255,255,255,.55)}
+#sceneB .join-badge:active{transform:translateY(0) scale(.95)}
+@keyframes joinMiniGestureB{
+  0%,76%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  80%{transform:translate3d(0,-2px,0) rotate(-4deg) scale(1.035)}
+  84%{transform:translate3d(0,0,0) rotate(3.2deg) scale(1.02)}
+  88%{transform:translate3d(0,-1px,0) rotate(-2deg) scale(1.025)}
+  92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+#sceneB .hang-string{order:2;width:1px;height:18px;flex:none;background:linear-gradient(rgba(255,255,255,.62),rgba(255,255,255,.3))}
+#sceneB .hang-pin{order:3;width:6px;height:6px;flex:none;border-radius:50%;background:#f7f7f7;box-shadow:0 0 7px rgba(255,255,255,.65);margin-top:-1px}
+
+/* During dragging, pause decorative animations and reduce costly live blur work. */
+body.is-dragging #sceneB .hang,
+body.is-dragging #sceneB .join-badge,
+body.is-dragging #sceneB .glass-shadow-runner-b{animation-play-state:paused!important}
 body.is-dragging #sceneB .glass-b{backdrop-filter:blur(18px) saturate(145%);-webkit-backdrop-filter:blur(18px) saturate(145%)}
+body.is-dragging #sceneB .grain-b{opacity:.035}
+
+@media (prefers-reduced-motion:reduce){
+  #sceneB *,#sceneB *::before,#sceneB *::after{animation-duration:.001ms!important;animation-iteration-count:1!important}
+  #sceneB .glass-b{transform:none!important}
+}
+@media (max-height:650px){
+  #sceneB .glass-b{padding-top:34px;padding-bottom:27px}
+  #sceneB .logo{width:58px;height:58px}
+  #sceneB .tagline{margin-bottom:18px}
+}
+@media(max-width:430px){
+  #sceneB .ambient-orb{opacity:.52}
+  #sceneB .glass-b{backdrop-filter:blur(28px) saturate(165%);-webkit-backdrop-filter:blur(28px) saturate(165%)}
+}
+@media(prefers-reduced-motion:reduce){#sceneB .ambient-orb,#sceneB .grain-b,#sceneB .btn::before{animation:none!important}}
+
 
 /* ===== In-world floating login block (the "lost" block, tappable) ===== */
 /* Looks like an actual miniature of the real card — not a generic label — */
@@ -3125,10 +3283,21 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
 <!-- anchored to the real viewport. Block A also gets display:none     -->
 <!-- toggled when Block B is active, which would hide any descendant.  -->
 <div id="sceneB" aria-label="DGXEN login (alternate)">
+  <div class="hang">
+    <span class="hang-pin"></span><span class="hang-string"></span>
+    <a class="join-badge" href="https://t.me/DGXEN" target="_blank" rel="noopener noreferrer">JOIN</a>
+  </div>
   <div id="cardShellB">
     <div class="glass-b" id="glassB">
+      <div id="notchSlotB"></div>
       <div class="liquid-rim-b" aria-hidden="true"></div>
       <div class="prism-spot-b" aria-hidden="true"></div>
+      <div class="light-cap-b" aria-hidden="true"></div>
+      <div class="light-cap-b two" aria-hidden="true"></div>
+      <div class="iridescent-b" aria-hidden="true"></div>
+      <div class="glass-shadow-runner-b" aria-hidden="true"></div>
+      <div class="grain-b" aria-hidden="true"></div>
+      <div class="roll-fold-b" aria-hidden="true"></div>
       <div class="content-b">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
         <div id="headSlotB"></div>
@@ -3139,7 +3308,6 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
         <div id="statusSlotB"></div>
         <div id="getKeySlotB"></div>
       </div>
-      <div id="notchSlotB"></div>
     </div>
   </div>
 </div>
@@ -3390,7 +3558,7 @@ function beginRecallTravel(clientX,clientY){
 }
 
 document.addEventListener('pointerdown',e=>{
-  if(cardShell.contains(e.target)||(e.button!==undefined&&e.button!==0)||e.target.closest(INTERACTIVE))return;
+  if(cardShell.contains(e.target)||(document.getElementById('cardShellB')&&document.getElementById('cardShellB').contains(e.target))||(e.button!==undefined&&e.button!==0)||e.target.closest(INTERACTIVE))return;
   recallPointer=e.pointerId;recallStartX=e.clientX;recallStartY=e.clientY;recallFollowing=false;
   document.body.classList.add('recall-ready');
   recallTimer=setTimeout(()=>{
