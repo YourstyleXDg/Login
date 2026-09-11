@@ -3030,18 +3030,21 @@ html[data-dgxen-world="1"] #worldBlockPreview.active{display:block;pointer-event
     });
   }
   function placeBlockNearSpawn(){
-    // Keep block genuinely reachable-by-flying-toward, not sitting on the exact
-    // forward line (which just gets rammed by normal forward drift). Offset it
-    // enough to require steering, but still within the visible cone at spawn
-    // (engine's effective half-FOV is roughly 20°, so keep well under that).
-    var side = (Math.random()<0.5?-1:1) * (1400 + Math.random()*600);   // left/right offset
-    var lift = (Math.random()<0.5?-1:1) * (350 + Math.random()*300);    // up/down offset
-    var ahead = 5200 + Math.random()*1200;                              // distance ahead
-    var perpX = Math.cos(cyaw), perpZ = -Math.sin(cyaw); // right-vector relative to camera facing
+    // Keep block reachable-by-flying-toward AND clearly clear of the card's own
+    // on-screen footprint (the card occupies most of the lower two-thirds of
+    // the screen, centered). Bias it upward + slightly to a side, using the
+    // camera's current yaw so it lands in a predictable spot (above the card,
+    // roughly where the AUTO-LOGIN tab / top of the card is) regardless of
+    // which way the player is currently facing.
+    var fwdX=sinY, fwdZ=cosY;                 // flat forward (yaw only, matches camera's travel direction)
+    var rightX=cosY, rightZ=-sinY;            // flat right vector
+    var side   = (Math.random()<0.5?-1:1) * (700 + Math.random()*500);
+    var liftUp = 2500 + Math.random()*700;    // distance ABOVE the flight line, in world space
+    var ahead  = 4600 + Math.random()*1000;   // distance ahead along the flight line
     blockPos={
-      x:camX + Math.sin(cyaw)*ahead + perpX*side,
-      y:camY + lift,
-      z:camZ + Math.cos(cyaw)*ahead + perpZ*side
+      x:camX + fwdX*ahead + rightX*side,
+      y:camY - liftUp,                        // more-negative Y = up, per this engine's FLOOR convention
+      z:camZ + fwdZ*ahead + rightZ*side
     };
     saveBlockPos();
   }
