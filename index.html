@@ -16,35 +16,6 @@
   --error:#ff5252;
   --card-radius:34px;
 }
-/* ===== THEME-AWARE ACCENT COLOR =====
-   --accent (and --accent-soft) previously stayed a fixed green on every
-   theme, which clashed with warm/red themes like metroid, apex, ember,
-   golden, sakura, etc. Text (h2, notice counter, notch) and interactive
-   blocks (checkbox, input focus ring) all read from --accent, so
-   overriding the variable per theme fixes all of them at once without
-   touching each element individually. */
-body.atm-morning,body.atm-day_sunny,body.atm-day_haze{--accent:#5fd97a;--accent2:#3fbf5e;--accent-soft:rgba(95,217,122,.18)}
-body.atm-golden{--accent:#ffc266;--accent2:#f0a83e;--accent-soft:rgba(255,194,102,.18)}
-body.atm-rain{--accent:#7db8e8;--accent2:#4f97d1;--accent-soft:rgba(125,184,232,.18)}
-body.atm-night_stars,body.atm-night_aurora{--accent:#8ca8ff;--accent2:#6c86e8;--accent-soft:rgba(140,168,255,.18)}
-body.atm-cyber{--accent:#00ffd0;--accent2:#00c9a8;--accent-soft:rgba(0,255,208,.18)}
-body.atm-sakura{--accent:#ff9dc0;--accent2:#e8709e;--accent-soft:rgba(255,157,192,.18)}
-body.atm-ocean{--accent:#4fd4e8;--accent2:#2ba8c2;--accent-soft:rgba(79,212,232,.18)}
-body.atm-ember{--accent:#ff8c4a;--accent2:#e86a26;--accent-soft:rgba(255,140,74,.18)}
-body.atm-metroid{--accent:#ff5a4d;--accent2:#e8382b;--accent-soft:rgba(255,90,77,.18)}
-body.atm-apex{--accent:#ffab3d;--accent2:#e8841a;--accent-soft:rgba(255,171,61,.18)}
-body.atm-minimal{--accent:#dcdcdc;--accent2:#b8b8b8;--accent-soft:rgba(220,220,220,.16)}
-body.atm-windy{--accent:#bfe9ff;--accent2:#8fcfef;--accent-soft:rgba(191,233,255,.18)}
-/* Festival themes: warm/cool grouped by mood so text stays readable and
-   on-brand instead of clashing green against festival palettes. */
-body.atm-fest_holi,body.atm-fest_rakhi,body.atm-fest_janmashtami{--accent:#ff8fc7;--accent2:#e85fa0;--accent-soft:rgba(255,143,199,.18)}
-body.atm-fest_diwali,body.atm-fest_sankranti,body.atm-fest_dussehra,body.atm-fest_ganesh,body.atm-fest_ramnavami,body.atm-fest_hanuman,body.atm-fest_baisakhi,body.atm-fest_akshaya,body.atm-fest_rathyatra{--accent:#ffb655;--accent2:#e8912c;--accent-soft:rgba(255,182,85,.18)}
-body.atm-fest_republic,body.atm-fest_independence,body.atm-fest_kargil{--accent:#7fd88a;--accent2:#54b862;--accent-soft:rgba(127,216,138,.18)}
-body.atm-fest_christmas{--accent:#6fdc8f;--accent2:#40b866;--accent-soft:rgba(111,220,143,.18)}
-body.atm-fest_newyear{--accent:#b7a4ff;--accent2:#9078e8;--accent-soft:rgba(183,164,255,.18)}
-body.atm-fest_teachers,body.atm-fest_children,body.atm-fest_gandhi,body.atm-fest_buddha,body.atm-fest_gurupurnima{--accent:#ffcf7a;--accent2:#e8ac4a;--accent-soft:rgba(255,207,122,.18)}
-body.atm-fest_ugadi,body.atm-fest_vatsavitri{--accent:#8fe0a0;--accent2:#5cc074;--accent-soft:rgba(143,224,160,.18)}
-body.atm-fest_ganga,body.atm-fest_yoga{--accent:#6fd4e0;--accent2:#3aabb8;--accent-soft:rgba(111,212,224,.18)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
 html,body{min-height:100%;margin:0}
 body{
@@ -136,16 +107,34 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .join-badge:hover{transform:translateY(-2px) scale(1.045);box-shadow:0 9px 20px rgba(0,255,136,.34),inset 0 1px rgba(255,255,255,.55)}
 .join-badge:active{transform:translateY(0) scale(.95)}
 
+/* Original idle "ambient" mini-gesture — small automatic wiggle every few
+   seconds even with no interaction, restored alongside (not replaced by)
+   the new VIP-tap dance below. Paused automatically while the tap-dance is
+   playing so the two never fight over the transform. */
+.join-badge{animation:joinMiniGesture 3.8s cubic-bezier(.22,1,.36,1) 2.1s infinite}
+.join-badge.jb-dancing{animation-play-state:paused}
+@keyframes joinMiniGesture{
+  0%,76%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  80%{transform:translate3d(0,-2px,0) rotate(-4deg) scale(1.035)}
+  84%{transform:translate3d(0,0,0) rotate(3.2deg) scale(1.02)}
+  88%{transform:translate3d(0,-1px,0) rotate(-2deg) scale(1.025)}
+  92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+
 /* Real interactive gesture: the JOIN "baby" dance, played only when the user
    taps the VIP text (gated server-side by admin's atmJoinFx toggle). Multiple
    move segments are cycled through by JS via data-move so no two consecutive
-   plays feel identical. */
-.join-badge.jb-dancing{animation-play-state:running}
-.join-badge[data-move="1"]{animation:jbMoveWiggle 2.6s cubic-bezier(.34,1.4,.44,1) 1}
-.join-badge[data-move="2"]{animation:jbMoveHop 2.6s cubic-bezier(.34,1.4,.44,1) 1}
-.join-badge[data-move="3"]{animation:jbMoveNaughty 2.8s cubic-bezier(.34,1.4,.44,1) 1}
-.join-badge[data-move="4"]{animation:jbMoveFrontBack 2.6s cubic-bezier(.34,1.4,.44,1) 1}
-.join-badge[data-move="5"]{animation:jbMoveSpinPeek 2.9s cubic-bezier(.34,1.4,.44,1) 1}
+   plays feel identical. Each plays for a full 12 seconds by repeating its
+   keyframe cycle several times (iteration count set per move below so the
+   total duration lands on 12s regardless of each move's natural cycle length). */
+.join-badge[data-move="1"]{animation:jbMoveWiggle 2.4s cubic-bezier(.34,1.4,.44,1) 5}
+.join-badge[data-move="2"]{animation:jbMoveHop 2.4s cubic-bezier(.34,1.4,.44,1) 5}
+.join-badge[data-move="3"]{animation:jbMoveNaughty 2.4s cubic-bezier(.34,1.4,.44,1) 5}
+.join-badge[data-move="4"]{animation:jbMoveFrontBack 2.4s cubic-bezier(.34,1.4,.44,1) 5}
+.join-badge[data-move="5"]{animation:jbMoveSpinPeek 2.4s cubic-bezier(.34,1.4,.44,1) 5}
+.join-badge[data-move="6"]{animation:jbMoveHeadTilt 2s cubic-bezier(.34,1.4,.44,1) 6}
+.join-badge[data-move="7"]{animation:jbMoveTwirl 3s cubic-bezier(.3,1.3,.4,1) 4}
+.join-badge[data-move="8"]{animation:jbMoveBounceFreeze 2s cubic-bezier(.3,1.3,.4,1) 6}
 
 /* Move 1: curved up/down/left/right wander */
 @keyframes jbMoveWiggle{
@@ -198,6 +187,29 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   70%{transform:translate3d(4px,4px,0) rotate(-4deg) scale(1.07)}
   84%{transform:translate3d(-5px,-1px,0) rotate(-8deg) scale(1.02)}
   100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+/* Move 6: a curious head-tilt-like sway, side to side, gentle */
+@keyframes jbMoveHeadTilt{
+  0%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  25%{transform:translate3d(-3px,-2px,0) rotate(-10deg) scale(1.02)}
+  50%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  75%{transform:translate3d(3px,-2px,0) rotate(10deg) scale(1.02)}
+}
+/* Move 7: a full 360 twirl with a little skip at the end */
+@keyframes jbMoveTwirl{
+  0%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  55%{transform:translate3d(0,-9px,0) rotate(360deg) scale(1.1)}
+  75%{transform:translate3d(0,-2px,0) rotate(370deg) scale(.95)}
+  100%{transform:translate3d(0,0,0) rotate(360deg) scale(1)}
+}
+/* Move 8: bounce-bounce-freeze — two quick hops then a held playful pose */
+@keyframes jbMoveBounceFreeze{
+  0%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  15%{transform:translate3d(0,-10px,0) rotate(-6deg) scale(1.08)}
+  30%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  45%{transform:translate3d(0,-10px,0) rotate(6deg) scale(1.08)}
+  60%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  75%,95%{transform:translate3d(-2px,-3px,0) rotate(-8deg) scale(1.04)}
 }
 
 /* Feedback when admin has disabled the gesture: brief red fade-out/fade-in on
@@ -746,7 +758,7 @@ body.atm-metroid .theme-shards b{clip-path:polygon(50% 0,100% 32%,78% 100%,20% 8
 body.atm-apex{background:radial-gradient(circle at 50% 40%,rgba(255,90,20,.16),transparent 55%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
 body.atm-apex .glass{border-color:rgba(255,171,61,.28)!important}
 #apexFight{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .9s ease}
-#apexFight.show{opacity:.9;visibility:visible}
+#apexFight.show{opacity:1;visibility:visible}
 body.atm-apex.apex-shake #apexFight,
 body.atm-apex.apex-shake .sky-layer{animation:apexScreenShake .22s linear}
 @keyframes apexScreenShake{
@@ -3559,37 +3571,40 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.globalAlpha = 1;
 
     ctx.fillStyle = bodyColor;
+    ctx.strokeStyle = 'rgba(5,5,10,0.85)';
+    ctx.lineWidth = 2.4;
+    ctx.lineJoin = 'round';
     // torso
     ctx.beginPath();
     ctx.moveTo(-16, 0);
     ctx.quadraticCurveTo(-20, -h*0.55, -10, -h*0.72);
     ctx.quadraticCurveTo(0, -h*0.8, 10, -h*0.72);
     ctx.quadraticCurveTo(20, -h*0.55, 16, 0);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     // head
-    ctx.beginPath(); ctx.arc(2, -h*0.86, 13, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(2, -h*0.86, 13, 0, Math.PI*2); ctx.fill(); ctx.stroke();
     // back leg (planted)
     ctx.beginPath();
     ctx.moveTo(-8,-2); ctx.quadraticCurveTo(-26, h*0.02, -30, h*0.14);
     ctx.lineTo(-20, h*0.16); ctx.quadraticCurveTo(-4, h*0.05, 4,-2);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     // front leg (driving forward/back with the lunge)
     const legKick = 18 + punchExtend*14;
     ctx.beginPath();
     ctx.moveTo(6,-4); ctx.quadraticCurveTo(20+legKick*0.5, h*0.02, 26+legKick, h*0.13);
     ctx.lineTo(16+legKick, h*0.15); ctx.quadraticCurveTo(4, h*0.03, -2,-4);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     // back arm
     ctx.beginPath();
     ctx.moveTo(-8,-h*0.62); ctx.quadraticCurveTo(-22,-h*0.5,-24,-h*0.36);
     ctx.lineTo(-16,-h*0.34); ctx.quadraticCurveTo(-6,-h*0.46,0,-h*0.58);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     // front arm — the punching/striking limb, extends with punchExtend
     const reach = 22 + punchExtend*34;
     ctx.beginPath();
     ctx.moveTo(8,-h*0.64); ctx.quadraticCurveTo(8+reach*0.6,-h*0.6, 10+reach, -h*0.58);
     ctx.lineTo(6+reach,-h*0.5); ctx.quadraticCurveTo(4,-h*0.56,0,-h*0.6);
-    ctx.closePath(); ctx.fill();
+    ctx.closePath(); ctx.fill(); ctx.stroke();
     // fist glow at strike extremes (reads as an anime "impact" hand)
     if (punchExtend > 0.55){
       ctx.globalCompositeOperation='lighter';
@@ -3682,8 +3697,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       }
     }
 
-    drawFighter(leftX, groundY+idleL, 1, leanL, punchL, crouchL, 'rgba(120,190,255,0.9)', '#0d1a2b');
-    drawFighter(rightX, groundY+idleR, -1, leanR, punchR, crouchR, 'rgba(255,140,60,0.9)', '#2b1408');
+    drawFighter(leftX, groundY+idleL, 1, leanL, punchL, crouchL, 'rgba(120,190,255,0.9)', '#5aa8ff');
+    drawFighter(rightX, groundY+idleR, -1, leanR, punchR, crouchR, 'rgba(255,140,60,0.9)', '#ff8a3d');
 
     // Impact flash + screen-shake trigger — only fire once per beat, right
     // near its peak, and only when the attack is actually landing hard.
@@ -4057,8 +4072,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const badge = document.querySelector('.join-badge');
   if (!vip || !badge) return;
 
-  const MOVES = ['1','2','3','4','5'];
-  const MOVE_DURATIONS = { '1':2600, '2':2600, '3':2800, '4':2600, '5':2900 };
+  const MOVES = ['1','2','3','4','5','6','7','8'];
+  const DANCE_DURATION_MS = 12000; // full 12s per play, per spec — same for every move
   let lastMove = null;
   let dancing = false;
   let flashing = false;
@@ -4077,6 +4092,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       danceAudio = new Audio('./sounds/join button dance.mp3');
       danceAudio.preload = 'auto';
       danceAudio.volume = 0.85;
+      danceAudio.loop = true; // gesture runs a fixed 12s regardless of the track's own length
       window.__dgxenJoinDanceAudio = danceAudio;
     }
     return danceAudio;
@@ -4105,7 +4121,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (dancing) return;
     dancing = true;
     const move = pickMove();
-    const dur = MOVE_DURATIONS[move] || 2600;
+    const dur = DANCE_DURATION_MS;
 
     pauseAmbientForDance();
     try{
