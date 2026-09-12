@@ -16,6 +16,35 @@
   --error:#ff5252;
   --card-radius:34px;
 }
+/* ===== THEME-AWARE ACCENT COLOR =====
+   --accent (and --accent-soft) previously stayed a fixed green on every
+   theme, which clashed with warm/red themes like metroid, apex, ember,
+   golden, sakura, etc. Text (h2, notice counter, notch) and interactive
+   blocks (checkbox, input focus ring) all read from --accent, so
+   overriding the variable per theme fixes all of them at once without
+   touching each element individually. */
+body.atm-morning,body.atm-day_sunny,body.atm-day_haze{--accent:#5fd97a;--accent2:#3fbf5e;--accent-soft:rgba(95,217,122,.18)}
+body.atm-golden{--accent:#ffc266;--accent2:#f0a83e;--accent-soft:rgba(255,194,102,.18)}
+body.atm-rain{--accent:#7db8e8;--accent2:#4f97d1;--accent-soft:rgba(125,184,232,.18)}
+body.atm-night_stars,body.atm-night_aurora{--accent:#8ca8ff;--accent2:#6c86e8;--accent-soft:rgba(140,168,255,.18)}
+body.atm-cyber{--accent:#00ffd0;--accent2:#00c9a8;--accent-soft:rgba(0,255,208,.18)}
+body.atm-sakura{--accent:#ff9dc0;--accent2:#e8709e;--accent-soft:rgba(255,157,192,.18)}
+body.atm-ocean{--accent:#4fd4e8;--accent2:#2ba8c2;--accent-soft:rgba(79,212,232,.18)}
+body.atm-ember{--accent:#ff8c4a;--accent2:#e86a26;--accent-soft:rgba(255,140,74,.18)}
+body.atm-metroid{--accent:#ff5a4d;--accent2:#e8382b;--accent-soft:rgba(255,90,77,.18)}
+body.atm-apex{--accent:#ffab3d;--accent2:#e8841a;--accent-soft:rgba(255,171,61,.18)}
+body.atm-minimal{--accent:#dcdcdc;--accent2:#b8b8b8;--accent-soft:rgba(220,220,220,.16)}
+body.atm-windy{--accent:#bfe9ff;--accent2:#8fcfef;--accent-soft:rgba(191,233,255,.18)}
+/* Festival themes: warm/cool grouped by mood so text stays readable and
+   on-brand instead of clashing green against festival palettes. */
+body.atm-fest_holi,body.atm-fest_rakhi,body.atm-fest_janmashtami{--accent:#ff8fc7;--accent2:#e85fa0;--accent-soft:rgba(255,143,199,.18)}
+body.atm-fest_diwali,body.atm-fest_sankranti,body.atm-fest_dussehra,body.atm-fest_ganesh,body.atm-fest_ramnavami,body.atm-fest_hanuman,body.atm-fest_baisakhi,body.atm-fest_akshaya,body.atm-fest_rathyatra{--accent:#ffb655;--accent2:#e8912c;--accent-soft:rgba(255,182,85,.18)}
+body.atm-fest_republic,body.atm-fest_independence,body.atm-fest_kargil{--accent:#7fd88a;--accent2:#54b862;--accent-soft:rgba(127,216,138,.18)}
+body.atm-fest_christmas{--accent:#6fdc8f;--accent2:#40b866;--accent-soft:rgba(111,220,143,.18)}
+body.atm-fest_newyear{--accent:#b7a4ff;--accent2:#9078e8;--accent-soft:rgba(183,164,255,.18)}
+body.atm-fest_teachers,body.atm-fest_children,body.atm-fest_gandhi,body.atm-fest_buddha,body.atm-fest_gurupurnima{--accent:#ffcf7a;--accent2:#e8ac4a;--accent-soft:rgba(255,207,122,.18)}
+body.atm-fest_ugadi,body.atm-fest_vatsavitri{--accent:#8fe0a0;--accent2:#5cc074;--accent-soft:rgba(143,224,160,.18)}
+body.atm-fest_ganga,body.atm-fest_yoga{--accent:#6fd4e0;--accent2:#3aabb8;--accent-soft:rgba(111,212,224,.18)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
 html,body{min-height:100%;margin:0}
 body{
@@ -101,17 +130,94 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   background:linear-gradient(135deg,#26f5a1,#00d978);
   box-shadow:0 6px 15px rgba(0,255,136,.24),inset 0 1px rgba(255,255,255,.48);
   transform-origin:50% 85%;
-  animation:joinMiniGesture 3.8s cubic-bezier(.22,1,.36,1) 2.1s infinite;
-  will-change:transform,box-shadow;
+  will-change:transform,box-shadow,background;
+  transition:background-color .5s ease,box-shadow .3s ease;
 }
-.join-badge:hover{animation-play-state:paused;transform:translateY(-2px) scale(1.045);box-shadow:0 9px 20px rgba(0,255,136,.34),inset 0 1px rgba(255,255,255,.55)}
+.join-badge:hover{transform:translateY(-2px) scale(1.045);box-shadow:0 9px 20px rgba(0,255,136,.34),inset 0 1px rgba(255,255,255,.55)}
 .join-badge:active{transform:translateY(0) scale(.95)}
-@keyframes joinMiniGesture{
-  0%,76%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
-  80%{transform:translate3d(0,-2px,0) rotate(-4deg) scale(1.035)}
-  84%{transform:translate3d(0,0,0) rotate(3.2deg) scale(1.02)}
-  88%{transform:translate3d(0,-1px,0) rotate(-2deg) scale(1.025)}
-  92%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+
+/* Real interactive gesture: the JOIN "baby" dance, played only when the user
+   taps the VIP text (gated server-side by admin's atmJoinFx toggle). Multiple
+   move segments are cycled through by JS via data-move so no two consecutive
+   plays feel identical. */
+.join-badge.jb-dancing{animation-play-state:running}
+.join-badge[data-move="1"]{animation:jbMoveWiggle 2.6s cubic-bezier(.34,1.4,.44,1) 1}
+.join-badge[data-move="2"]{animation:jbMoveHop 2.6s cubic-bezier(.34,1.4,.44,1) 1}
+.join-badge[data-move="3"]{animation:jbMoveNaughty 2.8s cubic-bezier(.34,1.4,.44,1) 1}
+.join-badge[data-move="4"]{animation:jbMoveFrontBack 2.6s cubic-bezier(.34,1.4,.44,1) 1}
+.join-badge[data-move="5"]{animation:jbMoveSpinPeek 2.9s cubic-bezier(.34,1.4,.44,1) 1}
+
+/* Move 1: curved up/down/left/right wander */
+@keyframes jbMoveWiggle{
+  0%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  12%{transform:translate3d(-7px,-5px,0) rotate(-9deg) scale(1.05)}
+  26%{transform:translate3d(6px,-9px,0) rotate(7deg) scale(1.08)}
+  40%{transform:translate3d(9px,2px,0) rotate(10deg) scale(1.03)}
+  55%{transform:translate3d(-4px,6px,0) rotate(-6deg) scale(1.06)}
+  70%{transform:translate3d(-8px,-2px,0) rotate(-10deg) scale(1.04)}
+  85%{transform:translate3d(3px,-3px,0) rotate(3deg) scale(1.02)}
+  100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+/* Move 2: playful up-down hop, like a little jump */
+@keyframes jbMoveHop{
+  0%,100%{transform:translate3d(0,0,0) scale(1,1)}
+  15%{transform:translate3d(0,3px,0) scale(1.12,.86)}
+  32%{transform:translate3d(0,-14px,0) scale(.92,1.14)}
+  46%{transform:translate3d(0,1px,0) scale(1.1,.9)}
+  60%{transform:translate3d(0,-8px,0) scale(.96,1.08)}
+  74%{transform:translate3d(0,1px,0) scale(1.05,.95)}
+  88%{transform:translate3d(0,-2px,0) scale(1.01,1.01)}
+}
+/* Move 3: "naughty" wiggle — a cheeky shimmy with a little shake */
+@keyframes jbMoveNaughty{
+  0%,100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  10%{transform:translate3d(-3px,0,0) rotate(-12deg) scale(1.04)}
+  20%{transform:translate3d(3px,0,0) rotate(12deg) scale(1.04)}
+  30%{transform:translate3d(-4px,-2px,0) rotate(-14deg) scale(1.06)}
+  40%{transform:translate3d(4px,-2px,0) rotate(14deg) scale(1.06)}
+  52%{transform:translate3d(0,-6px,0) rotate(0) scale(1.1)}
+  65%{transform:translate3d(-2px,0,0) rotate(-6deg) scale(1.03)}
+  78%{transform:translate3d(2px,0,0) rotate(6deg) scale(1.03)}
+}
+/* Move 4: front/back "lean toward you" scale pulse with a slight tilt */
+@keyframes jbMoveFrontBack{
+  0%,100%{transform:translate3d(0,0,0) scale(1) rotate(0)}
+  20%{transform:translate3d(0,-2px,0) scale(1.22) rotate(-2deg)}
+  38%{transform:translate3d(0,1px,0) scale(.9) rotate(1deg)}
+  56%{transform:translate3d(0,-4px,0) scale(1.14) rotate(-1deg)}
+  74%{transform:translate3d(0,0,0) scale(.96) rotate(1deg)}
+  88%{transform:translate3d(0,-1px,0) scale(1.03) rotate(0)}
+}
+/* Move 5: a full flourish — spin peek + curved travel, biggest of the set */
+@keyframes jbMoveSpinPeek{
+  0%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+  14%{transform:translate3d(-10px,-6px,0) rotate(-16deg) scale(1.08)}
+  28%{transform:translate3d(-6px,-16px,0) rotate(-40deg) scale(1.12)}
+  42%{transform:translate3d(8px,-14px,0) rotate(20deg) scale(1.1)}
+  56%{transform:translate3d(11px,-3px,0) rotate(14deg) scale(1.05)}
+  70%{transform:translate3d(4px,4px,0) rotate(-4deg) scale(1.07)}
+  84%{transform:translate3d(-5px,-1px,0) rotate(-8deg) scale(1.02)}
+  100%{transform:translate3d(0,0,0) rotate(0) scale(1)}
+}
+
+/* Feedback when admin has disabled the gesture: brief red fade-out/fade-in on
+   the badge itself, ~2s total, no motion — this is the ONLY thing that
+   happens when the toggle is off. */
+.join-badge.jb-disabled-flash{animation:jbDisabledFlash 2s ease-in-out 1}
+@keyframes jbDisabledFlash{
+  0%{background:linear-gradient(135deg,#26f5a1,#00d978)}
+  40%{background:linear-gradient(135deg,#ff6b6b,#e83b3b)}
+  100%{background:linear-gradient(135deg,#26f5a1,#00d978)}
+}
+
+/* Small tap-feedback pop on the VIP text itself */
+.vip-word{cursor:pointer;transition:transform .15s ease}
+.vip-word.vip-tapped{animation:vipTapPop .38s cubic-bezier(.34,1.6,.5,1) 1}
+@keyframes vipTapPop{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.28) rotate(-4deg)}
+  65%{transform:scale(.94) rotate(2deg)}
+  100%{transform:scale(1) rotate(0)}
 }
 .hang-string{
   order:2;width:1px;height:18px;flex:none;
@@ -496,14 +602,29 @@ body.atm-native .glass{
   border-color:rgba(255,255,255,.14)!important;
   box-shadow:0 28px 70px rgba(0,0,0,.55),0 0 40px rgba(0,255,136,.06),inset 0 1.5px rgba(255,255,255,.28)!important;
 }
-/* Card skin tints */
+/* Card skin tints — toggled by admin's "Card skin tint" switch (atmCardSkin).
+   Every non-native/non-minimal theme must have an entry here or the toggle
+   has no visible effect on that theme (this previously affected metroid,
+   apex, and any theme added after this list was last touched). */
 body.skin-day_sunny .glass,body.skin-golden .glass{border-color:rgba(255,200,100,.28)!important}
+body.skin-morning .glass,body.skin-day_haze .glass{border-color:rgba(150,220,160,.24)!important}
 body.skin-night_stars .glass,body.skin-night_aurora .glass{border-color:rgba(140,170,255,.28)!important}
 body.skin-sakura .glass{border-color:rgba(255,150,190,.35)!important}
 body.skin-ocean .glass{border-color:rgba(60,180,220,.3)!important}
 body.skin-ember .glass{border-color:rgba(255,100,40,.3)!important}
 body.skin-cyber .glass{border-color:rgba(0,255,200,.3)!important}
 body.skin-rain .glass{border-color:rgba(140,180,220,.25)!important}
+body.skin-metroid .glass{border-color:rgba(255,90,77,.32)!important}
+body.skin-apex .glass{border-color:rgba(255,171,61,.32)!important}
+body.skin-windy .glass{border-color:rgba(191,233,255,.3)!important}
+body.skin-fest_holi .glass,body.skin-fest_rakhi .glass,body.skin-fest_janmashtami .glass{border-color:rgba(255,143,199,.3)!important}
+body.skin-fest_diwali .glass,body.skin-fest_sankranti .glass,body.skin-fest_dussehra .glass,body.skin-fest_ganesh .glass,body.skin-fest_ramnavami .glass,body.skin-fest_hanuman .glass,body.skin-fest_baisakhi .glass,body.skin-fest_akshaya .glass,body.skin-fest_rathyatra .glass{border-color:rgba(255,182,85,.3)!important}
+body.skin-fest_republic .glass,body.skin-fest_independence .glass,body.skin-fest_kargil .glass{border-color:rgba(127,216,138,.3)!important}
+body.skin-fest_christmas .glass{border-color:rgba(111,220,143,.3)!important}
+body.skin-fest_newyear .glass{border-color:rgba(183,164,255,.3)!important}
+body.skin-fest_teachers .glass,body.skin-fest_children .glass,body.skin-fest_gandhi .glass,body.skin-fest_buddha .glass,body.skin-fest_gurupurnima .glass{border-color:rgba(255,207,122,.3)!important}
+body.skin-fest_ugadi .glass,body.skin-fest_vatsavitri .glass{border-color:rgba(143,224,160,.3)!important}
+body.skin-fest_ganga .glass,body.skin-fest_yoga .glass{border-color:rgba(111,212,224,.3)!important}
 .atm-mute-btn{
   position:absolute;left:100%;top:0;bottom:0;margin-top:auto;margin-bottom:auto;margin-left:8px;
   display:none;align-items:center;justify-content:center;
@@ -608,17 +729,55 @@ body.atm-morning{background:radial-gradient(circle at 84% 10%,rgba(255,225,145,.
 @keyframes dewBlink{0%,100%{opacity:.34}50%{opacity:.9}}
 .morning-leaves span{position:absolute;top:-12vh;width:13px;height:8px;border-radius:100% 0 100% 0;background:linear-gradient(135deg,#79c882,#1e6e45);box-shadow:0 0 8px rgba(80,190,110,.22);animation:leafDrift linear infinite}
 @keyframes leafDrift{0%{transform:translate3d(0,-8vh,0) rotate(0);opacity:0}12%{opacity:.78}100%{transform:translate3d(42px,118vh,0) rotate(420deg);opacity:.12}}
-/* Dedicated Metroid and Apex layers. They remain behind the translucent login glass. */
+/* Dedicated Metroid layer (meteor fall). Remains behind the translucent login glass. */
 body.atm-metroid .sky-layer .theme-shards{opacity:1}
-body.atm-apex .sky-layer .theme-shards,body.atm-apex .sky-layer .theme-sparks{opacity:1}
 body.atm-metroid{background:radial-gradient(circle at 50% 100%,rgba(220,20,30,.16),transparent 44%),linear-gradient(155deg,#060404,#110506 52%,#040202)!important}
-body.atm-apex{background:radial-gradient(circle at 50% 100%,rgba(255,70,12,.19),transparent 45%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
-body.atm-metroid .glass,body.atm-apex .glass{border-color:rgba(255,68,55,.26)!important}
+body.atm-metroid .glass{border-color:rgba(255,68,55,.26)!important}
 .theme-shards b{position:absolute;top:-16vh;display:block;clip-path:polygon(50% 0,100% 100%,0 76%);background:linear-gradient(145deg,rgba(255,70,55,.92),rgba(92,4,8,.44));border:1px solid rgba(255,125,95,.42);filter:drop-shadow(0 0 7px rgba(255,35,20,.45));animation:shardFall linear infinite}
 body.atm-metroid .theme-shards b{clip-path:polygon(50% 0,100% 32%,78% 100%,20% 82%,0 28%)}
 @keyframes shardFall{0%{transform:translate3d(-12vw,-10vh,0) rotateX(0) rotateZ(18deg);opacity:0}10%{opacity:.9}100%{transform:translate3d(22vw,122vh,0) rotateX(520deg) rotateZ(650deg);opacity:.12}}
 .theme-sparks i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ff9b42;box-shadow:0 0 7px #ff3d12,0 0 13px rgba(255,40,0,.75);animation:burnSpark ease-out infinite}
 @keyframes burnSpark{0%{transform:translate3d(0,0,0) scale(.25);opacity:0}18%{opacity:1}100%{transform:translate3d(var(--sx),var(--sy),0) scale(1.7);opacity:0}}
+
+/* ===== APEX — replaces the old meteor-fall duplicate of Metroid with a
+   distinct 2D animated anime-style fight scene (canvas-drawn, 50s seamless
+   loop, two silhouetted fighters trading ground on left/right, screen-shake
+   + flash on impacts). See #apexFight canvas + JS below. ===== */
+body.atm-apex{background:radial-gradient(circle at 50% 40%,rgba(255,90,20,.16),transparent 55%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
+body.atm-apex .glass{border-color:rgba(255,171,61,.28)!important}
+#apexFight{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .9s ease}
+#apexFight.show{opacity:.9;visibility:visible}
+body.atm-apex.apex-shake #apexFight,
+body.atm-apex.apex-shake .sky-layer{animation:apexScreenShake .22s linear}
+@keyframes apexScreenShake{
+  0%{transform:translate3d(0,0,0)}
+  20%{transform:translate3d(-6px,3px,0)}
+  40%{transform:translate3d(5px,-4px,0)}
+  60%{transform:translate3d(-4px,-2px,0)}
+  80%{transform:translate3d(3px,3px,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+
+/* ===== WINDY — new theme: variable-intensity wind gusts sweeping across
+   the scene (some gentle, some strong) using thin streak elements. ===== */
+body.atm-windy{background:radial-gradient(circle at 30% 20%,rgba(180,220,255,.10),transparent 40%),linear-gradient(160deg,#0a1016,#0d1620 50%,#08111a)!important}
+body.atm-windy .glass{border-color:rgba(191,233,255,.28)!important}
+.wind-gusts{position:absolute;inset:0;opacity:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease}
+body.atm-windy .wind-gusts{opacity:1}
+.wind-gusts i{
+  --peak:.5;
+  position:absolute;left:-20%;height:1.5px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,rgba(210,235,255,.65),rgba(255,255,255,.85),rgba(210,235,255,.5),transparent);
+  filter:blur(.3px);
+  animation:windGustMove linear infinite;
+}
+@keyframes windGustMove{
+  0%{transform:translate3d(0,0,0) scaleX(.4);opacity:0}
+  8%{opacity:var(--peak)}
+  85%{opacity:calc(var(--peak) * 0.75)}
+  100%{transform:translate3d(140vw,0,0) scaleX(1.1);opacity:0}
+}
+
 /* Shared understated festival tint for added dates. */
 body[class*="atm-fest_"] .sky-layer .haze{opacity:.55}
 
@@ -649,9 +808,11 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   <div class="morning-leaves" id="morningLeaves"></div>
   <div class="theme-shards" id="skyShards"></div>
   <div class="theme-sparks" id="skySparks"></div>
+  <div class="wind-gusts" id="windGusts"></div>
 </div>
 
 <canvas id="fx" aria-hidden="true"></canvas>
+<canvas id="apexFight" aria-hidden="true"></canvas>
 
 <!-- ============ DGXEN ∞ 4D — FINAL EDITION (upgraded world) ============ -->
 <style>
@@ -704,7 +865,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 </style>
 <canvas id="apex4d" aria-hidden="true"></canvas>
 <div id="apex4d-ov" aria-hidden="true"></div>
-<div id="apex-hint">◇ DRAG LOOK · 2×TAP FLY · HOLD ⚡ BOOST · 3×TAP WARP ◇</div>
+<div id="apex-hint">◇ DRAG LOOK · 2×TAP FLY · PINCH ⚡ BOOST · 3×TAP WARP ◇</div>
 <div id="apex-status"></div>
 <div id="apex-grav">◈ GRAVITY WELL — REACH LIGHT SPEED TO PUNCH THROUGH ◈</div>
 <div id="apex-vitals"></div>
@@ -2895,7 +3056,7 @@ window.__pendingSound=null;
 window.unlockAudio=function(){
   if(window.__audioUnlocked) return;
   window.__audioUnlocked=true;
-  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin].forEach(function(a){
+  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
     if(!a) return;
     try{
       const p=a.play();
@@ -2918,13 +3079,69 @@ function paintOffline(){
     try{ show('Connect internet','var(--error)'); }catch(e){}
   }
 }
-window.addEventListener('online', function(){
+function clearOfflineUI(){
   const b=document.getElementById('offlineBanner');
   if(b) b.classList.remove('show');
   try{ if(status&&status.textContent==='Connect internet') show('','white'); }catch(e){}
-});
+}
+window.addEventListener('online', clearOfflineUI);
 window.addEventListener('offline', paintOffline);
 paintOffline();
+
+// ===== REAL CONNECTIVITY RE-CHECK (fixes false "Connect internet" after the
+// app/tab sits backgrounded for a while) =====
+// navigator.onLine is only a *hint* — on Android WebViews and many browsers it
+// goes stale after the OS suspends/throttles a backgrounded tab, and it can
+// keep reporting a state that no longer matches reality once the page is
+// foregrounded again (this is exactly the "20 min later, false no-connection
+// popup" bug). Instead of trusting the cached flag alone, actively probe a
+// tiny request whenever the page becomes visible/focused again or regains
+// the 'online' event, and only trust that probe's result.
+let __connCheckBusy=false;
+async function probeOnce(url){
+  const ctrl = (typeof AbortController!=='undefined') ? new AbortController() : null;
+  const to = ctrl ? setTimeout(()=>{ try{ctrl.abort();}catch(e){} }, 4500) : null;
+  try{
+    await fetch(url, { mode:'no-cors', cache:'no-store', signal: ctrl?ctrl.signal:undefined });
+    return true;
+  }finally{
+    if(to) clearTimeout(to);
+  }
+}
+async function verifyRealConnectivity(){
+  if(__connCheckBusy) return;
+  __connCheckBusy=true;
+  try{
+    // Try two independent hosts before concluding we're actually offline —
+    // a single blocked/unreachable host (CSP, ad-block, regional outage)
+    // shouldn't be mistaken for "no internet."
+    try{
+      await probeOnce('https://www.gstatic.com/generate_204?cb='+Date.now());
+      clearOfflineUI();
+      return;
+    }catch(e1){
+      try{
+        await probeOnce('https://firebaseio.com/generate_204?cb='+Date.now());
+        clearOfflineUI();
+        return;
+      }catch(e2){
+        // Both probes failed — only now trust that we're genuinely offline.
+        if(navigator.onLine===false) paintOffline();
+      }
+    }
+  }finally{
+    __connCheckBusy=false;
+  }
+}
+document.addEventListener('visibilitychange', function(){
+  if(document.visibilityState==='visible') verifyRealConnectivity();
+});
+window.addEventListener('focus', verifyRealConnectivity);
+window.addEventListener('pageshow', verifyRealConnectivity);
+window.addEventListener('online', verifyRealConnectivity);
+// Also re-verify on an interval while the tab is visible, since some WebViews
+// never fire visibilitychange/focus reliably after long background periods.
+setInterval(function(){ if(document.visibilityState==='visible') verifyRealConnectivity(); }, 60000);
 
 window.playSound = function(obj){
   try{
@@ -3125,7 +3342,7 @@ window.addEventListener('pagehide',()=>{flushPosition();saveCardPosition()});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){flushPosition();saveCardPosition()}});
 </script>
 <script>
-// ===== METEOR FX (used by the metroid / apex themes) =====
+// ===== METEOR FX (used by the Metroid theme) =====
 (function(){
   const cv=document.getElementById('fx');
   if(!cv) return;
@@ -3295,9 +3512,221 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   };
 })();
 
+// ===== APEX FIGHT SCENE — replaces the old Apex/Metroid duplicate visuals.
+// Two silhouetted anime-style fighters on left/right, trading ground over a
+// deterministic 50-second cycle (so it loops seamlessly — the pose at t=50s
+// matches t=0s), with impact flashes and a screen-shake CSS class toggled
+// on hits. Kept lightweight: one canvas, flat-fill shapes, no per-frame
+// allocation, and it fully stops (rAF cancelled) whenever the theme isn't
+// active or the tab is hidden, so it costs nothing elsewhere. =====
+(function(){
+  const cv = document.getElementById('apexFight');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  let running=false, raf=0, W=0, H=0, DPR=1;
+  let startTime=0;
+  const CYCLE_MS = 50000; // full loop duration per spec
+
+  function resize(){
+    DPR = Math.min(2, window.devicePixelRatio||1);
+    W = cv.clientWidth = window.innerWidth;
+    H = cv.clientHeight = window.innerHeight;
+    cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', function(){ if(running) resize(); }, {passive:true});
+
+  // Ease helpers for punchy, curved movement instead of linear robotic motion.
+  function easeInOutQuad(t){ return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
+  function easeOutBack(t){ const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); }
+
+  // A silhouette "fighter": simple humanoid built from filled shapes so it
+  // reads as an action-pose figure without needing image assets, colored
+  // per-side (cool blue-white rim light on one, warm orange-red on the other)
+  // to keep them visually distinct like a two-character anime clash card.
+  function drawFighter(x, groundY, facing, lean, punchExtend, crouch, glowColor, bodyColor){
+    ctx.save();
+    ctx.translate(x, groundY);
+    ctx.scale(facing, 1); // facing: 1 = faces right, -1 = faces left
+    ctx.rotate(lean*0.12);
+
+    const h = 150 * (1 - crouch*0.18);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = glowColor;
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath(); ctx.ellipse(0, -h*0.55, 46, h*0.62, 0, 0, Math.PI*2); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = bodyColor;
+    // torso
+    ctx.beginPath();
+    ctx.moveTo(-16, 0);
+    ctx.quadraticCurveTo(-20, -h*0.55, -10, -h*0.72);
+    ctx.quadraticCurveTo(0, -h*0.8, 10, -h*0.72);
+    ctx.quadraticCurveTo(20, -h*0.55, 16, 0);
+    ctx.closePath(); ctx.fill();
+    // head
+    ctx.beginPath(); ctx.arc(2, -h*0.86, 13, 0, Math.PI*2); ctx.fill();
+    // back leg (planted)
+    ctx.beginPath();
+    ctx.moveTo(-8,-2); ctx.quadraticCurveTo(-26, h*0.02, -30, h*0.14);
+    ctx.lineTo(-20, h*0.16); ctx.quadraticCurveTo(-4, h*0.05, 4,-2);
+    ctx.closePath(); ctx.fill();
+    // front leg (driving forward/back with the lunge)
+    const legKick = 18 + punchExtend*14;
+    ctx.beginPath();
+    ctx.moveTo(6,-4); ctx.quadraticCurveTo(20+legKick*0.5, h*0.02, 26+legKick, h*0.13);
+    ctx.lineTo(16+legKick, h*0.15); ctx.quadraticCurveTo(4, h*0.03, -2,-4);
+    ctx.closePath(); ctx.fill();
+    // back arm
+    ctx.beginPath();
+    ctx.moveTo(-8,-h*0.62); ctx.quadraticCurveTo(-22,-h*0.5,-24,-h*0.36);
+    ctx.lineTo(-16,-h*0.34); ctx.quadraticCurveTo(-6,-h*0.46,0,-h*0.58);
+    ctx.closePath(); ctx.fill();
+    // front arm — the punching/striking limb, extends with punchExtend
+    const reach = 22 + punchExtend*34;
+    ctx.beginPath();
+    ctx.moveTo(8,-h*0.64); ctx.quadraticCurveTo(8+reach*0.6,-h*0.6, 10+reach, -h*0.58);
+    ctx.lineTo(6+reach,-h*0.5); ctx.quadraticCurveTo(4,-h*0.56,0,-h*0.6);
+    ctx.closePath(); ctx.fill();
+    // fist glow at strike extremes (reads as an anime "impact" hand)
+    if (punchExtend > 0.55){
+      ctx.globalCompositeOperation='lighter';
+      ctx.fillStyle = glowColor;
+      ctx.globalAlpha = (punchExtend-0.55)/0.45 * 0.85;
+      ctx.beginPath(); ctx.arc(10+reach, -h*0.56, 9, 0, Math.PI*2); ctx.fill();
+      ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=1;
+    }
+    ctx.restore();
+  }
+
+  function drawImpactBurst(x,y,strength,hue){
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    const rays = 8;
+    for(let i=0;i<rays;i++){
+      const a = (i/rays)*Math.PI*2;
+      const len = 26 + strength*46;
+      ctx.strokeStyle = 'hsla('+hue+',95%,70%,'+(0.55*strength)+')';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x+Math.cos(a)*len, y+Math.sin(a)*len*0.6);
+      ctx.stroke();
+    }
+    ctx.fillStyle = 'hsla('+hue+',100%,85%,'+(0.7*strength)+')';
+    ctx.beginPath(); ctx.arc(x,y,10+strength*10,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  // Choreography: a handful of "beats" spread across the 50s cycle, each
+  // describing which side is aggressing, how far they lunge, and when the
+  // hit lands. Everything else (idle sway, footwork) is continuous and
+  // purely a function of the loop-phase so it always lines up at wrap-around.
+  const BEATS = [
+    { t:0.06, attacker:'L', peak:0.18, power:0.5 },
+    { t:0.16, attacker:'R', peak:0.24, power:0.6 },
+    { t:0.27, attacker:'L', peak:0.35, power:0.85 },
+    { t:0.40, attacker:'R', peak:0.47, power:0.7 },
+    { t:0.52, attacker:'L', peak:0.60, power:0.55 },
+    { t:0.63, attacker:'R', peak:0.70, power:0.9 },
+    { t:0.76, attacker:'L', peak:0.83, power:0.65 },
+    { t:0.88, attacker:'R', peak:0.94, power:0.75 }
+  ];
+  let lastFlashAt = -1;
+
+  function tick(now){
+    if(!running) return;
+    if(!startTime) startTime = now;
+    const phase = ((now - startTime) % CYCLE_MS) / CYCLE_MS; // 0..1, loops forever
+
+    ctx.clearRect(0,0,W,H);
+
+    const groundY = H*0.86;
+    const midX = W*0.5;
+    const spread = Math.min(W*0.34, 220);
+    let leftX = midX - spread, rightX = midX + spread;
+
+    // Continuous idle bob so the pair never look frozen between beats.
+    const idleL = Math.sin(phase*Math.PI*2*14) * 4;
+    const idleR = Math.sin(phase*Math.PI*2*14 + 1.4) * 4;
+
+    let leanL=0, leanR=0, punchL=0, punchR=0, crouchL=0.1, crouchR=0.1;
+    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY;
+
+    for(const b of BEATS){
+      // Each beat has a short attack window ~7% of the cycle wide, eased
+      // in/out so the lunge feels weighted rather than linear.
+      const win = 0.07;
+      const d = Math.abs(phase - b.t);
+      const wrappedD = Math.min(d, 1-d);
+      if (wrappedD < win){
+        const local = 1 - (wrappedD/win); // 0..1, peak at the beat's t
+        const eased = local < 0.5 ? easeInOutQuad(local*2) : easeOutBack(1-(local-0.5)*2);
+        const extend = Math.max(0, eased);
+        if (b.attacker === 'L'){
+          leanL = extend*0.8; punchL = extend; crouchL = 0.1+extend*0.15;
+          leanR = -extend*0.35; crouchR = 0.1+extend*0.3;
+          leftX += extend*26; rightX -= extend*14;
+        } else {
+          leanR = -extend*0.8; punchR = extend; crouchR = 0.1+extend*0.15;
+          leanL = extend*0.35; crouchL = 0.1+extend*0.3;
+          rightX -= extend*26; leftX += extend*14;
+        }
+        if (wrappedD < closestBeatDist){
+          closestBeatDist = wrappedD; closestBeatPower = b.power * extend;
+          closestBeatX = b.attacker==='L' ? rightX-30 : leftX+30;
+          closestBeatY = groundY - 90;
+        }
+      }
+    }
+
+    drawFighter(leftX, groundY+idleL, 1, leanL, punchL, crouchL, 'rgba(120,190,255,0.9)', '#0d1a2b');
+    drawFighter(rightX, groundY+idleR, -1, leanR, punchR, crouchR, 'rgba(255,140,60,0.9)', '#2b1408');
+
+    // Impact flash + screen-shake trigger — only fire once per beat, right
+    // near its peak, and only when the attack is actually landing hard.
+    for(const b of BEATS){
+      if (Math.abs(phase - b.peak) < 0.006 && lastFlashAt !== b.peak){
+        lastFlashAt = b.peak;
+        document.body.classList.remove('apex-shake');
+        void document.body.offsetWidth;
+        document.body.classList.add('apex-shake');
+        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, 240);
+      }
+    }
+    if (closestBeatDist < 0.07 && closestBeatPower > 0.3){
+      drawImpactBurst(closestBeatX, closestBeatY, Math.min(1, closestBeatPower), 28);
+    }
+
+    raf = requestAnimationFrame(tick);
+  }
+
+  window.__dgxenApexFightFX = {
+    start:function(){
+      if(running) return;
+      resize(); running=true; startTime=0;
+      cv.classList.add('show');
+      raf = requestAnimationFrame(tick);
+    },
+    stop:function(){
+      running=false;
+      if(raf) cancelAnimationFrame(raf);
+      cv.classList.remove('show');
+      ctx.clearRect(0,0,W,H);
+      document.body.classList.remove('apex-shake');
+    }
+  };
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden && running){ if(raf) cancelAnimationFrame(raf); }
+    else if(!document.hidden && running){ raf = requestAnimationFrame(tick); }
+  });
+})();
+
 // ===== LOGIN ATMOSPHERE THEMES =====
 (function(){
-  const BASE = ['native','morning','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex'];
+  const BASE = ['native','morning','day_sunny','day_haze','golden','rain','night_stars','night_aurora','cyber','sakura','ocean','ember','minimal','metroid','apex','windy'];
   const FEST = ['fest_republic','fest_independence','fest_teachers','fest_children','fest_holi','fest_diwali','fest_christmas','fest_newyear','fest_gandhi','fest_sankranti','fest_rakhi','fest_janmashtami','fest_ganesh','fest_dussehra','fest_ugadi','fest_ramnavami','fest_hanuman','fest_baisakhi','fest_akshaya','fest_buddha','fest_vatsavitri','fest_ganga','fest_yoga','fest_rathyatra','fest_kargil','fest_gurupurnima'];
   const THEMES = BASE.concat(FEST);
   const FESTIVAL_MAP = [
@@ -3332,7 +3761,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const SPEAKER_ON_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg>';
   const SPEAKER_OFF_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/><line x1="3" y1="3" x2="21" y2="21"/></svg>';
   let forced = 'auto';
-  let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true };
+  let opts = { intensity:80, particles:60, reduceMotion:false, season:true, weather:true, sound:false, cardSkin:true, festival:true, joinFx:true };
   let weatherTheme = null;
   let audioEl = null;
   let muted = true; // sound always starts muted on every app open/reopen — no saved preference (per request)
@@ -3411,6 +3840,27 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     }
     box.innerHTML = html;
   }
+  function buildWindGusts(){
+    const box = document.getElementById('windGusts');
+    if (!box) return;
+    const n = Math.max(10, Math.round((opts.particles||60)/100*22));
+    let html = '';
+    for (let i=0;i<n;i++){
+      // Randomize per-streak intensity so gusts feel variable: some strong
+      // (wide, bright, fast) and some gentle (thin, dim, slow) — "sometimes
+      // extremely, sometimes less" per the theme brief.
+      const strength = Math.random();
+      const width = (60 + strength*260).toFixed(0);
+      const top = (Math.random()*100).toFixed(1);
+      const dur = (strength > 0.7 ? (1.4+Math.random()*0.8) : (3.5+Math.random()*4.5)).toFixed(2);
+      const delay = (Math.random()*6).toFixed(2);
+      const opacityMax = (0.25 + strength*0.6).toFixed(2);
+      html += '<i style="top:'+top+'%;width:'+width+'px;animation-duration:'+dur+'s;animation-delay:-'+delay+'s;opacity:0" data-op="'+opacityMax+'"></i>';
+    }
+    box.innerHTML = html;
+    // apply the per-streak peak opacity via CSS var so the keyframe can reference it
+    box.querySelectorAll('i').forEach(function(el){ el.style.setProperty('--peak', el.getAttribute('data-op')); });
+  }
   function stopSound(){
     try {
       if (audioEl) {
@@ -3429,13 +3879,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     startSound(document.documentElement.getAttribute('data-atm') || 'native');
   };
   window.__dgxenIsMuted = function(){ return muted; };
+  window.__dgxenJoinFxEnabled = function(){ return !!opts.joinFx; };
+  window.__dgxenCurrentTheme = function(){ return document.documentElement.getAttribute('data-atm') || 'native'; };
   function startSound(theme){
     if (window.__dgxenLoggedIn) return; // no background sound is ever restarted after a successful login
     stopSound();
     if (isNativeTheme) return;
     if (!opts.sound) return;
     if (muted) return;
-    const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'ember', cyber:'cyber' };
+    const map = { morning:'soft', day_sunny:'soft', day_haze:'soft', golden:'evening', rain:'rain', night_stars:'night', night_aurora:'night', ocean:'ocean', ember:'ember', sakura:'soft', fest_diwali:'diwali', fest_holi:'holi', fest_republic:'patriot', fest_independence:'patriot', fest_christmas:'soft', fest_teachers:'soft', fest_children:'soft', metroid:'cyber', apex:'apex', cyber:'cyber', minimal:'minimal', windy:'wind' };
     const file = map[theme] || 'soft';
     try {
       if (!audioEl) { audioEl = new Audio(); audioEl.loop = true; audioEl.volume = 0.22; }
@@ -3478,10 +3930,16 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
     if (t === 'sakura' || t === 'fest_holi') buildPetals();
     if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
-    if (t === 'metroid' || t === 'apex') {
+    if (t === 'windy') buildWindGusts();
+    if (t === 'metroid') {
       if (window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
     } else if (window.__dgxenMeteorFX) {
       window.__dgxenMeteorFX.stop();
+    }
+    if (t === 'apex') {
+      if (window.__dgxenApexFightFX) window.__dgxenApexFightFX.start();
+    } else if (window.__dgxenApexFightFX) {
+      window.__dgxenApexFightFX.stop();
     }
     const sky = document.getElementById('skyLayer');
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
@@ -3530,7 +3988,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       weather: v.atmWeather !== false,
       sound: !!(v.atmSound),
       cardSkin: v.atmCardSkin !== false,
-      festival: v.atmFestival !== false
+      festival: v.atmFestival !== false,
+      joinFx: v.atmJoinFx !== false
     };
     resolveAndApply();
     if (!opts.sound) stopSound();
@@ -3584,6 +4043,113 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
 
+})();
+</script>
+
+<script>
+// ===== JOIN BUTTON GESTURE ("baby dance") — triggered by tapping VIP text =====
+// Admin-gated via settings/notice.atmJoinFx (read through window.__dgxenJoinFxEnabled,
+// which the atmosphere-themes script keeps in sync with Firebase). Repeatable
+// infinitely. Pauses the current ambient theme track, plays the dance track,
+// resumes ambient automatically when the dance ends.
+(function(){
+  const vip = document.querySelector('.vip-word');
+  const badge = document.querySelector('.join-badge');
+  if (!vip || !badge) return;
+
+  const MOVES = ['1','2','3','4','5'];
+  const MOVE_DURATIONS = { '1':2600, '2':2600, '3':2800, '4':2600, '5':2900 };
+  let lastMove = null;
+  let dancing = false;
+  let flashing = false;
+  let danceAudio = null;
+
+  function pickMove(){
+    // avoid repeating the same move twice in a row so it doesn't feel static
+    let m;
+    do { m = MOVES[Math.floor(Math.random()*MOVES.length)]; } while (m === lastMove && MOVES.length > 1);
+    lastMove = m;
+    return m;
+  }
+
+  function getDanceAudio(){
+    if (!danceAudio){
+      danceAudio = new Audio('./sounds/join button dance.mp3');
+      danceAudio.preload = 'auto';
+      danceAudio.volume = 0.85;
+      window.__dgxenJoinDanceAudio = danceAudio;
+    }
+    return danceAudio;
+  }
+
+  function pauseAmbientForDance(){
+    try{
+      if (window.__dgxenIsMuted && window.__dgxenIsMuted()) return; // nothing playing to pause
+      if (window.__dgxenStopAtmSound) window.__dgxenStopAtmSound();
+    }catch(e){}
+  }
+  function resumeAmbientAfterDance(){
+    try{ if (window.__dgxenResumeAtmSound) window.__dgxenResumeAtmSound(); }catch(e){}
+  }
+
+  function playDisabledFlash(){
+    if (flashing) return;
+    flashing = true;
+    badge.classList.remove('jb-disabled-flash');
+    void badge.offsetWidth; // restart animation
+    badge.classList.add('jb-disabled-flash');
+    setTimeout(function(){ badge.classList.remove('jb-disabled-flash'); flashing = false; }, 2000);
+  }
+
+  function playDance(){
+    if (dancing) return;
+    dancing = true;
+    const move = pickMove();
+    const dur = MOVE_DURATIONS[move] || 2600;
+
+    pauseAmbientForDance();
+    try{
+      const a = getDanceAudio();
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && p.catch) p.catch(function(){}); // autoplay-block fallback: gesture still plays visually
+    }catch(e){}
+
+    badge.setAttribute('data-move', move);
+    badge.classList.add('jb-dancing');
+
+    setTimeout(function(){
+      badge.classList.remove('jb-dancing');
+      badge.removeAttribute('data-move');
+      dancing = false;
+      try{ if (danceAudio) danceAudio.pause(); }catch(e){}
+      resumeAmbientAfterDance();
+    }, dur + 40);
+  }
+
+  function onVipTap(e){
+    // small tap animation on the VIP text itself, every tap, regardless of gate
+    vip.classList.remove('vip-tapped');
+    void vip.offsetWidth;
+    vip.classList.add('vip-tapped');
+
+    const enabled = !window.__dgxenJoinFxEnabled || window.__dgxenJoinFxEnabled();
+    if (!enabled){ playDisabledFlash(); return; }
+    playDance();
+  }
+
+  vip.addEventListener('click', onVipTap);
+
+  // Actual JOIN click sound — the one file that is NOT in the atm folder.
+  let joinClickAudio = null;
+  badge.addEventListener('click', function(){
+    try{
+      if (!joinClickAudio){ joinClickAudio = new Audio('./sounds/clicked on join button.mp3'); joinClickAudio.preload='auto'; window.__dgxenJoinClickAudio = joinClickAudio; }
+      joinClickAudio.currentTime = 0;
+      const p = joinClickAudio.play();
+      if (p && p.catch) p.catch(function(){});
+    }catch(e){}
+  });
 })();
 </script>
 
