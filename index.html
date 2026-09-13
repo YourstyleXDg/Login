@@ -462,11 +462,74 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 
 /* ===== LOGIN ATMOSPHERE (corners + sky, outside card) ===== */
 .sky-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease,background 1.2s ease}
-/* In the 3D world, the themed 2D sky (sun/moon/stars/aurora/rain/orbs/particles) is
-   fully vanished — not just dimmed — so no theme colour bleeds through behind the
-   world. Only the plain native background/colours remain. */
-html[data-dgxen-world="1"] .sky-layer{opacity:0;transition:opacity .6s ease}
-html[data-dgxen-world="1"] #fx{opacity:0!important}
+/* In the 3D world, the themed 2D sky (sun/moon/stars/aurora/rain/orbs/particles)
+   is not fully removed anymore — it stays visible at 30% opacity OUTSIDE a
+   soft-edged circle centred on the login card + world HUD, and is completely
+   hidden INSIDE that circle so no theme colour bleeds through behind the
+   world content itself. The circle's edge is feathered (not a hard cutoff)
+   for an aesthetic blend between "gone" and "30% visible". This applies to
+   every theme's sky-layer/#fx/#windFX EXCEPT Apex, which stays 100% gone —
+   its fight scene must never partially bleed through. */
+html[data-dgxen-world="1"] .sky-layer{
+  opacity:.3;
+  -webkit-mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+  mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+  transition:opacity .6s ease;
+}
+html[data-dgxen-world="1"] #fx{
+  opacity:.3!important;
+  -webkit-mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+  mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+}
+html[data-dgxen-world="1"] #windFX{
+  opacity:.3!important;
+  -webkit-mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+  mask-image:radial-gradient(circle at 50% 46%,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 38vmin,
+    rgba(0,0,0,.55) 46vmin,
+    rgba(0,0,0,1) 55vmin
+  );
+}
+/* Apex is the one exception — fully gone, no partial bleed, no mask. Its
+   fight-scene canvas is also hard-stopped in JS on world entry (belt and
+   suspenders). */
+html[data-dgxen-world="1"] body.atm-apex .sky-layer,
+html[data-dgxen-world="1"] body.atm-apex #fx,
+html[data-dgxen-world="1"] body.atm-apex #windFX{
+  opacity:0!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
+html[data-dgxen-world="1"] #apexFight{
+  opacity:0!important;
+  visibility:hidden!important;
+}
 html[data-dgxen-world="1"] body{
   background:
     radial-gradient(circle at 14% 13%,rgba(255,255,255,.09),transparent 26%),
@@ -5088,17 +5151,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   function enterWorld(){
     inWorld = true;
-    try { if (window.__dgxenMeteorFX) window.__dgxenMeteorFX.stop(); } catch(e){}
-    // Apex's fight-scene canvas sits in the same 2D layer as the meteor FX
-    // and must also be stopped before entering the 3D world — otherwise the
-    // fighters kept drawing/animating underneath (or behind) the 3D canvas,
-    // visible as "both characters appear on screen looking bad." This stop
-    // is scoped to apex only, matching the "only applicable for apex theme"
-    // requirement — no other theme's 2D FX needs this treatment.
+    // Only the Apex fight scene is fully stopped on world entry — it must be
+    // 100% gone, not just dimmed (a full anime combat scene bleeding through
+    // at any opacity looks broken next to the 3D world content). Metroid's
+    // meteor FX and the Windy streaks are intentionally left RUNNING here:
+    // they keep animating softly behind the world, dimmed to 30% outside the
+    // login-card focus circle by the html[data-dgxen-world="1"] CSS rules
+    // below, and hidden entirely inside it — same treatment as the plain
+    // sky-layer background for every non-apex theme.
     try { if (window.__dgxenApexFightFX) window.__dgxenApexFightFX.stop(); } catch(e){}
-    try {
-      if (window.__dgxenWindFX) window.__dgxenWindFX.stop();
-    } catch(e){}
     // The 2D ambient theme track must not keep playing under the ultrasonic world
     // sound — stop it here so only one audio source is ever heard at a time.
     try { if (window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); } catch(e){}
