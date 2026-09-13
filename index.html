@@ -755,7 +755,13 @@ body.atm-metroid .theme-shards b{clip-path:polygon(50% 0,100% 32%,78% 100%,20% 8
    distinct 2D animated anime-style fight scene (canvas-drawn, 50s seamless
    loop, two silhouetted fighters trading ground on left/right, screen-shake
    + flash on impacts). See #apexFight canvas + JS below. ===== */
-body.atm-apex{background:radial-gradient(circle at 50% 40%,rgba(255,90,20,.16),transparent 55%),linear-gradient(160deg,#0d0402,#170704 50%,#050202)!important}
+body.atm-apex{
+  background:
+    radial-gradient(circle at 50% 20%,rgba(255,180,80,.25),transparent 25%),
+    radial-gradient(circle at 20% 80%,rgba(255,60,40,.15),transparent 40%),
+    radial-gradient(circle at 80% 75%,rgba(255,120,40,.12),transparent 40%),
+    linear-gradient(180deg,#1a0503 0%,#0b0201 40%,#020101 100%)!important;
+}
 body.atm-apex .glass{border-color:rgba(255,171,61,.28)!important}
 #apexFight{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .9s ease}
 #apexFight.show{opacity:1;visibility:visible}
@@ -770,19 +776,169 @@ body.atm-apex.apex-shake .sky-layer{animation:apexScreenShake .22s linear}
   100%{transform:translate3d(0,0,0)}
 }
 
-/* ===== WINDY — canvas-drawn flowing wind: curved bezier gust paths (not
-   straight lines), layered depth for a pseudo-3D feel (closer streaks
-   bigger/brighter/faster, farther ones thin/dim/slow), and variable gust
-   intensity (calm lulls between stronger bursts). See #windFX canvas + JS
-   below. ===== */
-body.atm-windy{background:radial-gradient(circle at 30% 20%,rgba(180,220,255,.10),transparent 40%),linear-gradient(160deg,#0a1016,#0d1620 50%,#08111a)!important}
-body.atm-windy .glass{border-color:rgba(191,233,255,.28)!important}
-#windFX{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .9s ease}
-#windFX.show{opacity:1;visibility:visible}
-/* Old CSS-streak wind-gusts layer kept only as a harmless no-op container
-   in case any other code still queries #windGusts; the canvas above now
-   owns all rendering for this theme. */
-.wind-gusts{display:none}
+/* ===== WINDY 3D ATMOSPHERE — upgraded realistic airflow ===== */
+body.atm-windy{
+  background:
+    radial-gradient(ellipse at 18% 14%,rgba(198,231,255,.15),transparent 38%),
+    radial-gradient(ellipse at 82% 78%,rgba(76,145,190,.12),transparent 44%),
+    radial-gradient(ellipse at 50% 115%,rgba(130,205,225,.09),transparent 52%),
+    linear-gradient(155deg,#07111a 0%,#0b1822 38%,#0a151e 65%,#061019 100%) !important;
+}
+
+body.atm-windy::after{
+  content:"";
+  position:fixed;
+  inset:-15%;
+  z-index:0;
+  pointer-events:none;
+  opacity:.75;
+  background:
+    radial-gradient(ellipse at 25% 32%,rgba(218,241,255,.075),transparent 28%),
+    radial-gradient(ellipse at 72% 66%,rgba(128,199,230,.065),transparent 34%);
+  filter:blur(35px);
+  animation:windAtmosphereDrift 18s ease-in-out infinite alternate;
+}
+
+@keyframes windAtmosphereDrift{
+  0%{
+    transform:translate3d(-2%,-1%,0) scale(1);
+    opacity:.55;
+  }
+  50%{
+    transform:translate3d(3%,2%,0) scale(1.055);
+    opacity:.85;
+  }
+  100%{
+    transform:translate3d(-1%,4%,0) scale(1.025);
+    opacity:.65;
+  }
+}
+
+body.atm-windy .sky-layer .haze{
+  opacity:.3;
+  background:
+    radial-gradient(ellipse at 50% 5%,rgba(225,243,255,.13),transparent 57%),
+    linear-gradient(180deg,rgba(168,218,242,.035),transparent 65%);
+  filter:blur(14px);
+}
+
+body.atm-windy .sky-layer .orb-tl{
+  opacity:.42;
+  width:230px;
+  height:230px;
+  background:rgba(170,220,250,.17);
+  filter:blur(72px);
+}
+
+body.atm-windy .sky-layer .orb-br{
+  opacity:.34;
+  width:260px;
+  height:260px;
+  background:rgba(70,150,205,.15);
+  filter:blur(82px);
+}
+
+body.atm-windy .glass{
+  border-color:rgba(201,235,255,.32) !important;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(225,243,255,.115),
+      rgba(135,191,220,.04) 45%,
+      rgba(255,255,255,.022)
+    );
+  box-shadow:
+    0 30px 85px rgba(0,8,16,.62),
+    0 0 75px rgba(135,209,240,.075),
+    inset 0 1.5px rgba(239,249,255,.34),
+    inset 0 -1px rgba(20,55,78,.36) !important;
+}
+
+body.atm-windy .glass::before{
+  background:
+    linear-gradient(
+      135deg,
+      rgba(208,240,255,.72),
+      rgba(255,255,255,.8) 18%,
+      transparent 43%,
+      rgba(105,188,230,.48) 76%,
+      rgba(235,249,255,.75)
+    );
+}
+
+body.atm-windy .glass::after{
+  background:
+    linear-gradient(
+      118deg,
+      transparent 20%,
+      rgba(212,241,255,.04) 37%,
+      rgba(255,255,255,.25) 49%,
+      rgba(170,222,248,.07) 62%,
+      transparent 80%
+    );
+  animation:windGlassSheen 8.5s cubic-bezier(.45,0,.25,1) infinite;
+}
+
+@keyframes windGlassSheen{
+  0%{
+    transform:translateX(-150%) rotate(17deg) skewX(-7deg);
+    opacity:.25;
+  }
+  42%{
+    opacity:.85;
+  }
+  68%{
+    transform:translateX(260%) rotate(17deg) skewX(-7deg);
+    opacity:.35;
+  }
+  100%{
+    transform:translateX(260%) rotate(17deg) skewX(-7deg);
+    opacity:0;
+  }
+}
+
+body.atm-windy .iridescent{
+  opacity:.14;
+  background:
+    linear-gradient(
+      120deg,
+      rgba(175,225,255,.22),
+      rgba(255,255,255,.05) 28%,
+      rgba(100,185,225,.18) 57%,
+      rgba(205,240,255,.13)
+    );
+}
+
+#windFX{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:1;
+  pointer-events:none;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity 1.25s ease,visibility 1.25s;
+  transform:translateZ(0);
+}
+
+#windFX.show{
+  opacity:1;
+  visibility:visible;
+}
+
+html[data-dgxen-world="1"] #windFX{
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+
+.wind-gusts{
+  display:none;
+}
+
+body.atm-reduce #windFX{
+  opacity:.35;
+}
 
 /* Shared understated festival tint for added dates. */
 body[class*="atm-fest_"] .sky-layer .haze{opacity:.55}
@@ -3519,11 +3675,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   };
 })();
 
-// ===== APEX FIGHT SCENE — two anime-style fighters clashing left/right.
-// Deterministic 50-second cycle (loops seamlessly — pose at t=50s matches
-// t=0s), jointed limbs (shoulder/elbow/hip/knee pivots that actually swing,
-// not rigid blocks), 30+ distinct rapid attack beats across the cycle,
-// speed-line trails on fast strikes, impact bursts, and screen-shake.
+// ===== APEX FIGHT SCENE 2.0 — two jointed anime fighters with full combat
+// choreography: rush/retreat/circle/jump/dash movement, 15+ move types,
+// 120+ generated fight events across a 90s deterministic cycle, slashes,
+// shockwaves, hit sparks, after-images/speed-trails, ground dust, camera
+// shake and screen flash on big hits. Anime-stylized silhouettes (hair,
+// shoulder pads, cloth strips, shoes) — not realistic 3D.
 //
 // Rendering stays defensive for WebView reliability: only rect/arc/lineTo +
 // plain 'source-over' fills (no ellipse(), no 'lighter' blend — both have
@@ -3535,8 +3692,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   const ctx = cv.getContext && cv.getContext('2d');
   if(!ctx){ console.warn('[apex-fight] 2d context unavailable on this WebView'); return; }
   let running=false, raf=0, W=0, H=0, DPR=1;
-  let startTime=0;
-  const CYCLE_MS = 50000;
+  let startTime=0, lastNow=0;
+  const CYCLE_MS = 90000;
 
   function resize(){
     DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
@@ -3552,16 +3709,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   function easeInOutQuad(t){ return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
   function easeOutBack(t){ const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); }
+  function easeOutQuad(t){ return 1-(1-t)*(1-t); }
   function clamp01(v){ return v<0?0:v>1?1:v; }
+  function lerp(a,b,t){ return a+(b-a)*t; }
 
   // ---- Jointed limb helper -------------------------------------------
-  // Draws a two-segment limb (upper+lower, e.g. upper-arm+forearm or
-  // thigh+shin) as a filled quad per segment, pivoting at shoulder/hip and
-  // elbow/knee. swingA = angle of the first segment (radians, 0 = pointing
-  // straight down from the pivot), swingB = angle of the second segment
-  // RELATIVE to the first. This is what makes the limbs read as actually
-  // swinging/kicking/punching instead of static rectangles.
-  function drawLimb(px, py, len1, len2, swingA, swingB, thickness, color, outline){
+  // Draws a two-segment limb (upper+lower) as a filled quad per segment,
+  // pivoting at shoulder/hip and elbow/knee, with an optional tip shape
+  // (fist / shoe) for readability at anime silhouette scale.
+  function drawLimb(px, py, len1, len2, swingA, swingB, thickness, color, outline, tip){
     const x1 = px + Math.sin(swingA)*len1;
     const y1 = py + Math.cos(swingA)*len1;
     const totalA = swingA + swingB;
@@ -3586,6 +3742,25 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     }
     segment(px,py,x1,y1,thickness);
     segment(x1,y1,x2,y2,thickness*0.82);
+
+    if (tip === 'fist'){
+      ctx.beginPath();
+      ctx.arc(x2,y2,thickness*0.62,0,Math.PI*2);
+      ctx.fill(); ctx.stroke();
+    } else if (tip === 'shoe'){
+      const dx = x2-x1, dy = y2-y1;
+      const len = Math.hypot(dx,dy) || 1;
+      const ux = dx/len, uy = dy/len;
+      const nx = -uy, ny = ux;
+      ctx.beginPath();
+      ctx.moveTo(x2-nx*thickness, y2-ny*thickness);
+      ctx.lineTo(x2+ux*thickness*1.8-nx*thickness*0.7, y2+uy*thickness*1.8-ny*thickness*0.7);
+      ctx.lineTo(x2+ux*thickness*1.8+nx*thickness*0.7, y2+uy*thickness*1.8+ny*thickness*0.7);
+      ctx.lineTo(x2+nx*thickness, y2+ny*thickness);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }
+
     return {x:x2, y:y2, jointX:x1, jointY:y1};
   }
 
@@ -3594,12 +3769,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    const count = 4;
+    const count = 5;
     for(let i=0;i<count;i++){
       const spread = (i-count/2)*7;
-      const len = 22 + intensity*38;
+      const len = 24 + intensity*46;
       ctx.globalAlpha = intensity * (0.55 - i*0.08);
-      ctx.lineWidth = 2.2 - i*0.3;
+      ctx.lineWidth = 2.4 - i*0.3;
       ctx.beginPath();
       ctx.moveTo(x - dirX*len + dirY*spread, y - dirY*len - dirX*spread);
       ctx.lineTo(x, y);
@@ -3609,13 +3784,129 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.restore();
   }
 
-  // Fighter built from jointed limbs. pose fields: leanBody, hipShift,
-  // crouch, frontArmSwing/frontArmBend, backArmSwing/backArmBend,
+  // ---- Anime FX pools ---------------------------------------------------
+  // Lightweight object pools (plain arrays, spliced on death) for slashes,
+  // shockwave rings, hit-spark impacts, dust puffs and after-image speed
+  // trails. Kept intentionally simple (no blend-mode tricks) for WebView
+  // reliability, same rendering constraints as the fighters themselves.
+  const slashes = [];
+  const shockwaves = [];
+  const impacts = [];
+  const dustPuffs = [];
+  const speedTrails = [];
+
+  function spawnSlash(x,y,angle,len,color){
+    slashes.push({ x:x, y:y, angle:angle, len:len, life:1, color:color });
+  }
+  function spawnShockwave(x,y,strength,color){
+    shockwaves.push({ x:x, y:y, r:6, maxR:40+strength*70, life:1, color:color });
+  }
+  function spawnImpact(x,y,strength,color){
+    impacts.push({ x:x, y:y, strength:strength, life:1, color:color });
+  }
+  function spawnDust(x,y,strength){
+    const n = 4 + Math.round(strength*4);
+    for(let i=0;i<n;i++){
+      const a = Math.random()*Math.PI - Math.PI/2;
+      dustPuffs.push({
+        x:x, y:y,
+        vx:Math.cos(a)*(20+Math.random()*40),
+        vy:-Math.abs(Math.sin(a))*(10+Math.random()*18),
+        r: 3+Math.random()*5,
+        life:1
+      });
+    }
+  }
+  function spawnTrail(x,y,facing,color){
+    speedTrails.push({ x:x, y:y, facing:facing, color:color, life:1 });
+  }
+
+  function updateAndDrawFX(dt){
+    // Slashes — short-lived energy arcs left by fast strikes.
+    for(let i=slashes.length-1;i>=0;i--){
+      const s = slashes[i];
+      s.life -= dt*3.2;
+      if (s.life <= 0){ slashes.splice(i,1); continue; }
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.angle);
+      ctx.globalAlpha = clamp01(s.life);
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 3.5*s.life + 1;
+      ctx.beginPath();
+      ctx.moveTo(-s.len*0.5, 0);
+      ctx.quadraticCurveTo(0, -s.len*0.35, s.len*0.5, 0);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // Shockwaves — expanding rings from big hits.
+    for(let i=shockwaves.length-1;i>=0;i--){
+      const s = shockwaves[i];
+      s.life -= dt*1.6;
+      s.r = s.maxR*(1-s.life);
+      if (s.life <= 0){ shockwaves.splice(i,1); continue; }
+      ctx.save();
+      ctx.globalAlpha = clamp01(s.life)*0.65;
+      ctx.strokeStyle = s.color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, Math.max(1,s.r), 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+
+    // Impacts — hit-spark bursts (rays + core flash) at the strike point.
+    for(let i=impacts.length-1;i>=0;i--){
+      const im = impacts[i];
+      im.life -= dt*3.4;
+      if (im.life <= 0){ impacts.splice(i,1); continue; }
+      drawImpactBurst(im.x, im.y, im.strength*clamp01(im.life), im.color);
+    }
+
+    // Dust puffs — small ground-kicked particles with gravity.
+    for(let i=dustPuffs.length-1;i>=0;i--){
+      const d = dustPuffs[i];
+      d.life -= dt*1.2;
+      if (d.life <= 0){ dustPuffs.splice(i,1); continue; }
+      d.x += d.vx*dt;
+      d.y += d.vy*dt;
+      d.vy += 60*dt;
+      ctx.save();
+      ctx.globalAlpha = clamp01(d.life)*0.5;
+      ctx.fillStyle = '#c9a06a';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r*clamp01(d.life), 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // After-image speed trails — faded silhouettes marking recent motion.
+    for(let i=speedTrails.length-1;i>=0;i--){
+      const t = speedTrails[i];
+      t.life -= dt*3.6;
+      if (t.life <= 0){ speedTrails.splice(i,1); continue; }
+      ctx.save();
+      ctx.globalAlpha = clamp01(t.life)*0.28;
+      ctx.fillStyle = t.color;
+      ctx.beginPath();
+      ctx.arc(t.x, t.y, 26, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Fighter built from jointed limbs plus anime-styling accents (hair
+  // spike, shoulder pad, cloth strip, shoes). pose fields: leanBody,
+  // hipShift, crouch, frontArmSwing/frontArmBend, backArmSwing/backArmBend,
   // frontLegSwing/frontLegBend, backLegSwing/backLegBend, strikeIntensity
-  // (drives speed-lines + fist glow at extension).
-  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor){
+  // (drives speed-lines + fist glow at extension), jumpY (aerial offset).
+  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor, hairColor){
     ctx.save();
-    ctx.translate(x, groundY);
+    ctx.translate(x, groundY + (pose.jumpY||0));
     ctx.scale(facing, 1);
     ctx.rotate(pose.leanBody*0.16);
 
@@ -3624,9 +3915,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const shoulderY = -128*scale;
 
     // back leg
-    drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.backLegSwing, pose.backLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
-    // front leg
-    const frontFoot = drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.frontLegSwing, pose.frontLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
+    drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.backLegSwing, pose.backLegBend, 9, bodyColor, 'rgba(0,0,0,.85)', 'shoe');
+    // front leg — the kicking limb
+    const frontFoot = drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.frontLegSwing, pose.frontLegBend, 9, bodyColor, 'rgba(0,0,0,.85)', 'shoe');
 
     // torso (single quad from hip to shoulder, slight lean-driven skew)
     ctx.fillStyle = bodyColor;
@@ -3641,15 +3932,51 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
+    // cloth strip — a trailing sash accent that lags behind body lean for
+    // a bit of secondary motion (anime "cloth flutter" cue).
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = rimColor;
+    ctx.beginPath();
+    ctx.moveTo(-6, hipY*0.8);
+    ctx.lineTo(-6 - torsoSkew*1.4 - pose.hipShift*4, hipY*0.8 + 26);
+    ctx.lineTo(2 - torsoSkew*1.4 - pose.hipShift*4, hipY*0.8 + 24);
+    ctx.lineTo(2, hipY*0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // shoulder pad accent
+    ctx.save();
+    ctx.fillStyle = rimColor;
+    ctx.beginPath();
+    ctx.arc(9+torsoSkew*0.5, shoulderY+4, 8*scale, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
     // back arm
-    drawLimb(-8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.backArmSwing, pose.backArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
+    drawLimb(-8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.backArmSwing, pose.backArmBend, 7, bodyColor, 'rgba(0,0,0,.85)', 'fist');
     // front arm — the striking limb
-    const fist = drawLimb(8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.frontArmSwing, pose.frontArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
+    const fist = drawLimb(8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.frontArmSwing, pose.frontArmBend, 7, bodyColor, 'rgba(0,0,0,.85)', 'fist');
 
     // head
     ctx.beginPath();
     ctx.arc(torsoSkew*0.6, shoulderY-13, 13, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
+
+    // anime hair spikes
+    ctx.save();
+    ctx.fillStyle = hairColor;
+    const hx = torsoSkew*0.6, hy = shoulderY-13;
+    for(let i=-1;i<=1;i++){
+      ctx.beginPath();
+      ctx.moveTo(hx + i*7, hy-9);
+      ctx.lineTo(hx + i*7 - 3, hy-24-Math.abs(i)*3);
+      ctx.lineTo(hx + i*7 + 4, hy-11);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
 
     // rim-light accent
     ctx.strokeStyle = rimColor;
@@ -3659,20 +3986,27 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.lineTo(14, hipY);
     ctx.stroke();
 
-    // fist glow + speed lines at strike extension
+    // fist/foot glow + speed lines at strike extension
     if (pose.strikeIntensity > 0.35){
       const g = clamp01((pose.strikeIntensity-0.35)/0.65);
+      const tipPoint = pose.kicking ? frontFoot : fist;
       ctx.fillStyle = rimColor;
       ctx.globalAlpha = g*0.9;
-      ctx.beginPath(); ctx.arc(fist.x, fist.y, 7+g*4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(tipPoint.x, tipPoint.y, 7+g*4, 0, Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
-      // direction of travel approximated from joint->fist vector
-      const dx = fist.x-fist.jointX, dy = fist.y-fist.jointY;
+      const dx = tipPoint.x-tipPoint.jointX, dy = tipPoint.y-tipPoint.jointY;
       const dlen = Math.hypot(dx,dy)||1;
-      drawSpeedLines(fist.x, fist.y, dx/dlen, dy/dlen, g, rimColor);
+      drawSpeedLines(tipPoint.x, tipPoint.y, dx/dlen, dy/dlen, g, rimColor);
     }
 
     ctx.restore();
+
+    // world-space anchor for FX spawns (approx strike tip in screen coords)
+    const scaleSign = facing;
+    const tip = pose.kicking ? frontFoot : fist;
+    const worldX = x + (torsoSkew*0.5 + tip.x)*scaleSign;
+    const worldY = groundY + (pose.jumpY||0) + tip.y;
+    return { x: worldX, y: worldY };
   }
 
   function drawImpactBurst(x,y,strength,color){
@@ -3696,50 +4030,196 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.restore();
   }
 
-  // ---- Choreography ----------------------------------------------------
-  // 36 rapid-fire beats across the 50s cycle (roughly one every ~1.4s),
-  // alternating sides with occasional back-to-back combos from the same
-  // attacker for a "flurry" feel. Left drifts further left on its attacks
-  // and right balances back, and vice versa, per spec.
+  function drawArena(phase){
+    // Parallax mountain silhouettes + energy fog band, sitting behind the
+    // fighters. Cheap: a handful of flat-shaded polygons + one gradient.
+    const horizon = H*0.78;
+    ctx.save();
+    const fog = ctx.createLinearGradient(0, horizon-140, 0, horizon+20);
+    fog.addColorStop(0, 'rgba(255,140,60,0)');
+    fog.addColorStop(1, 'rgba(255,120,40,0.10)');
+    ctx.fillStyle = fog;
+    ctx.fillRect(0, horizon-140, W, 160);
+
+    ctx.fillStyle = 'rgba(40,14,10,0.55)';
+    const drift1 = Math.sin(phase*Math.PI*2*0.15)*14;
+    ctx.beginPath();
+    ctx.moveTo(0, horizon);
+    for(let i=0;i<=6;i++){
+      const x = (i/6)*W + drift1;
+      const y = horizon - 30 - Math.abs(Math.sin(i*1.7+phase*3))*26;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W, horizon);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(60,20,14,0.4)';
+    const drift2 = Math.cos(phase*Math.PI*2*0.1)*22;
+    ctx.beginPath();
+    ctx.moveTo(0, horizon+10);
+    for(let i=0;i<=8;i++){
+      const x = (i/8)*W + drift2;
+      const y = horizon - 14 - Math.abs(Math.cos(i*2.1+phase*2))*16;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(W, horizon+10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  const debris = (function(){
+    const arr = [];
+    for(let i=0;i<10;i++){
+      arr.push({
+        x: Math.random(),
+        y: 0.3+Math.random()*0.4,
+        s: 2+Math.random()*3,
+        speed: 6+Math.random()*10,
+        phase: Math.random()*Math.PI*2
+      });
+    }
+    return arr;
+  })();
+  function drawDebris(dt,phase){
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,190,120,0.35)';
+    for(const d of debris){
+      d.phase += dt*0.6;
+      const x = ((d.x + phase*0.02*d.speed) % 1) * W;
+      const y = d.y*H + Math.sin(d.phase)*10;
+      ctx.beginPath();
+      ctx.arc(x,y,d.s,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawGroundDust(groundY){
+    ctx.save();
+    const g = ctx.createLinearGradient(0, groundY-10, 0, groundY+34);
+    g.addColorStop(0, 'rgba(120,60,30,0)');
+    g.addColorStop(1, 'rgba(90,40,20,0.28)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, groundY-10, W, 44);
+    ctx.restore();
+  }
+
+  function drawFlashRing(strength){
+    if (strength <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = strength*0.5;
+    ctx.fillStyle = '#fff3d0';
+    ctx.fillRect(0,0,W,H);
+    ctx.restore();
+  }
+
+  // ---- Choreography -------------------------------------------------
+  // Move roster — 15+ named actions, each mapped to a pose-shape and a
+  // strike-type used for FX (fist glow vs kick glow vs guard/taunt with no
+  // strike FX at all). Generates 120–180 fight events across the 90s cycle
+  // (deterministic per session — Math.random seeds the arrays once at
+  // build time, then the whole thing loops seamlessly).
+  const MOVESET = [
+    'jab','cross','uppercut','hook','spinning_hook','axe_kick','front_kick',
+    'side_kick','sweep','elbow_strike','knee_strike','dash_attack',
+    'backstep','teleport_dash','air_kick','slam','counter','guard','taunt','power_charge'
+  ];
+  const STRIKE_MOVES = ['jab','cross','uppercut','hook','spinning_hook','axe_kick','front_kick','side_kick','sweep','elbow_strike','knee_strike','dash_attack','air_kick','slam'];
+  const KICK_MOVES = ['axe_kick','front_kick','side_kick','sweep','air_kick','slam'];
+  const MOBILITY_MOVES = ['dash_attack','backstep','teleport_dash','air_kick'];
+
   const BEATS = (function build(){
     const arr = [];
-    let t = 0.015;
+    let t = 0.006;
     let side = 'L';
     let n = 0;
-    while (t < 0.985 && n < 36){
+    const TARGET = 160; // within the 120-180 spec range
+    while (t < 0.995 && n < TARGET){
       const comboRoll = Math.random();
-      // occasionally throw 2-3 rapid hits from the same side in a row (a "combo")
-      const comboLen = comboRoll > 0.72 ? 3 : comboRoll > 0.45 ? 2 : 1;
-      for (let c=0; c<comboLen && t < 0.985 && n < 36; c++){
-        const power = 0.45 + Math.random()*0.5;
-        const gap = 0.010 + Math.random()*0.006; // time from attack start to peak (fast!)
-        arr.push({ t: t, attacker: side, peak: t+gap, power: power });
-        t += gap + 0.006 + Math.random()*0.010; // short recovery before next beat
+      const comboLen = comboRoll > 0.78 ? 4 : comboRoll > 0.55 ? 3 : comboRoll > 0.25 ? 2 : 1;
+      for (let c=0; c<comboLen && t < 0.995 && n < TARGET; c++){
+        const power = 0.4 + Math.random()*0.6;
+        const gap = 0.0025 + Math.random()*0.0025;
+        const move = MOVESET[Math.floor(Math.random()*MOVESET.length)];
+        arr.push({ t: t, attacker: side, peak: t+gap, power: power, move: move });
+        t += gap + 0.0015 + Math.random()*0.0025;
         n++;
       }
       side = side === 'L' ? 'R' : 'L';
-      t += 0.004;
+      t += 0.001;
     }
     return arr;
   })();
   let lastFlashAt = -1;
+  let screenFlash = 0;
 
-  function poseForSide(extend, isAttacker, crouchBias){
-    // isAttacker: this fighter is throwing the strike this beat
-    // extend: 0..1 progress of the current beat's easing
+  // Combat-arena movement state — replaces the old fixed leftX/rightX with
+  // per-fighter target/velocity so both sides genuinely rush, retreat,
+  // circle and jump across the arena instead of standing almost still.
+  const fighterL = { x:0, targetX:0, velX:0, y:0, targetY:0, velY:0, jumpY:0 };
+  const fighterR = { x:0, targetX:0, velX:0, y:0, targetY:0, velY:0, jumpY:0 };
+
+  function poseForSide(extend, isAttacker, crouchBias, move){
+    const kicking = KICK_MOVES.indexOf(move) !== -1;
+    const isGuard = move === 'guard';
+    const isTaunt = move === 'taunt';
+    const isCharge = move === 'power_charge';
+    const isCounter = move === 'counter';
+
+    if (isGuard){
+      return {
+        leanBody:-0.15, hipShift:-0.3, crouch:0.3,
+        frontArmSwing:0.55, frontArmBend:0.9, backArmSwing:0.5, backArmBend:0.9,
+        frontLegSwing:0.1, frontLegBend:-0.2, backLegSwing:-0.1, backLegBend:0.2,
+        strikeIntensity:0, kicking:false, jumpY:0
+      };
+    }
+    if (isTaunt){
+      const wobble = Math.sin(extend*Math.PI*4)*0.2;
+      return {
+        leanBody:wobble, hipShift:0.2, crouch:0.02,
+        frontArmSwing:-0.8+wobble, frontArmBend:-0.4, backArmSwing:-0.8-wobble, backArmBend:-0.4,
+        frontLegSwing:0.05, frontLegBend:-0.1, backLegSwing:-0.05, backLegBend:0.15,
+        strikeIntensity:0, kicking:false, jumpY:0
+      };
+    }
+    if (isCharge){
+      return {
+        leanBody:extend*0.1, hipShift:0, crouch:0.25+extend*0.1,
+        frontArmSwing:0.2, frontArmBend:0.6, backArmSwing:-0.2, backArmBend:0.6,
+        frontLegSwing:0.1, frontLegBend:-0.2, backLegSwing:-0.1, backLegBend:0.2,
+        strikeIntensity:extend*0.3, kicking:false, jumpY:0
+      };
+    }
+    if (isCounter){
+      return {
+        leanBody:isAttacker?extend*0.6:-0.1, hipShift:isAttacker?extend*0.8:0, crouch:0.18,
+        frontArmSwing:isAttacker?(-0.2+extend*1.1):0.3, frontArmBend:0.2, backArmSwing:-0.3, backArmBend:0.5,
+        frontLegSwing:0.15, frontLegBend:-0.25, backLegSwing:-0.1, backLegBend:0.25,
+        strikeIntensity:isAttacker?extend:0, kicking:false, jumpY:0
+      };
+    }
+
+    const jumping = move === 'air_kick';
+    const jumpY = jumping ? -Math.sin(extend*Math.PI)*70 : 0;
+
     return {
       leanBody: isAttacker ? extend*0.85 : -extend*0.3,
       hipShift: isAttacker ? extend*1.4 : -extend*0.6,
       crouch: 0.08 + crouchBias*0.22,
-      frontArmSwing: isAttacker ? (-0.35 + extend*1.55) : (0.15 - extend*0.2),
-      frontArmBend: isAttacker ? (0.25 - extend*0.35) : 0.35,
+      frontArmSwing: kicking ? -0.1 : (isAttacker ? (-0.35 + extend*1.55) : (0.15 - extend*0.2)),
+      frontArmBend: kicking ? 0.3 : (isAttacker ? (0.25 - extend*0.35) : 0.35),
       backArmSwing: isAttacker ? (-0.5 + extend*0.3) : (-0.1),
       backArmBend: 0.55,
-      frontLegSwing: isAttacker ? (0.25 + extend*0.35) : (0.15 - extend*0.15),
-      frontLegBend: -0.3,
+      frontLegSwing: kicking ? (isAttacker ? (-0.2 + extend*1.3) : (0.15 - extend*0.15)) : (isAttacker ? (0.25 + extend*0.35) : (0.15 - extend*0.15)),
+      frontLegBend: kicking ? (0.3 - extend*0.4) : -0.3,
       backLegSwing: -0.15,
       backLegBend: 0.3,
-      strikeIntensity: isAttacker ? extend : 0
+      strikeIntensity: isAttacker ? extend : 0,
+      kicking: kicking,
+      jumpY: jumpY
     };
   }
   function idlePose(bobPhase){
@@ -3748,12 +4228,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       leanBody: bob*0.3, hipShift: 0, crouch: 0.08+Math.abs(bob)*0.3,
       frontArmSwing: 0.1+bob*0.15, frontArmBend: 0.35, backArmSwing: -0.1-bob*0.1, backArmBend: 0.55,
       frontLegSwing: 0.12, frontLegBend: -0.25, backLegSwing: -0.12, backLegBend: 0.28,
-      strikeIntensity: 0
+      strikeIntensity: 0, kicking:false, jumpY:0
     };
   }
   function blendPose(a,b,t){
     const o={};
-    for(const k in a){ o[k] = a[k] + (b[k]-a[k])*t; }
+    for(const k in a){
+      if (typeof a[k] === 'number' && typeof b[k] === 'number') o[k] = a[k] + (b[k]-a[k])*t;
+      else o[k] = t>0.5 ? b[k] : a[k];
+    }
     return o;
   }
 
@@ -3762,27 +4245,41 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if(!startTime) startTime = now;
     if (W <= 1 || H <= 1) { raf = requestAnimationFrame(tick); return; }
 
+    const dtMs = lastNow ? Math.min(48, now-lastNow) : 16;
+    const dt = dtMs/1000;
+    lastNow = now;
+
     const phase = ((now - startTime) % CYCLE_MS) / CYCLE_MS;
     ctx.clearRect(0,0,W,H);
 
-    // Anchor the fight to the lower third of the viewport, clamped so it
-    // always stays on-screen regardless of aspect ratio (fixes the
-    // "fighters drawn way below the visible area" issue from before).
     const groundY = Math.min(H*0.82, H-90);
     const midX = W*0.5;
-    const spread = Math.min(W*0.30, 190);
-    let leftX = midX - spread, rightX = midX + spread;
+    const baseSpread = Math.min(W*0.30, 190);
+
+    drawArena(phase);
+    drawDebris(dt, phase);
+    drawGroundDust(groundY);
+
+    // Circling drift — both fighters slowly orbit the arena center even
+    // with no active beat, so they never look "almost fixed" at idle.
+    const circle = Math.sin(phase*Math.PI*2*3)*26;
+    fighterL.targetX = midX - baseSpread + circle;
+    fighterR.targetX = midX + baseSpread - circle;
+    fighterL.targetY = 0;
+    fighterR.targetY = 0;
 
     const bobL = phase*Math.PI*2*10;
     const bobR = phase*Math.PI*2*10 + 2.1;
     let poseL = idlePose(bobL);
     let poseR = idlePose(bobR);
 
-    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY;
+    let closestBeatDist = 1, closestBeatPower = 0, closestBeatMove = '';
     let anyActiveBeat = false;
+    let activeAttackerIsL = true;
+    let peakThisFrame = null;
 
     for(const b of BEATS){
-      const win = 0.02; // tight window = fast, rapid-fire strikes
+      const win = 0.018;
       const d = Math.abs(phase - b.t);
       const wrappedD = Math.min(d, 1-d);
       if (wrappedD < win){
@@ -3790,43 +4287,92 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
         const local = clamp01(1 - (wrappedD/win));
         const eased = local < 0.5 ? easeInOutQuad(local*2) : easeOutBack(1-(local-0.5)*2);
         const extend = clamp01(eased);
+        const mobile = MOBILITY_MOVES.indexOf(b.move) !== -1;
 
-        const attackerPose = poseForSide(extend, true, 0);
-        const defenderPose = poseForSide(extend, false, 0.4);
+        const attackerPose = poseForSide(extend, true, 0, b.move);
+        const defenderPose = poseForSide(extend, false, 0.4, 'guard_react');
 
         if (b.attacker === 'L'){
           poseL = blendPose(poseL, attackerPose, extend);
-          poseR = blendPose(poseR, defenderPose, extend*0.7);
-          leftX += extend*22; rightX -= extend*10;
+          poseR = blendPose(poseR, defenderPose, extend*0.6);
+          fighterL.targetX += extend * (mobile ? 46 : 22);
+          fighterR.targetX -= extend * (mobile ? 20 : 10);
+          activeAttackerIsL = true;
         } else {
           poseR = blendPose(poseR, attackerPose, extend);
-          poseL = blendPose(poseL, defenderPose, extend*0.7);
-          rightX -= extend*22; leftX += extend*10;
+          poseL = blendPose(poseL, defenderPose, extend*0.6);
+          fighterR.targetX -= extend * (mobile ? 46 : 22);
+          fighterL.targetX += extend * (mobile ? 20 : 10);
+          activeAttackerIsL = false;
         }
+
         const distToPeak = Math.abs(phase - b.peak);
         if (distToPeak < closestBeatDist){
           closestBeatDist = distToPeak;
           closestBeatPower = b.power * extend;
-          closestBeatX = b.attacker==='L' ? rightX-26 : leftX+26;
-          closestBeatY = groundY - 118;
+          closestBeatMove = b.move;
+        }
+        if (Math.abs(phase - b.peak) < 0.004 && lastFlashAt !== b.peak){
+          peakThisFrame = b;
         }
       }
     }
 
-    drawFighter(leftX, groundY, 1, poseL, '#3a7bd5', '#9fd8ff');
-    drawFighter(rightX, groundY, -1, poseR, '#e8541e', '#ffcf8a');
+    // Spring the actual position toward target (rush/retreat feel) instead
+    // of teleporting straight to it.
+    fighterL.velX += (fighterL.targetX - fighterL.x) * 0.18;
+    fighterL.velX *= 0.72;
+    fighterL.x += fighterL.velX;
+    fighterR.velX += (fighterR.targetX - fighterR.x) * 0.18;
+    fighterR.velX *= 0.72;
+    fighterR.x += fighterR.velX;
 
-    for(const b of BEATS){
-      if (Math.abs(phase - b.peak) < 0.004 && lastFlashAt !== b.peak){
-        lastFlashAt = b.peak;
-        document.body.classList.remove('apex-shake');
-        void document.body.offsetWidth;
-        document.body.classList.add('apex-shake');
-        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, 200);
+    if (!fighterL.x) fighterL.x = fighterL.targetX;
+    if (!fighterR.x) fighterR.x = fighterR.targetX;
+
+    const leftX = fighterL.x, rightX = fighterR.x;
+
+    const tipL = drawFighter(leftX, groundY, 1, poseL, '#3a7bd5', '#9fd8ff', '#1c3f66');
+    const tipR = drawFighter(rightX, groundY, -1, poseR, '#e8541e', '#ffcf8a', '#5c1f0a');
+
+    // Speed trails while a strike is in flight (after-image cue).
+    if (poseL.strikeIntensity > 0.4) spawnTrail(tipL.x, tipL.y, 1, 'rgba(154,216,255,0.5)');
+    if (poseR.strikeIntensity > 0.4) spawnTrail(tipR.x, tipR.y, -1, 'rgba(255,207,138,0.5)');
+
+    if (peakThisFrame){
+      lastFlashAt = peakThisFrame.peak;
+      const strikeTip = activeAttackerIsL ? tipL : tipR;
+      const color = activeAttackerIsL ? '#9fd8ff' : '#ffcf8a';
+      const power = Math.min(1, peakThisFrame.power);
+      const isStrike = STRIKE_MOVES.indexOf(peakThisFrame.move) !== -1;
+
+      if (isStrike){
+        spawnImpact(strikeTip.x, strikeTip.y, power, '#ffe27a');
+        spawnSlash(strikeTip.x, strikeTip.y, activeAttackerIsL?0.3:Math.PI-0.3, 40+power*40, color);
+        spawnDust(strikeTip.x, groundY, power);
+      }
+
+      document.body.classList.remove('apex-shake');
+      void document.body.offsetWidth;
+      document.body.classList.add('apex-shake');
+      setTimeout(function(){ document.body.classList.remove('apex-shake'); }, 200);
+
+      if (power > 0.8){
+        spawnShockwave(strikeTip.x, strikeTip.y, power, color);
+        screenFlash = 1;
       }
     }
-    if (anyActiveBeat && closestBeatDist < 0.03 && closestBeatPower > 0.25){
-      drawImpactBurst(closestBeatX, closestBeatY, Math.min(1, closestBeatPower), '#ffe27a');
+
+    updateAndDrawFX(dt);
+
+    if (anyActiveBeat && closestBeatDist < 0.025 && closestBeatPower > 0.25 && STRIKE_MOVES.indexOf(closestBeatMove) !== -1){
+      const midPointX = (leftX+rightX)/2;
+      drawImpactBurst(midPointX, groundY-118, Math.min(1, closestBeatPower), '#ffe27a');
+    }
+
+    if (screenFlash > 0){
+      drawFlashRing(screenFlash);
+      screenFlash = Math.max(0, screenFlash - dt*3.2);
     }
 
     raf = requestAnimationFrame(tick);
@@ -3854,131 +4400,615 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   });
 })();
 
-// ===== WINDY FX — layered, curved wind flow (canvas) =====
-// Replaces the old straight-line CSS streaks with genuinely curved gust
-// paths (quadratic bezier, not straight lines), three depth layers for a
-// pseudo-3D feel (far layer: thin/dim/slow; near layer: thick/bright/fast),
-// and variable intensity over time — calm lulls alternating with stronger
-// bursts, per "sometimes extremely, sometimes less."
-//
-// Rendering stays defensive for WebView reliability, same approach as the
-// Apex rebuild: only bezier curves + plain 'source-over' strokes, no
-// blend-mode tricks, sized/guarded the same way (waits for a real canvas
-// size before drawing, stops cleanly on tab-hide).
+// ===== WINDY FX 3D — volumetric ribbons, vortices and atmospheric flow =====
 (function(){
+  'use strict';
+
   const cv = document.getElementById('windFX');
-  if(!cv){ console.warn('[wind-fx] #windFX canvas not found in DOM'); return; }
-  const ctx = cv.getContext && cv.getContext('2d');
-  if(!ctx){ console.warn('[wind-fx] 2d context unavailable on this WebView'); return; }
-  let running=false, raf=0, W=0, H=0, DPR=1;
-  let startTime=0;
+
+  if(!cv){
+    console.warn('[wind-fx] #windFX canvas not found');
+    return;
+  }
+
+  const ctx = cv.getContext && cv.getContext('2d', {
+    alpha: true,
+    desynchronized: true
+  });
+
+  if(!ctx){
+    console.warn('[wind-fx] Canvas 2D context unavailable');
+    return;
+  }
+
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let running = false;
+  let raf = 0;
+  let W = 0;
+  let H = 0;
+  let DPR = 1;
+  let lastTime = 0;
+  let elapsed = 0;
+  let resizeTimer = 0;
+
+  let ribbons = [];
+  let particles = [];
+  let wisps = [];
+  let vortices = [];
+
+  const pointer = {
+    x: 0,
+    y: 0,
+    tx: 0,
+    ty: 0,
+    active: false
+  };
+
+  const DEPTHS = [
+    {
+      count: reduced ? 3 : 7,
+      speed: 24,
+      width: 1.1,
+      alpha: .10,
+      blur: 1,
+      length: [170,300],
+      curve: [22,52],
+      depth: .28
+    },
+    {
+      count: reduced ? 4 : 9,
+      speed: 43,
+      width: 1.8,
+      alpha: .20,
+      blur: 2,
+      length: [190,360],
+      curve: [35,78],
+      depth: .55
+    },
+    {
+      count: reduced ? 3 : 8,
+      speed: 67,
+      width: 2.8,
+      alpha: .34,
+      blur: 4,
+      length: [220,430],
+      curve: [50,112],
+      depth: .82
+    },
+    {
+      count: reduced ? 2 : 5,
+      speed: 94,
+      width: 4.2,
+      alpha: .42,
+      blur: 7,
+      length: [260,500],
+      curve: [68,145],
+      depth: 1
+    }
+  ];
+
+  function rnd(min,max){
+    return min + Math.random() * (max - min);
+  }
+
+  function clamp(value,min,max){
+    return Math.max(min,Math.min(max,value));
+  }
 
   function resize(){
-    DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
     W = window.innerWidth || document.documentElement.clientWidth || 360;
     H = window.innerHeight || document.documentElement.clientHeight || 640;
+
+    DPR = Math.max(1,Math.min(
+      reduced ? 1.25 : 1.75,
+      window.devicePixelRatio || 1
+    ));
+
     cv.style.width = W + 'px';
     cv.style.height = H + 'px';
-    cv.width = Math.max(1, Math.round(W*DPR));
-    cv.height = Math.max(1, Math.round(H*DPR));
+
+    cv.width = Math.max(1,Math.round(W * DPR));
+    cv.height = Math.max(1,Math.round(H * DPR));
+
     ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    pointer.x = pointer.tx = W * .5;
+    pointer.y = pointer.ty = H * .5;
   }
-  window.addEventListener('resize', function(){ if(running) resize(); }, {passive:true});
 
-  // Three depth layers. Each streak is a single flowing curve defined by a
-  // start point, a control-point wobble (for the curve), and a length —
-  // drifting rightward and slowly bobbing vertically as it travels so the
-  // whole path reads as flowing air rather than a straight dash.
-  const LAYERS = [
-    { count: 10, speed: 34,  width: 1.0, alpha: 0.18, curve: 26, label:'far'  },
-    { count: 9,  speed: 58,  width: 1.6, alpha: 0.32, curve: 40, label:'mid'  },
-    { count: 7,  speed: 92,  width: 2.4, alpha: 0.5,  curve: 58, label:'near' }
-  ];
-  let streaks = [];
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      if(!running) return;
+      resize();
+      seed();
+    },140);
+  },{passive:true});
 
-  function spawnStreak(layerIdx, atStart){
-    const L = LAYERS[layerIdx];
+  function createRibbon(layerIndex,randomPosition){
+    const layer = DEPTHS[layerIndex];
+    const direction = Math.random() < .12 ? -1 : 1;
+
     return {
-      layer: layerIdx,
-      x: atStart ? -60 - Math.random()*200 : Math.random()*W,
-      y: Math.random()*H,
-      len: 70 + Math.random()*110,
-      bob: Math.random()*Math.PI*2,
-      bobSpeed: 0.6 + Math.random()*0.8,
-      speedMul: 0.7 + Math.random()*0.6
+      layer: layerIndex,
+      x: randomPosition
+        ? rnd(-layer.length[1],W + layer.length[1])
+        : direction > 0
+          ? rnd(-layer.length[1] * 1.8,-60)
+          : rnd(W + 60,W + layer.length[1] * 1.8),
+
+      baseY: rnd(-H * .08,H * 1.08),
+      length: rnd(layer.length[0],layer.length[1]),
+      curve: rnd(layer.curve[0],layer.curve[1]),
+      speed: layer.speed * rnd(.72,1.24),
+      phase: rnd(0,Math.PI * 2),
+      phaseSpeed: rnd(.18,.46),
+      thickness: layer.width * rnd(.72,1.35),
+      alpha: layer.alpha * rnd(.65,1.18),
+      direction: direction,
+      twist: rnd(.6,1.7),
+      tilt: rnd(-.12,.12),
+      life: rnd(.75,1),
+      hueShift: rnd(0,1)
+    };
+  }
+
+  function createParticle(randomPosition){
+    const z = Math.pow(Math.random(),.72);
+
+    return {
+      x: randomPosition ? rnd(0,W) : rnd(-80,-8),
+      y: rnd(-20,H + 20),
+      z: z,
+      vx: rnd(18,72) * (.35 + z),
+      size: rnd(.45,1.6) * (.55 + z),
+      phase: rnd(0,Math.PI * 2),
+      wave: rnd(5,24),
+      alpha: rnd(.12,.48) * (.4 + z)
+    };
+  }
+
+  function createWisp(randomPosition){
+    return {
+      x: randomPosition ? rnd(-W * .2,W) : rnd(-W * .45,-W * .15),
+      y: rnd(-H * .1,H * .9),
+      width: rnd(W * .22,W * .48),
+      height: rnd(55,150),
+      speed: rnd(5,15),
+      alpha: rnd(.018,.052),
+      phase: rnd(0,Math.PI * 2),
+      drift: rnd(8,28)
+    };
+  }
+
+  function createVortex(randomPosition){
+    return {
+      x: randomPosition ? rnd(W * .05,W * .95) : -180,
+      y: rnd(H * .15,H * .85),
+      radius: rnd(50,120),
+      speed: rnd(8,22),
+      rotation: rnd(0,Math.PI * 2),
+      rotationSpeed: rnd(.08,.22) * (Math.random() < .5 ? -1 : 1),
+      alpha: rnd(.07,.16),
+      stretch: rnd(1.5,2.7),
+      life: rnd(7,14)
     };
   }
 
   function seed(){
-    streaks = [];
-    LAYERS.forEach(function(L, idx){
-      for (let i=0;i<L.count;i++) streaks.push(spawnStreak(idx, false));
+    ribbons = [];
+    particles = [];
+    wisps = [];
+    vortices = [];
+
+    DEPTHS.forEach(function(layer,index){
+      for(let i=0;i<layer.count;i++){
+        ribbons.push(createRibbon(index,true));
+      }
     });
+
+    const particleCount = reduced
+      ? 18
+      : clamp(Math.round(W * H / 18000),28,72);
+
+    for(let i=0;i<particleCount;i++){
+      particles.push(createParticle(true));
+    }
+
+    const wispCount = reduced ? 3 : 7;
+
+    for(let i=0;i<wispCount;i++){
+      wisps.push(createWisp(true));
+    }
+
+    const vortexCount = reduced ? 1 : 3;
+
+    for(let i=0;i<vortexCount;i++){
+      vortices.push(createVortex(true));
+    }
   }
 
-  // Global gust envelope: slow sine + occasional stronger burst multiplier,
-  // so intensity genuinely varies over time rather than staying constant.
-  function gustIntensity(tSec){
-    const base = 0.55 + Math.sin(tSec*0.15)*0.25; // slow breathing 0.3..0.8
-    const burst = Math.max(0, Math.sin(tSec*0.05 + 1.3)) > 0.85 ? 1.4 : 1.0; // occasional stronger passage
-    return Math.max(0.15, Math.min(1.3, base*burst));
+  function gustEnvelope(time){
+    const breathing =
+      .52 +
+      Math.sin(time * .22) * .13 +
+      Math.sin(time * .071 + 1.8) * .11;
+
+    const wave = Math.sin(time * .12 - 1.1);
+    const burst = Math.pow(Math.max(0,wave),5) * .56;
+
+    return clamp(breathing + burst,.3,1.12);
+  }
+
+  function drawAtmosphericFog(time,intensity){
+    const x1 = W * (.22 + Math.sin(time * .035) * .08);
+    const y1 = H * (.27 + Math.cos(time * .041) * .05);
+
+    const fog1 = ctx.createRadialGradient(
+      x1,y1,0,
+      x1,y1,Math.max(W,H) * .72
+    );
+
+    fog1.addColorStop(0,'rgba(188,225,245,' + (.045 * intensity) + ')');
+    fog1.addColorStop(.45,'rgba(86,159,202,' + (.025 * intensity) + ')');
+    fog1.addColorStop(1,'rgba(20,60,90,0)');
+
+    ctx.fillStyle = fog1;
+    ctx.fillRect(0,0,W,H);
+
+    const x2 = W * (.78 + Math.cos(time * .029) * .07);
+    const y2 = H * (.72 + Math.sin(time * .037) * .05);
+
+    const fog2 = ctx.createRadialGradient(
+      x2,y2,0,
+      x2,y2,Math.max(W,H) * .58
+    );
+
+    fog2.addColorStop(0,'rgba(122,194,226,' + (.035 * intensity) + ')');
+    fog2.addColorStop(1,'rgba(40,110,155,0)');
+
+    ctx.fillStyle = fog2;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  function drawWisps(dt,time,intensity){
+    for(let i=0;i<wisps.length;i++){
+      const w = wisps[i];
+
+      w.x += w.speed * dt * intensity;
+      w.phase += dt * .1;
+
+      const y = w.y + Math.sin(w.phase + time * .08) * w.drift;
+
+      const gradient = ctx.createRadialGradient(
+        w.x,y,0,
+        w.x,y,w.width
+      );
+
+      gradient.addColorStop(0,'rgba(202,234,249,' + (w.alpha * intensity) + ')');
+      gradient.addColorStop(.45,'rgba(145,203,229,' + (w.alpha * .45 * intensity) + ')');
+      gradient.addColorStop(1,'rgba(100,180,220,0)');
+
+      ctx.save();
+      ctx.translate(w.x,y);
+      ctx.scale(1,w.height / w.width);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(0,0,w.width,0,Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      if(w.x - w.width > W){
+        wisps[i] = createWisp(false);
+      }
+    }
+  }
+
+  function ribbonPoints(r,time){
+    const direction = r.direction;
+    const len = r.length * direction;
+
+    const localTime = time * r.phaseSpeed + r.phase;
+
+    const sway1 = Math.sin(localTime) * r.curve;
+    const sway2 = Math.sin(localTime * 1.41 + r.twist) * r.curve * .55;
+    const sway3 = Math.cos(localTime * .81 + r.twist) * r.curve * .34;
+
+    const pointerForce = pointer.active
+      ? clamp(1 - Math.abs(r.baseY - pointer.y) / Math.max(160,H * .35),0,1)
+      : 0;
+
+    const pointerBend = (pointer.y - r.baseY) * pointerForce * .055;
+
+    return {
+      x0:r.x,
+      y0:r.baseY + sway3,
+
+      c1x:r.x + len * .25,
+      c1y:r.baseY + sway1 + pointerBend,
+
+      c2x:r.x + len * .72,
+      c2y:r.baseY - sway2 + pointerBend * .35,
+
+      x3:r.x + len,
+      y3:r.baseY + sway3 * .4
+    };
+  }
+
+  function strokeRibbonPath(points){
+    ctx.beginPath();
+    ctx.moveTo(points.x0,points.y0);
+    ctx.bezierCurveTo(
+      points.c1x,points.c1y,
+      points.c2x,points.c2y,
+      points.x3,points.y3
+    );
+  }
+
+  function drawRibbons(dt,time,intensity){
+    for(let i=0;i<ribbons.length;i++){
+      const r = ribbons[i];
+      const layer = DEPTHS[r.layer];
+
+      r.x += r.speed * r.direction * dt * intensity;
+
+      const points = ribbonPoints(r,time);
+      const visibleAlpha = r.alpha * r.life * clamp(intensity,.35,1);
+
+      const lineGradient = ctx.createLinearGradient(
+        points.x0,points.y0,
+        points.x3,points.y3
+      );
+
+      lineGradient.addColorStop(0,'rgba(185,225,247,0)');
+      lineGradient.addColorStop(.16,'rgba(200,235,251,' + (visibleAlpha * .42) + ')');
+      lineGradient.addColorStop(.48,'rgba(235,249,255,' + visibleAlpha + ')');
+      lineGradient.addColorStop(.8,'rgba(166,218,244,' + (visibleAlpha * .52) + ')');
+      lineGradient.addColorStop(1,'rgba(130,200,235,0)');
+
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if(layer.blur > 0){
+        ctx.shadowColor = 'rgba(150,215,245,' + (visibleAlpha * .7) + ')';
+        ctx.shadowBlur = layer.blur * (1 + intensity * .45);
+      }
+
+      ctx.strokeStyle = lineGradient;
+      ctx.lineWidth = r.thickness * (1 + intensity * .10);
+
+      strokeRibbonPath(points);
+      ctx.stroke();
+
+      if(r.layer >= 2){
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(245,252,255,' + (visibleAlpha * .23) + ')';
+        ctx.lineWidth = Math.max(.55,r.thickness * .24);
+
+        strokeRibbonPath(points);
+        ctx.stroke();
+      }
+
+      if(r.layer === 3){
+        ctx.strokeStyle = 'rgba(120,193,230,' + (visibleAlpha * .12) + ')';
+        ctx.lineWidth = r.thickness * 2.6;
+
+        strokeRibbonPath(points);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      const goneRight = r.direction > 0 && r.x > W + r.length + 160;
+      const goneLeft = r.direction < 0 && r.x < -r.length - 160;
+
+      if(goneRight || goneLeft){
+        ribbons[i] = createRibbon(r.layer,false);
+      }
+    }
+  }
+
+  function drawParticles(dt,time,intensity){
+    ctx.save();
+    ctx.lineCap = 'round';
+
+    for(let i=0;i<particles.length;i++){
+      const p = particles[i];
+
+      p.x += p.vx * dt * intensity;
+      p.phase += dt * (.45 + p.z);
+
+      const py = p.y + Math.sin(p.phase + time * .5) * p.wave;
+      const trail = 5 + p.z * 20 * intensity;
+
+      const gradient = ctx.createLinearGradient(
+        p.x - trail,py,
+        p.x,py
+      );
+
+      gradient.addColorStop(0,'rgba(185,230,250,0)');
+      gradient.addColorStop(1,'rgba(235,250,255,' + (p.alpha * intensity) + ')');
+
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = p.size;
+      ctx.beginPath();
+      ctx.moveTo(p.x - trail,py);
+      ctx.quadraticCurveTo(
+        p.x - trail * .45,
+        py - Math.sin(p.phase) * 3,
+        p.x,py
+      );
+      ctx.stroke();
+
+      if(p.x - trail > W + 30){
+        particles[i] = createParticle(false);
+      }
+    }
+
+    ctx.restore();
+  }
+
+  function drawVortices(dt,time,intensity){
+    for(let i=0;i<vortices.length;i++){
+      const v = vortices[i];
+
+      v.x += v.speed * dt * intensity;
+      v.rotation += v.rotationSpeed * dt;
+      v.life -= dt;
+
+      ctx.save();
+      ctx.translate(v.x,v.y);
+      ctx.rotate(v.rotation);
+
+      for(let ring=0;ring<3;ring++){
+        const ringRadius = v.radius * (1 - ring * .19);
+        const alpha = v.alpha * (1 - ring * .22) * intensity;
+
+        ctx.strokeStyle = 'rgba(205,238,252,' + alpha + ')';
+        ctx.lineWidth = Math.max(.7,2.2 - ring * .5);
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+
+        const segments = 28;
+
+        for(let s=0;s<=segments;s++){
+          const a = (s / segments) * Math.PI * 1.72;
+          const taper = .72 + Math.sin(a * .5) * .28;
+          const radius = ringRadius * taper;
+
+          const x = Math.cos(a) * radius * v.stretch;
+          const y = Math.sin(a) * radius * .42;
+
+          if(s === 0) ctx.moveTo(x,y);
+          else ctx.lineTo(x,y);
+        }
+
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      if(v.x - v.radius * v.stretch > W || v.life <= 0){
+        vortices[i] = createVortex(false);
+      }
+    }
+  }
+
+  function drawEdgeDepth(intensity){
+    const edge = ctx.createRadialGradient(
+      W * .5,H * .48,
+      Math.min(W,H) * .14,
+      W * .5,H * .48,
+      Math.max(W,H) * .78
+    );
+
+    edge.addColorStop(0,'rgba(3,13,22,0)');
+    edge.addColorStop(.68,'rgba(3,13,22,' + (.03 * intensity) + ')');
+    edge.addColorStop(1,'rgba(1,7,13,.19)');
+
+    ctx.fillStyle = edge;
+    ctx.fillRect(0,0,W,H);
   }
 
   function tick(now){
     if(!running) return;
-    if(!startTime) startTime = now;
-    if (W <= 1 || H <= 1) { raf = requestAnimationFrame(tick); return; }
-
-    const tSec = (now-startTime)/1000;
-    const intensity = gustIntensity(tSec);
-    ctx.clearRect(0,0,W,H);
-
-    for (let i=0; i<streaks.length; i++){
-      const s = streaks[i];
-      const L = LAYERS[s.layer];
-      const dx = L.speed * s.speedMul * intensity * (1/60);
-      s.x += dx;
-      s.bob += 0.016 * s.bobSpeed;
-      const yWobble = Math.sin(s.bob) * L.curve * 0.4;
-
-      const x0 = s.x, y0 = s.y + yWobble;
-      const x1 = s.x + s.len*0.5, y1 = s.y + yWobble - L.curve*Math.sin(s.bob*1.3);
-      const x2 = s.x + s.len, y2 = s.y + yWobble;
-
-      ctx.strokeStyle = 'rgba(220,240,255,' + (L.alpha * Math.min(1, intensity)).toFixed(3) + ')';
-      ctx.lineWidth = L.width;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(x0, y0);
-      ctx.quadraticCurveTo(x1, y1, x2, y2);
-      ctx.stroke();
-
-      if (s.x - 60 > W){
-        streaks[i] = spawnStreak(s.layer, true);
-      }
-    }
 
     raf = requestAnimationFrame(tick);
+
+    if(document.hidden) return;
+
+    if(!lastTime) lastTime = now;
+
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    dt = clamp(dt,0,.034);
+    elapsed += dt;
+
+    pointer.x += (pointer.tx - pointer.x) * Math.min(1,dt * 3.5);
+    pointer.y += (pointer.ty - pointer.y) * Math.min(1,dt * 3.5);
+
+    const intensity = reduced ? .38 : gustEnvelope(elapsed);
+
+    ctx.clearRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'source-over';
+
+    drawAtmosphericFog(elapsed,intensity);
+    drawWisps(dt,elapsed,intensity);
+    drawVortices(dt,elapsed,intensity);
+    drawRibbons(dt,elapsed,intensity);
+    drawParticles(dt,elapsed,intensity);
+    drawEdgeDepth(intensity);
+
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = 'source-over';
   }
+
+  function onPointerMove(e){
+    pointer.tx = e.clientX;
+    pointer.ty = e.clientY;
+    pointer.active = true;
+  }
+
+  function onPointerLeave(){
+    pointer.active = false;
+    pointer.tx = W * .5;
+    pointer.ty = H * .5;
+  }
+
+  document.addEventListener('pointermove',onPointerMove,{passive:true});
+  document.addEventListener('pointerleave',onPointerLeave,{passive:true});
 
   window.__dgxenWindFX = {
     start:function(){
       if(running) return;
-      resize(); seed();
-      running=true; startTime=0;
+
+      resize();
+      seed();
+
+      running = true;
+      lastTime = 0;
+      elapsed = 0;
+
       cv.classList.add('show');
       raf = requestAnimationFrame(tick);
     },
+
     stop:function(){
-      running=false;
-      if(raf) cancelAnimationFrame(raf);
+      running = false;
+
+      if(raf){
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+
       cv.classList.remove('show');
-      try{ ctx.clearRect(0,0,W,H); }catch(e){}
+
+      try{
+        ctx.clearRect(0,0,W,H);
+      }catch(error){}
+    },
+
+    reseed:function(){
+      if(!running) return;
+      seed();
     }
   };
-  document.addEventListener('visibilitychange', function(){
-    if(document.hidden && running){ if(raf) cancelAnimationFrame(raf); }
-    else if(!document.hidden && running){ raf = requestAnimationFrame(tick); }
+
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden){
+      if(raf){
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    }else if(running && !raf){
+      lastTime = 0;
+      raf = requestAnimationFrame(tick);
+    }
   });
 })();
 
@@ -4548,6 +5578,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     // is scoped to apex only, matching the "only applicable for apex theme"
     // requirement — no other theme's 2D FX needs this treatment.
     try { if (window.__dgxenApexFightFX) window.__dgxenApexFightFX.stop(); } catch(e){}
+    try {
+      if (window.__dgxenWindFX) window.__dgxenWindFX.stop();
+    } catch(e){}
     // The 2D ambient theme track must not keep playing under the ultrasonic world
     // sound — stop it here so only one audio source is ever heard at a time.
     try { if (window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); } catch(e){}
@@ -4587,8 +5620,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
         // like "the theme auto-changed to metroid" even though the
         // underlying atm-apex theme class never actually changed.
         const t = document.documentElement.getAttribute('data-atm');
-        if (t === 'metroid' && window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
-        else if (t === 'apex' && window.__dgxenApexFightFX) window.__dgxenApexFightFX.start();
+        if (t === 'metroid' && window.__dgxenMeteorFX) {
+          window.__dgxenMeteorFX.start();
+        }
+        else if (t === 'apex' && window.__dgxenApexFightFX) {
+          window.__dgxenApexFightFX.start();
+        }
+        else if (t === 'windy' && window.__dgxenWindFX) {
+          window.__dgxenWindFX.start();
+        }
       } catch(e){}
     }, 260);
   }
