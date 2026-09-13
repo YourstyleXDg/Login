@@ -761,12 +761,13 @@ body.atm-apex .glass{border-color:rgba(255,171,61,.28)!important}
 #apexFight.show{opacity:1;visibility:visible}
 body.atm-apex.apex-shake #apexFight,
 body.atm-apex.apex-shake .sky-layer{animation:apexScreenShake .22s linear}
+:root{--apex-shake-scale:1}
 @keyframes apexScreenShake{
   0%{transform:translate3d(0,0,0)}
-  20%{transform:translate3d(-6px,3px,0)}
-  40%{transform:translate3d(5px,-4px,0)}
-  60%{transform:translate3d(-4px,-2px,0)}
-  80%{transform:translate3d(3px,3px,0)}
+  20%{transform:translate3d(calc(-6px*var(--apex-shake-scale,1)),calc(3px*var(--apex-shake-scale,1)),0)}
+  40%{transform:translate3d(calc(5px*var(--apex-shake-scale,1)),calc(-4px*var(--apex-shake-scale,1)),0)}
+  60%{transform:translate3d(calc(-4px*var(--apex-shake-scale,1)),calc(-2px*var(--apex-shake-scale,1)),0)}
+  80%{transform:translate3d(calc(3px*var(--apex-shake-scale,1)),calc(3px*var(--apex-shake-scale,1)),0)}
   100%{transform:translate3d(0,0,0)}
 }
 
@@ -3525,10 +3526,14 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 })();
 
 // ===== APEX FIGHT SCENE — two anime-style fighters clashing left/right.
-// Deterministic 50-second cycle (loops seamlessly — pose at t=50s matches
-// t=0s), jointed limbs (shoulder/elbow/hip/knee pivots that actually swing,
-// not rigid blocks), 30+ distinct rapid attack beats across the cycle,
-// speed-line trails on fast strikes, impact bursts, and screen-shake.
+// Deterministic-ish 50-second cycle, jointed limbs (shoulder/elbow/hip/knee
+// pivots that actually swing), a roster of 16 visually distinct attacks
+// (jab, cross, hook, uppercut, elbow, front kick, roundhouse, axe kick,
+// spinning backfist, knee strike, haymaker, flying knee, double-jab flurry,
+// spinning kick, overhead smash, rising elbow) cycled across 40+ rapid-fire
+// beats so consecutive hits never look like the same move twice in a row,
+// after-image motion-trails on hard strikes, per-move impact colour/flash,
+// and screen-shake that scales with power.
 //
 // Rendering stays defensive for WebView reliability: only rect/arc/lineTo +
 // plain 'source-over' fills (no ellipse(), no 'lighter' blend — both have
@@ -3558,14 +3563,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   function easeInOutQuad(t){ return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
   function easeOutBack(t){ const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); }
   function clamp01(v){ return v<0?0:v>1?1:v; }
+  function lerp(r,t){ return r[0]+(r[1]-r[0])*t; }
 
   // ---- Jointed limb helper -------------------------------------------
-  // Draws a two-segment limb (upper+lower, e.g. upper-arm+forearm or
-  // thigh+shin) as a filled quad per segment, pivoting at shoulder/hip and
-  // elbow/knee. swingA = angle of the first segment (radians, 0 = pointing
-  // straight down from the pivot), swingB = angle of the second segment
-  // RELATIVE to the first. This is what makes the limbs read as actually
-  // swinging/kicking/punching instead of static rectangles.
   function drawLimb(px, py, len1, len2, swingA, swingB, thickness, color, outline){
     const x1 = px + Math.sin(swingA)*len1;
     const y1 = py + Math.cos(swingA)*len1;
@@ -3599,12 +3599,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    const count = 4;
+    const count = 5;
     for(let i=0;i<count;i++){
       const spread = (i-count/2)*7;
-      const len = 22 + intensity*38;
-      ctx.globalAlpha = intensity * (0.55 - i*0.08);
-      ctx.lineWidth = 2.2 - i*0.3;
+      const len = 24 + intensity*46;
+      ctx.globalAlpha = intensity * (0.6 - i*0.08);
+      ctx.lineWidth = 2.4 - i*0.3;
       ctx.beginPath();
       ctx.moveTo(x - dirX*len + dirY*spread, y - dirY*len - dirX*spread);
       ctx.lineTo(x, y);
@@ -3615,12 +3615,13 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   }
 
   // Fighter built from jointed limbs. pose fields: leanBody, hipShift,
-  // crouch, frontArmSwing/frontArmBend, backArmSwing/backArmBend,
-  // frontLegSwing/frontLegBend, backLegSwing/backLegBend, strikeIntensity
-  // (drives speed-lines + fist glow at extension).
-  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor){
+  // crouch, hop (vertical lift for jumping strikes), frontArmSwing/Bend,
+  // backArmSwing/Bend, frontLegSwing/Bend, backLegSwing/Bend,
+  // strikeIntensity, strikeLimb ('arm'|'leg' — which limb glows/trails).
+  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor, ghostAlpha){
     ctx.save();
-    ctx.translate(x, groundY);
+    if (ghostAlpha!==undefined && ghostAlpha<1) ctx.globalAlpha = ghostAlpha;
+    ctx.translate(x, groundY - (pose.hop||0)*46);
     ctx.scale(facing, 1);
     ctx.rotate(pose.leanBody*0.16);
 
@@ -3628,12 +3629,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const hipY = -68*scale;
     const shoulderY = -128*scale;
 
-    // back leg
     drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.backLegSwing, pose.backLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
-    // front leg
     const frontFoot = drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.frontLegSwing, pose.frontLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
 
-    // torso (single quad from hip to shoulder, slight lean-driven skew)
     ctx.fillStyle = bodyColor;
     ctx.strokeStyle = 'rgba(0,0,0,.85)';
     ctx.lineWidth = 2.5;
@@ -3646,17 +3644,13 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
-    // back arm
     drawLimb(-8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.backArmSwing, pose.backArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
-    // front arm — the striking limb
     const fist = drawLimb(8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.frontArmSwing, pose.frontArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
 
-    // head
     ctx.beginPath();
     ctx.arc(torsoSkew*0.6, shoulderY-13, 13, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
 
-    // rim-light accent
     ctx.strokeStyle = rimColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -3664,103 +3658,168 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.lineTo(14, hipY);
     ctx.stroke();
 
-    // fist glow + speed lines at strike extension
     if (pose.strikeIntensity > 0.35){
       const g = clamp01((pose.strikeIntensity-0.35)/0.65);
+      const tip = pose.strikeLimb === 'leg' ? frontFoot : fist;
       ctx.fillStyle = rimColor;
-      ctx.globalAlpha = g*0.9;
-      ctx.beginPath(); ctx.arc(fist.x, fist.y, 7+g*4, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1;
-      // direction of travel approximated from joint->fist vector
-      const dx = fist.x-fist.jointX, dy = fist.y-fist.jointY;
+      ctx.globalAlpha = (ghostAlpha!==undefined?ghostAlpha:1) * g*0.9;
+      ctx.beginPath(); ctx.arc(tip.x, tip.y, 7+g*4, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = ghostAlpha!==undefined?ghostAlpha:1;
+      const dx = tip.x-tip.jointX, dy = tip.y-tip.jointY;
       const dlen = Math.hypot(dx,dy)||1;
-      drawSpeedLines(fist.x, fist.y, dx/dlen, dy/dlen, g, rimColor);
+      drawSpeedLines(tip.x, tip.y, dx/dlen, dy/dlen, g, rimColor);
     }
 
     ctx.restore();
   }
 
-  function drawImpactBurst(x,y,strength,color){
+  function drawImpactBurst(x,y,strength,color,rays){
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = 3;
-    const rays = 9;
-    for(let i=0;i<rays;i++){
-      const a = (i/rays)*Math.PI*2;
-      const len = 22 + strength*50;
-      ctx.globalAlpha = 0.6*strength;
+    const n = rays||9;
+    for(let i=0;i<n;i++){
+      const a = (i/n)*Math.PI*2;
+      const len = 22 + strength*54;
+      ctx.globalAlpha = 0.62*strength;
       ctx.beginPath();
       ctx.moveTo(x,y);
       ctx.lineTo(x+Math.cos(a)*len, y+Math.sin(a)*len*0.65);
       ctx.stroke();
     }
-    ctx.globalAlpha = 0.8*strength;
-    ctx.beginPath(); ctx.arc(x,y,7+strength*11,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 0.85*strength;
+    ctx.beginPath(); ctx.arc(x,y,7+strength*12,0,Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
     ctx.restore();
   }
 
-  // ---- Choreography ----------------------------------------------------
-  // 36 rapid-fire beats across the 50s cycle (roughly one every ~1.4s),
-  // alternating sides with occasional back-to-back combos from the same
-  // attacker for a "flurry" feel. Left drifts further left on its attacks
-  // and right balances back, and vice versa, per spec.
-  const BEATS = (function build(){
-    const arr = [];
-    let t = 0.015;
-    let side = 'L';
-    let n = 0;
-    while (t < 0.985 && n < 36){
-      const comboRoll = Math.random();
-      // occasionally throw 2-3 rapid hits from the same side in a row (a "combo")
-      const comboLen = comboRoll > 0.72 ? 3 : comboRoll > 0.45 ? 2 : 1;
-      for (let c=0; c<comboLen && t < 0.985 && n < 36; c++){
-        const power = 0.45 + Math.random()*0.5;
-        const gap = 0.010 + Math.random()*0.006; // time from attack start to peak (fast!)
-        arr.push({ t: t, attacker: side, peak: t+gap, power: power });
-        t += gap + 0.006 + Math.random()*0.010; // short recovery before next beat
-        n++;
-      }
-      side = side === 'L' ? 'R' : 'L';
-      t += 0.004;
-    }
-    return arr;
-  })();
-  let lastFlashAt = -1;
+  function drawScreenFlash(strength,color){
+    ctx.save();
+    ctx.globalAlpha = 0.16*strength;
+    ctx.fillStyle = color;
+    ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
 
-  function poseForSide(extend, isAttacker, crouchBias){
-    // isAttacker: this fighter is throwing the strike this beat
-    // extend: 0..1 progress of the current beat's easing
+  // ---- Move roster ------------------------------------------------------
+  // Each move drives EITHER the front arm OR the front leg through a
+  // distinct swing/bend arc, plus its own lean/hip/crouch/hop character —
+  // so every entry reads as a genuinely different attack, not the same
+  // punch re-skinned.
+  const MOVES = [
+    { name:'jab',        limb:'arm', power:0.50, arm:[-0.30,0.85],  armBend:[0.30,0.08], hip:[0,0.6],  lean:[0,0.30],  crouch:0.05, hop:0,    color:'#ffe27a' },
+    { name:'cross',      limb:'arm', power:0.72, arm:[-0.35,1.30],  armBend:[0.25,-0.05],hip:[0,1.5],  lean:[0,0.85],  crouch:0.08, hop:0,    color:'#ffcf6a' },
+    { name:'hook',       limb:'arm', power:0.80, arm:[-0.75,1.55],  armBend:[0.85,0.60], hip:[0,1.9],  lean:[0,1.10],  crouch:0.10, hop:0,    color:'#ff9f4a' },
+    { name:'uppercut',   limb:'arm', power:0.85, arm:[0.55,-0.95],  armBend:[0.95,0.05], hip:[0,1.1],  lean:[0,-0.45], crouch:0.30, hop:0.10, color:'#ffe27a' },
+    { name:'elbow',      limb:'arm', power:0.58, arm:[0.20,0.60],   armBend:[1.30,1.55], hip:[0,0.8],  lean:[0,0.45],  crouch:0.04, hop:0,    color:'#ff8a5a' },
+    { name:'haymaker',   limb:'arm', power:1.00, arm:[-0.85,1.95],  armBend:[0.90,0.00], hip:[0,2.5],  lean:[0,1.45],  crouch:0.16, hop:0,    color:'#ffffff' },
+    { name:'spinbackfist',limb:'arm',power:0.95, arm:[-1.05,1.95],  armBend:[0.45,0.20], hip:[0,2.7],  lean:[0,1.70],  crouch:0.12, hop:0.08, color:'#d9b4ff' },
+    { name:'doublejab',  limb:'arm', power:0.55, arm:[-0.25,0.95],  armBend:[0.30,0.10], hip:[0,0.5],  lean:[0,0.25],  crouch:0.05, hop:0,    color:'#ffe27a', flurry:2 },
+    { name:'risingelbow',limb:'arm', power:0.75, arm:[0.65,-0.55],  armBend:[1.35,0.30], hip:[0,0.9],  lean:[0,-0.35], crouch:0.05, hop:0.30, color:'#ff8a5a' },
+    { name:'overheadsmash',limb:'arm',power:0.98,arm:[-1.15,1.35],  armBend:[1.35,0.10], hip:[0,0.9],  lean:[0,0.60],  crouch:0.05, hop:0.42, color:'#ffffff' },
+
+    { name:'frontkick',  limb:'leg', power:0.68, leg:[0.15,0.80],   legBend:[-0.90,-0.05],hip:[0,1.0], lean:[0,-0.30], crouch:0.05, hop:0,    color:'#7fe8ff' },
+    { name:'roundhouse', limb:'leg', power:0.90, leg:[0.10,1.35],   legBend:[-0.70,-0.15],hip:[0,2.1], lean:[0,-0.90], crouch:0.14, hop:0.05, color:'#5fd0ff' },
+    { name:'axekick',    limb:'leg', power:0.85, leg:[-0.65,1.15],  legBend:[-1.15,-0.05],hip:[0,0.6], lean:[0,-0.20], crouch:0.02, hop:0.38, color:'#9fe8ff' },
+    { name:'kneestrike', limb:'leg', power:0.62, leg:[0.30,0.95],   legBend:[-1.20,-0.55],hip:[0,1.0], lean:[0,0.40],  crouch:0.32, hop:0.08, color:'#5fd0ff' },
+    { name:'flyingknee', limb:'leg', power:0.92, leg:[0.20,1.00],   legBend:[-1.30,-0.50],hip:[0,0.8], lean:[0,0.60],  crouch:0.05, hop:0.58, color:'#7fe8ff' },
+    { name:'spinkick',   limb:'leg', power:0.96, leg:[-0.45,1.45],  legBend:[-0.60,-0.10],hip:[0,3.1], lean:[0,2.05],  crouch:0.10, hop:0.22, color:'#9fe8ff' }
+  ];
+
+  function poseFromMove(def, extendRaw){
+    const e = def.flurry ? Math.abs(Math.sin(Math.pow(clamp01(extendRaw),0.6)*Math.PI*def.flurry)) : extendRaw;
+    const p = {
+      leanBody: lerp(def.lean, e),
+      hipShift: lerp(def.hip, e),
+      crouch: def.crouch,
+      hop: def.hop ? Math.sin(clamp01(extendRaw)*Math.PI)*def.hop : 0,
+      strikeIntensity: e * def.power,
+      strikeLimb: def.limb
+    };
+    if (def.limb === 'arm'){
+      p.frontArmSwing = lerp(def.arm, e);
+      p.frontArmBend  = lerp(def.armBend, e);
+      p.backArmSwing  = -0.5 + e*0.25; p.backArmBend = 0.55;
+      p.frontLegSwing = 0.18 + e*0.22; p.frontLegBend = -0.28;
+      p.backLegSwing  = -0.15;         p.backLegBend  = 0.30;
+    } else {
+      p.frontLegSwing = lerp(def.leg, e);
+      p.frontLegBend  = lerp(def.legBend, e);
+      p.backLegSwing  = -0.20 - e*0.15; p.backLegBend  = 0.35 + e*0.20;
+      p.frontArmSwing = 0.05 - e*0.30;  p.frontArmBend = 0.60;
+      p.backArmSwing  = -0.35;          p.backArmBend  = 0.50;
+    }
+    return p;
+  }
+
+  function defenderReaction(def, extend){
+    const big = def.power > 0.82;
     return {
-      leanBody: isAttacker ? extend*0.85 : -extend*0.3,
-      hipShift: isAttacker ? extend*1.4 : -extend*0.6,
-      crouch: 0.08 + crouchBias*0.22,
-      frontArmSwing: isAttacker ? (-0.35 + extend*1.55) : (0.15 - extend*0.2),
-      frontArmBend: isAttacker ? (0.25 - extend*0.35) : 0.35,
-      backArmSwing: isAttacker ? (-0.5 + extend*0.3) : (-0.1),
-      backArmBend: 0.55,
-      frontLegSwing: isAttacker ? (0.25 + extend*0.35) : (0.15 - extend*0.15),
-      frontLegBend: -0.3,
-      backLegSwing: -0.15,
-      backLegBend: 0.3,
-      strikeIntensity: isAttacker ? extend : 0
+      leanBody: -extend*(big?0.55:0.28),
+      hipShift: -extend*(big?1.1:0.55),
+      crouch: 0.08 + extend*(big?0.30:0.16),
+      hop: 0,
+      frontArmSwing: 0.35 - extend*0.15,
+      frontArmBend: 1.15 + extend*0.2,
+      backArmSwing: -0.15,
+      backArmBend: 0.9,
+      frontLegSwing: 0.15 - extend*0.12,
+      frontLegBend: -0.28,
+      backLegSwing: -0.12 - extend*0.2,
+      backLegBend: 0.30,
+      strikeIntensity: 0,
+      strikeLimb: 'arm'
     };
   }
+
   function idlePose(bobPhase){
     const bob = Math.sin(bobPhase)*0.04;
     return {
-      leanBody: bob*0.3, hipShift: 0, crouch: 0.08+Math.abs(bob)*0.3,
+      leanBody: bob*0.3, hipShift: 0, crouch: 0.08+Math.abs(bob)*0.3, hop:0,
       frontArmSwing: 0.1+bob*0.15, frontArmBend: 0.35, backArmSwing: -0.1-bob*0.1, backArmBend: 0.55,
       frontLegSwing: 0.12, frontLegBend: -0.25, backLegSwing: -0.12, backLegBend: 0.28,
-      strikeIntensity: 0
+      strikeIntensity: 0, strikeLimb:'arm'
     };
   }
   function blendPose(a,b,t){
     const o={};
-    for(const k in a){ o[k] = a[k] + (b[k]-a[k])*t; }
+    for(const k in a){
+      if (typeof a[k]==='number' && typeof b[k]==='number') o[k] = a[k] + (b[k]-a[k])*t;
+      else o[k] = t>0.5 ? b[k] : a[k];
+    }
     return o;
   }
+
+  // ---- Choreography ----------------------------------------------------
+  // 40 rapid-fire beats across the 50s cycle, each assigned a move from the
+  // 16-entry roster (no immediate repeat of the same move on the same
+  // side), with occasional 2-3 hit combos from the same attacker.
+  const BEATS = (function build(){
+    const arr = [];
+    let t = 0.012;
+    let side = 'L';
+    let n = 0;
+    let lastMoveIdx = { L:-1, R:-1 };
+    while (t < 0.985 && n < 40){
+      const comboRoll = Math.random();
+      const comboLen = comboRoll > 0.72 ? 3 : comboRoll > 0.42 ? 2 : 1;
+      for (let c=0; c<comboLen && t < 0.985 && n < 40; c++){
+        let mi = Math.floor(Math.random()*MOVES.length);
+        if (mi === lastMoveIdx[side]) mi = (mi+1+Math.floor(Math.random()*(MOVES.length-1))) % MOVES.length;
+        lastMoveIdx[side] = mi;
+        const gap = 0.009 + Math.random()*0.006;
+        arr.push({ t:t, attacker:side, peak:t+gap, move:mi });
+        t += gap + 0.005 + Math.random()*0.009;
+        n++;
+      }
+      side = side === 'L' ? 'R' : 'L';
+      t += 0.003;
+    }
+    return arr;
+  })();
+  let lastFlashAt = -1;
 
   function tick(now){
     if(!running) return;
@@ -3770,9 +3829,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const phase = ((now - startTime) % CYCLE_MS) / CYCLE_MS;
     ctx.clearRect(0,0,W,H);
 
-    // Anchor the fight to the lower third of the viewport, clamped so it
-    // always stays on-screen regardless of aspect ratio (fixes the
-    // "fighters drawn way below the visible area" issue from before).
     const groundY = Math.min(H*0.82, H-90);
     const midX = W*0.5;
     const spread = Math.min(W*0.30, 190);
@@ -3782,12 +3838,13 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const bobR = phase*Math.PI*2*10 + 2.1;
     let poseL = idlePose(bobL);
     let poseR = idlePose(bobR);
+    let ghostL = 0, ghostR = 0, ghostPoseL = null, ghostPoseR = null;
 
-    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY;
+    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY, closestBeatColor = '#ffe27a';
     let anyActiveBeat = false;
 
     for(const b of BEATS){
-      const win = 0.02; // tight window = fast, rapid-fire strikes
+      const win = 0.018;
       const d = Math.abs(phase - b.t);
       const wrappedD = Math.min(d, 1-d);
       if (wrappedD < win){
@@ -3795,43 +3852,54 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
         const local = clamp01(1 - (wrappedD/win));
         const eased = local < 0.5 ? easeInOutQuad(local*2) : easeOutBack(1-(local-0.5)*2);
         const extend = clamp01(eased);
+        const def = MOVES[b.move];
 
-        const attackerPose = poseForSide(extend, true, 0);
-        const defenderPose = poseForSide(extend, false, 0.4);
+        const attackerPose = poseFromMove(def, extend);
+        const defenderPose = defenderReaction(def, extend*0.85);
 
         if (b.attacker === 'L'){
           poseL = blendPose(poseL, attackerPose, extend);
-          poseR = blendPose(poseR, defenderPose, extend*0.7);
-          leftX += extend*22; rightX -= extend*10;
+          poseR = blendPose(poseR, defenderPose, extend*0.75);
+          leftX += extend*24; rightX -= extend*10;
+          if (extend > 0.55){ ghostL = (extend-0.55)/0.45*0.32; ghostPoseL = blendPose(idlePose(bobL), poseFromMove(def, clamp01(extend-0.22)), clamp01(extend-0.22)); }
         } else {
           poseR = blendPose(poseR, attackerPose, extend);
-          poseL = blendPose(poseL, defenderPose, extend*0.7);
-          rightX -= extend*22; leftX += extend*10;
+          poseL = blendPose(poseL, defenderPose, extend*0.75);
+          rightX -= extend*24; leftX += extend*10;
+          if (extend > 0.55){ ghostR = (extend-0.55)/0.45*0.32; ghostPoseR = blendPose(idlePose(bobR), poseFromMove(def, clamp01(extend-0.22)), clamp01(extend-0.22)); }
         }
         const distToPeak = Math.abs(phase - b.peak);
         if (distToPeak < closestBeatDist){
           closestBeatDist = distToPeak;
-          closestBeatPower = b.power * extend;
+          closestBeatPower = def.power * extend;
           closestBeatX = b.attacker==='L' ? rightX-26 : leftX+26;
           closestBeatY = groundY - 118;
+          closestBeatColor = def.color;
         }
       }
     }
 
+    if (ghostL>0.02 && ghostPoseL) drawFighter(leftX, groundY, 1, ghostPoseL, '#3a7bd5', '#9fd8ff', ghostL);
+    if (ghostR>0.02 && ghostPoseR) drawFighter(rightX, groundY, -1, ghostPoseR, '#e8541e', '#ffcf8a', ghostR);
     drawFighter(leftX, groundY, 1, poseL, '#3a7bd5', '#9fd8ff');
     drawFighter(rightX, groundY, -1, poseR, '#e8541e', '#ffcf8a');
 
     for(const b of BEATS){
       if (Math.abs(phase - b.peak) < 0.004 && lastFlashAt !== b.peak){
         lastFlashAt = b.peak;
+        const power = MOVES[b.move].power;
         document.body.classList.remove('apex-shake');
         void document.body.offsetWidth;
         document.body.classList.add('apex-shake');
-        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, 200);
+        const shakeMs = 160 + power*140;
+        document.body.style.setProperty('--apex-shake-scale', (0.6 + power*0.9).toFixed(2));
+        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, shakeMs);
       }
     }
-    if (anyActiveBeat && closestBeatDist < 0.03 && closestBeatPower > 0.25){
-      drawImpactBurst(closestBeatX, closestBeatY, Math.min(1, closestBeatPower), '#ffe27a');
+    if (anyActiveBeat && closestBeatDist < 0.03 && closestBeatPower > 0.22){
+      const s = Math.min(1, closestBeatPower);
+      drawImpactBurst(closestBeatX, closestBeatY, s, closestBeatColor, s>0.85?13:9);
+      if (s > 0.82) drawScreenFlash(s, closestBeatColor);
     }
 
     raf = requestAnimationFrame(tick);
