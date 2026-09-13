@@ -761,35 +761,28 @@ body.atm-apex .glass{border-color:rgba(255,171,61,.28)!important}
 #apexFight.show{opacity:1;visibility:visible}
 body.atm-apex.apex-shake #apexFight,
 body.atm-apex.apex-shake .sky-layer{animation:apexScreenShake .22s linear}
-:root{--apex-shake-scale:1}
 @keyframes apexScreenShake{
   0%{transform:translate3d(0,0,0)}
-  20%{transform:translate3d(calc(-6px*var(--apex-shake-scale,1)),calc(3px*var(--apex-shake-scale,1)),0)}
-  40%{transform:translate3d(calc(5px*var(--apex-shake-scale,1)),calc(-4px*var(--apex-shake-scale,1)),0)}
-  60%{transform:translate3d(calc(-4px*var(--apex-shake-scale,1)),calc(-2px*var(--apex-shake-scale,1)),0)}
-  80%{transform:translate3d(calc(3px*var(--apex-shake-scale,1)),calc(3px*var(--apex-shake-scale,1)),0)}
+  20%{transform:translate3d(-6px,3px,0)}
+  40%{transform:translate3d(5px,-4px,0)}
+  60%{transform:translate3d(-4px,-2px,0)}
+  80%{transform:translate3d(3px,3px,0)}
   100%{transform:translate3d(0,0,0)}
 }
 
-/* ===== WINDY — new theme: variable-intensity wind gusts sweeping across
-   the scene (some gentle, some strong) using thin streak elements. ===== */
+/* ===== WINDY — canvas-drawn flowing wind: curved bezier gust paths (not
+   straight lines), layered depth for a pseudo-3D feel (closer streaks
+   bigger/brighter/faster, farther ones thin/dim/slow), and variable gust
+   intensity (calm lulls between stronger bursts). See #windFX canvas + JS
+   below. ===== */
 body.atm-windy{background:radial-gradient(circle at 30% 20%,rgba(180,220,255,.10),transparent 40%),linear-gradient(160deg,#0a1016,#0d1620 50%,#08111a)!important}
 body.atm-windy .glass{border-color:rgba(191,233,255,.28)!important}
-.wind-gusts{position:absolute;inset:0;opacity:0;pointer-events:none;overflow:hidden;transition:opacity .8s ease}
-body.atm-windy .wind-gusts{opacity:1}
-.wind-gusts i{
-  --peak:.5;
-  position:absolute;left:-20%;height:1.5px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,rgba(210,235,255,.65),rgba(255,255,255,.85),rgba(210,235,255,.5),transparent);
-  filter:blur(.3px);
-  animation:windGustMove linear infinite;
-}
-@keyframes windGustMove{
-  0%{transform:translate3d(0,0,0) scaleX(.4);opacity:0}
-  8%{opacity:var(--peak)}
-  85%{opacity:calc(var(--peak) * 0.75)}
-  100%{transform:translate3d(140vw,0,0) scaleX(1.1);opacity:0}
-}
+#windFX{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .9s ease}
+#windFX.show{opacity:1;visibility:visible}
+/* Old CSS-streak wind-gusts layer kept only as a harmless no-op container
+   in case any other code still queries #windGusts; the canvas above now
+   owns all rendering for this theme. */
+.wind-gusts{display:none}
 
 /* Shared understated festival tint for added dates. */
 body[class*="atm-fest_"] .sky-layer .haze{opacity:.55}
@@ -826,6 +819,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 <canvas id="fx" aria-hidden="true"></canvas>
 <canvas id="apexFight" aria-hidden="true"></canvas>
+<canvas id="windFX" aria-hidden="true"></canvas>
 
 <!-- ============ DGXEN ∞ 4D — FINAL EDITION (upgraded world) ============ -->
 <style>
@@ -3526,14 +3520,10 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 })();
 
 // ===== APEX FIGHT SCENE — two anime-style fighters clashing left/right.
-// Deterministic-ish 50-second cycle, jointed limbs (shoulder/elbow/hip/knee
-// pivots that actually swing), a roster of 16 visually distinct attacks
-// (jab, cross, hook, uppercut, elbow, front kick, roundhouse, axe kick,
-// spinning backfist, knee strike, haymaker, flying knee, double-jab flurry,
-// spinning kick, overhead smash, rising elbow) cycled across 40+ rapid-fire
-// beats so consecutive hits never look like the same move twice in a row,
-// after-image motion-trails on hard strikes, per-move impact colour/flash,
-// and screen-shake that scales with power.
+// Deterministic 50-second cycle (loops seamlessly — pose at t=50s matches
+// t=0s), jointed limbs (shoulder/elbow/hip/knee pivots that actually swing,
+// not rigid blocks), 30+ distinct rapid attack beats across the cycle,
+// speed-line trails on fast strikes, impact bursts, and screen-shake.
 //
 // Rendering stays defensive for WebView reliability: only rect/arc/lineTo +
 // plain 'source-over' fills (no ellipse(), no 'lighter' blend — both have
@@ -3563,9 +3553,14 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   function easeInOutQuad(t){ return t<0.5 ? 2*t*t : -1+(4-2*t)*t; }
   function easeOutBack(t){ const c=1.70158; return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2); }
   function clamp01(v){ return v<0?0:v>1?1:v; }
-  function lerp(r,t){ return r[0]+(r[1]-r[0])*t; }
 
   // ---- Jointed limb helper -------------------------------------------
+  // Draws a two-segment limb (upper+lower, e.g. upper-arm+forearm or
+  // thigh+shin) as a filled quad per segment, pivoting at shoulder/hip and
+  // elbow/knee. swingA = angle of the first segment (radians, 0 = pointing
+  // straight down from the pivot), swingB = angle of the second segment
+  // RELATIVE to the first. This is what makes the limbs read as actually
+  // swinging/kicking/punching instead of static rectangles.
   function drawLimb(px, py, len1, len2, swingA, swingB, thickness, color, outline){
     const x1 = px + Math.sin(swingA)*len1;
     const y1 = py + Math.cos(swingA)*len1;
@@ -3599,12 +3594,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineCap = 'round';
-    const count = 5;
+    const count = 4;
     for(let i=0;i<count;i++){
       const spread = (i-count/2)*7;
-      const len = 24 + intensity*46;
-      ctx.globalAlpha = intensity * (0.6 - i*0.08);
-      ctx.lineWidth = 2.4 - i*0.3;
+      const len = 22 + intensity*38;
+      ctx.globalAlpha = intensity * (0.55 - i*0.08);
+      ctx.lineWidth = 2.2 - i*0.3;
       ctx.beginPath();
       ctx.moveTo(x - dirX*len + dirY*spread, y - dirY*len - dirX*spread);
       ctx.lineTo(x, y);
@@ -3615,13 +3610,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   }
 
   // Fighter built from jointed limbs. pose fields: leanBody, hipShift,
-  // crouch, hop (vertical lift for jumping strikes), frontArmSwing/Bend,
-  // backArmSwing/Bend, frontLegSwing/Bend, backLegSwing/Bend,
-  // strikeIntensity, strikeLimb ('arm'|'leg' — which limb glows/trails).
-  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor, ghostAlpha){
+  // crouch, frontArmSwing/frontArmBend, backArmSwing/backArmBend,
+  // frontLegSwing/frontLegBend, backLegSwing/backLegBend, strikeIntensity
+  // (drives speed-lines + fist glow at extension).
+  function drawFighter(x, groundY, facing, pose, bodyColor, rimColor){
     ctx.save();
-    if (ghostAlpha!==undefined && ghostAlpha<1) ctx.globalAlpha = ghostAlpha;
-    ctx.translate(x, groundY - (pose.hop||0)*46);
+    ctx.translate(x, groundY);
     ctx.scale(facing, 1);
     ctx.rotate(pose.leanBody*0.16);
 
@@ -3629,9 +3623,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const hipY = -68*scale;
     const shoulderY = -128*scale;
 
+    // back leg
     drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.backLegSwing, pose.backLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
+    // front leg
     const frontFoot = drawLimb(pose.hipShift*6, hipY, 34*scale, 30*scale, pose.frontLegSwing, pose.frontLegBend, 9, bodyColor, 'rgba(0,0,0,.85)');
 
+    // torso (single quad from hip to shoulder, slight lean-driven skew)
     ctx.fillStyle = bodyColor;
     ctx.strokeStyle = 'rgba(0,0,0,.85)';
     ctx.lineWidth = 2.5;
@@ -3644,13 +3641,17 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.closePath();
     ctx.fill(); ctx.stroke();
 
+    // back arm
     drawLimb(-8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.backArmSwing, pose.backArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
+    // front arm — the striking limb
     const fist = drawLimb(8+torsoSkew*0.5, shoulderY+6, 26*scale, 24*scale, pose.frontArmSwing, pose.frontArmBend, 7, bodyColor, 'rgba(0,0,0,.85)');
 
+    // head
     ctx.beginPath();
     ctx.arc(torsoSkew*0.6, shoulderY-13, 13, 0, Math.PI*2);
     ctx.fill(); ctx.stroke();
 
+    // rim-light accent
     ctx.strokeStyle = rimColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -3658,168 +3659,103 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     ctx.lineTo(14, hipY);
     ctx.stroke();
 
+    // fist glow + speed lines at strike extension
     if (pose.strikeIntensity > 0.35){
       const g = clamp01((pose.strikeIntensity-0.35)/0.65);
-      const tip = pose.strikeLimb === 'leg' ? frontFoot : fist;
       ctx.fillStyle = rimColor;
-      ctx.globalAlpha = (ghostAlpha!==undefined?ghostAlpha:1) * g*0.9;
-      ctx.beginPath(); ctx.arc(tip.x, tip.y, 7+g*4, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = ghostAlpha!==undefined?ghostAlpha:1;
-      const dx = tip.x-tip.jointX, dy = tip.y-tip.jointY;
+      ctx.globalAlpha = g*0.9;
+      ctx.beginPath(); ctx.arc(fist.x, fist.y, 7+g*4, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+      // direction of travel approximated from joint->fist vector
+      const dx = fist.x-fist.jointX, dy = fist.y-fist.jointY;
       const dlen = Math.hypot(dx,dy)||1;
-      drawSpeedLines(tip.x, tip.y, dx/dlen, dy/dlen, g, rimColor);
+      drawSpeedLines(fist.x, fist.y, dx/dlen, dy/dlen, g, rimColor);
     }
 
     ctx.restore();
   }
 
-  function drawImpactBurst(x,y,strength,color,rays){
+  function drawImpactBurst(x,y,strength,color){
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = 3;
-    const n = rays||9;
-    for(let i=0;i<n;i++){
-      const a = (i/n)*Math.PI*2;
-      const len = 22 + strength*54;
-      ctx.globalAlpha = 0.62*strength;
+    const rays = 9;
+    for(let i=0;i<rays;i++){
+      const a = (i/rays)*Math.PI*2;
+      const len = 22 + strength*50;
+      ctx.globalAlpha = 0.6*strength;
       ctx.beginPath();
       ctx.moveTo(x,y);
       ctx.lineTo(x+Math.cos(a)*len, y+Math.sin(a)*len*0.65);
       ctx.stroke();
     }
-    ctx.globalAlpha = 0.85*strength;
-    ctx.beginPath(); ctx.arc(x,y,7+strength*12,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 0.8*strength;
+    ctx.beginPath(); ctx.arc(x,y,7+strength*11,0,Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1;
     ctx.restore();
-  }
-
-  function drawScreenFlash(strength,color){
-    ctx.save();
-    ctx.globalAlpha = 0.16*strength;
-    ctx.fillStyle = color;
-    ctx.fillRect(0,0,W,H);
-    ctx.globalAlpha = 1;
-    ctx.restore();
-  }
-
-  // ---- Move roster ------------------------------------------------------
-  // Each move drives EITHER the front arm OR the front leg through a
-  // distinct swing/bend arc, plus its own lean/hip/crouch/hop character —
-  // so every entry reads as a genuinely different attack, not the same
-  // punch re-skinned.
-  const MOVES = [
-    { name:'jab',        limb:'arm', power:0.50, arm:[-0.30,0.85],  armBend:[0.30,0.08], hip:[0,0.6],  lean:[0,0.30],  crouch:0.05, hop:0,    color:'#ffe27a' },
-    { name:'cross',      limb:'arm', power:0.72, arm:[-0.35,1.30],  armBend:[0.25,-0.05],hip:[0,1.5],  lean:[0,0.85],  crouch:0.08, hop:0,    color:'#ffcf6a' },
-    { name:'hook',       limb:'arm', power:0.80, arm:[-0.75,1.55],  armBend:[0.85,0.60], hip:[0,1.9],  lean:[0,1.10],  crouch:0.10, hop:0,    color:'#ff9f4a' },
-    { name:'uppercut',   limb:'arm', power:0.85, arm:[0.55,-0.95],  armBend:[0.95,0.05], hip:[0,1.1],  lean:[0,-0.45], crouch:0.30, hop:0.10, color:'#ffe27a' },
-    { name:'elbow',      limb:'arm', power:0.58, arm:[0.20,0.60],   armBend:[1.30,1.55], hip:[0,0.8],  lean:[0,0.45],  crouch:0.04, hop:0,    color:'#ff8a5a' },
-    { name:'haymaker',   limb:'arm', power:1.00, arm:[-0.85,1.95],  armBend:[0.90,0.00], hip:[0,2.5],  lean:[0,1.45],  crouch:0.16, hop:0,    color:'#ffffff' },
-    { name:'spinbackfist',limb:'arm',power:0.95, arm:[-1.05,1.95],  armBend:[0.45,0.20], hip:[0,2.7],  lean:[0,1.70],  crouch:0.12, hop:0.08, color:'#d9b4ff' },
-    { name:'doublejab',  limb:'arm', power:0.55, arm:[-0.25,0.95],  armBend:[0.30,0.10], hip:[0,0.5],  lean:[0,0.25],  crouch:0.05, hop:0,    color:'#ffe27a', flurry:2 },
-    { name:'risingelbow',limb:'arm', power:0.75, arm:[0.65,-0.55],  armBend:[1.35,0.30], hip:[0,0.9],  lean:[0,-0.35], crouch:0.05, hop:0.30, color:'#ff8a5a' },
-    { name:'overheadsmash',limb:'arm',power:0.98,arm:[-1.15,1.35],  armBend:[1.35,0.10], hip:[0,0.9],  lean:[0,0.60],  crouch:0.05, hop:0.42, color:'#ffffff' },
-
-    { name:'frontkick',  limb:'leg', power:0.68, leg:[0.15,0.80],   legBend:[-0.90,-0.05],hip:[0,1.0], lean:[0,-0.30], crouch:0.05, hop:0,    color:'#7fe8ff' },
-    { name:'roundhouse', limb:'leg', power:0.90, leg:[0.10,1.35],   legBend:[-0.70,-0.15],hip:[0,2.1], lean:[0,-0.90], crouch:0.14, hop:0.05, color:'#5fd0ff' },
-    { name:'axekick',    limb:'leg', power:0.85, leg:[-0.65,1.15],  legBend:[-1.15,-0.05],hip:[0,0.6], lean:[0,-0.20], crouch:0.02, hop:0.38, color:'#9fe8ff' },
-    { name:'kneestrike', limb:'leg', power:0.62, leg:[0.30,0.95],   legBend:[-1.20,-0.55],hip:[0,1.0], lean:[0,0.40],  crouch:0.32, hop:0.08, color:'#5fd0ff' },
-    { name:'flyingknee', limb:'leg', power:0.92, leg:[0.20,1.00],   legBend:[-1.30,-0.50],hip:[0,0.8], lean:[0,0.60],  crouch:0.05, hop:0.58, color:'#7fe8ff' },
-    { name:'spinkick',   limb:'leg', power:0.96, leg:[-0.45,1.45],  legBend:[-0.60,-0.10],hip:[0,3.1], lean:[0,2.05],  crouch:0.10, hop:0.22, color:'#9fe8ff' }
-  ];
-
-  function poseFromMove(def, extendRaw){
-    const e = def.flurry ? Math.abs(Math.sin(Math.pow(clamp01(extendRaw),0.6)*Math.PI*def.flurry)) : extendRaw;
-    const p = {
-      leanBody: lerp(def.lean, e),
-      hipShift: lerp(def.hip, e),
-      crouch: def.crouch,
-      hop: def.hop ? Math.sin(clamp01(extendRaw)*Math.PI)*def.hop : 0,
-      strikeIntensity: e * def.power,
-      strikeLimb: def.limb
-    };
-    if (def.limb === 'arm'){
-      p.frontArmSwing = lerp(def.arm, e);
-      p.frontArmBend  = lerp(def.armBend, e);
-      p.backArmSwing  = -0.5 + e*0.25; p.backArmBend = 0.55;
-      p.frontLegSwing = 0.18 + e*0.22; p.frontLegBend = -0.28;
-      p.backLegSwing  = -0.15;         p.backLegBend  = 0.30;
-    } else {
-      p.frontLegSwing = lerp(def.leg, e);
-      p.frontLegBend  = lerp(def.legBend, e);
-      p.backLegSwing  = -0.20 - e*0.15; p.backLegBend  = 0.35 + e*0.20;
-      p.frontArmSwing = 0.05 - e*0.30;  p.frontArmBend = 0.60;
-      p.backArmSwing  = -0.35;          p.backArmBend  = 0.50;
-    }
-    return p;
-  }
-
-  function defenderReaction(def, extend){
-    const big = def.power > 0.82;
-    return {
-      leanBody: -extend*(big?0.55:0.28),
-      hipShift: -extend*(big?1.1:0.55),
-      crouch: 0.08 + extend*(big?0.30:0.16),
-      hop: 0,
-      frontArmSwing: 0.35 - extend*0.15,
-      frontArmBend: 1.15 + extend*0.2,
-      backArmSwing: -0.15,
-      backArmBend: 0.9,
-      frontLegSwing: 0.15 - extend*0.12,
-      frontLegBend: -0.28,
-      backLegSwing: -0.12 - extend*0.2,
-      backLegBend: 0.30,
-      strikeIntensity: 0,
-      strikeLimb: 'arm'
-    };
-  }
-
-  function idlePose(bobPhase){
-    const bob = Math.sin(bobPhase)*0.04;
-    return {
-      leanBody: bob*0.3, hipShift: 0, crouch: 0.08+Math.abs(bob)*0.3, hop:0,
-      frontArmSwing: 0.1+bob*0.15, frontArmBend: 0.35, backArmSwing: -0.1-bob*0.1, backArmBend: 0.55,
-      frontLegSwing: 0.12, frontLegBend: -0.25, backLegSwing: -0.12, backLegBend: 0.28,
-      strikeIntensity: 0, strikeLimb:'arm'
-    };
-  }
-  function blendPose(a,b,t){
-    const o={};
-    for(const k in a){
-      if (typeof a[k]==='number' && typeof b[k]==='number') o[k] = a[k] + (b[k]-a[k])*t;
-      else o[k] = t>0.5 ? b[k] : a[k];
-    }
-    return o;
   }
 
   // ---- Choreography ----------------------------------------------------
-  // 40 rapid-fire beats across the 50s cycle, each assigned a move from the
-  // 16-entry roster (no immediate repeat of the same move on the same
-  // side), with occasional 2-3 hit combos from the same attacker.
+  // 36 rapid-fire beats across the 50s cycle (roughly one every ~1.4s),
+  // alternating sides with occasional back-to-back combos from the same
+  // attacker for a "flurry" feel. Left drifts further left on its attacks
+  // and right balances back, and vice versa, per spec.
   const BEATS = (function build(){
     const arr = [];
-    let t = 0.012;
+    let t = 0.015;
     let side = 'L';
     let n = 0;
-    let lastMoveIdx = { L:-1, R:-1 };
-    while (t < 0.985 && n < 40){
+    while (t < 0.985 && n < 36){
       const comboRoll = Math.random();
-      const comboLen = comboRoll > 0.72 ? 3 : comboRoll > 0.42 ? 2 : 1;
-      for (let c=0; c<comboLen && t < 0.985 && n < 40; c++){
-        let mi = Math.floor(Math.random()*MOVES.length);
-        if (mi === lastMoveIdx[side]) mi = (mi+1+Math.floor(Math.random()*(MOVES.length-1))) % MOVES.length;
-        lastMoveIdx[side] = mi;
-        const gap = 0.009 + Math.random()*0.006;
-        arr.push({ t:t, attacker:side, peak:t+gap, move:mi });
-        t += gap + 0.005 + Math.random()*0.009;
+      // occasionally throw 2-3 rapid hits from the same side in a row (a "combo")
+      const comboLen = comboRoll > 0.72 ? 3 : comboRoll > 0.45 ? 2 : 1;
+      for (let c=0; c<comboLen && t < 0.985 && n < 36; c++){
+        const power = 0.45 + Math.random()*0.5;
+        const gap = 0.010 + Math.random()*0.006; // time from attack start to peak (fast!)
+        arr.push({ t: t, attacker: side, peak: t+gap, power: power });
+        t += gap + 0.006 + Math.random()*0.010; // short recovery before next beat
         n++;
       }
       side = side === 'L' ? 'R' : 'L';
-      t += 0.003;
+      t += 0.004;
     }
     return arr;
   })();
   let lastFlashAt = -1;
+
+  function poseForSide(extend, isAttacker, crouchBias){
+    // isAttacker: this fighter is throwing the strike this beat
+    // extend: 0..1 progress of the current beat's easing
+    return {
+      leanBody: isAttacker ? extend*0.85 : -extend*0.3,
+      hipShift: isAttacker ? extend*1.4 : -extend*0.6,
+      crouch: 0.08 + crouchBias*0.22,
+      frontArmSwing: isAttacker ? (-0.35 + extend*1.55) : (0.15 - extend*0.2),
+      frontArmBend: isAttacker ? (0.25 - extend*0.35) : 0.35,
+      backArmSwing: isAttacker ? (-0.5 + extend*0.3) : (-0.1),
+      backArmBend: 0.55,
+      frontLegSwing: isAttacker ? (0.25 + extend*0.35) : (0.15 - extend*0.15),
+      frontLegBend: -0.3,
+      backLegSwing: -0.15,
+      backLegBend: 0.3,
+      strikeIntensity: isAttacker ? extend : 0
+    };
+  }
+  function idlePose(bobPhase){
+    const bob = Math.sin(bobPhase)*0.04;
+    return {
+      leanBody: bob*0.3, hipShift: 0, crouch: 0.08+Math.abs(bob)*0.3,
+      frontArmSwing: 0.1+bob*0.15, frontArmBend: 0.35, backArmSwing: -0.1-bob*0.1, backArmBend: 0.55,
+      frontLegSwing: 0.12, frontLegBend: -0.25, backLegSwing: -0.12, backLegBend: 0.28,
+      strikeIntensity: 0
+    };
+  }
+  function blendPose(a,b,t){
+    const o={};
+    for(const k in a){ o[k] = a[k] + (b[k]-a[k])*t; }
+    return o;
+  }
 
   function tick(now){
     if(!running) return;
@@ -3829,6 +3765,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const phase = ((now - startTime) % CYCLE_MS) / CYCLE_MS;
     ctx.clearRect(0,0,W,H);
 
+    // Anchor the fight to the lower third of the viewport, clamped so it
+    // always stays on-screen regardless of aspect ratio (fixes the
+    // "fighters drawn way below the visible area" issue from before).
     const groundY = Math.min(H*0.82, H-90);
     const midX = W*0.5;
     const spread = Math.min(W*0.30, 190);
@@ -3838,13 +3777,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const bobR = phase*Math.PI*2*10 + 2.1;
     let poseL = idlePose(bobL);
     let poseR = idlePose(bobR);
-    let ghostL = 0, ghostR = 0, ghostPoseL = null, ghostPoseR = null;
 
-    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY, closestBeatColor = '#ffe27a';
+    let closestBeatDist = 1, closestBeatPower = 0, closestBeatX = midX, closestBeatY = groundY;
     let anyActiveBeat = false;
 
     for(const b of BEATS){
-      const win = 0.018;
+      const win = 0.02; // tight window = fast, rapid-fire strikes
       const d = Math.abs(phase - b.t);
       const wrappedD = Math.min(d, 1-d);
       if (wrappedD < win){
@@ -3852,54 +3790,43 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
         const local = clamp01(1 - (wrappedD/win));
         const eased = local < 0.5 ? easeInOutQuad(local*2) : easeOutBack(1-(local-0.5)*2);
         const extend = clamp01(eased);
-        const def = MOVES[b.move];
 
-        const attackerPose = poseFromMove(def, extend);
-        const defenderPose = defenderReaction(def, extend*0.85);
+        const attackerPose = poseForSide(extend, true, 0);
+        const defenderPose = poseForSide(extend, false, 0.4);
 
         if (b.attacker === 'L'){
           poseL = blendPose(poseL, attackerPose, extend);
-          poseR = blendPose(poseR, defenderPose, extend*0.75);
-          leftX += extend*24; rightX -= extend*10;
-          if (extend > 0.55){ ghostL = (extend-0.55)/0.45*0.32; ghostPoseL = blendPose(idlePose(bobL), poseFromMove(def, clamp01(extend-0.22)), clamp01(extend-0.22)); }
+          poseR = blendPose(poseR, defenderPose, extend*0.7);
+          leftX += extend*22; rightX -= extend*10;
         } else {
           poseR = blendPose(poseR, attackerPose, extend);
-          poseL = blendPose(poseL, defenderPose, extend*0.75);
-          rightX -= extend*24; leftX += extend*10;
-          if (extend > 0.55){ ghostR = (extend-0.55)/0.45*0.32; ghostPoseR = blendPose(idlePose(bobR), poseFromMove(def, clamp01(extend-0.22)), clamp01(extend-0.22)); }
+          poseL = blendPose(poseL, defenderPose, extend*0.7);
+          rightX -= extend*22; leftX += extend*10;
         }
         const distToPeak = Math.abs(phase - b.peak);
         if (distToPeak < closestBeatDist){
           closestBeatDist = distToPeak;
-          closestBeatPower = def.power * extend;
+          closestBeatPower = b.power * extend;
           closestBeatX = b.attacker==='L' ? rightX-26 : leftX+26;
           closestBeatY = groundY - 118;
-          closestBeatColor = def.color;
         }
       }
     }
 
-    if (ghostL>0.02 && ghostPoseL) drawFighter(leftX, groundY, 1, ghostPoseL, '#3a7bd5', '#9fd8ff', ghostL);
-    if (ghostR>0.02 && ghostPoseR) drawFighter(rightX, groundY, -1, ghostPoseR, '#e8541e', '#ffcf8a', ghostR);
     drawFighter(leftX, groundY, 1, poseL, '#3a7bd5', '#9fd8ff');
     drawFighter(rightX, groundY, -1, poseR, '#e8541e', '#ffcf8a');
 
     for(const b of BEATS){
       if (Math.abs(phase - b.peak) < 0.004 && lastFlashAt !== b.peak){
         lastFlashAt = b.peak;
-        const power = MOVES[b.move].power;
         document.body.classList.remove('apex-shake');
         void document.body.offsetWidth;
         document.body.classList.add('apex-shake');
-        const shakeMs = 160 + power*140;
-        document.body.style.setProperty('--apex-shake-scale', (0.6 + power*0.9).toFixed(2));
-        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, shakeMs);
+        setTimeout(function(){ document.body.classList.remove('apex-shake'); }, 200);
       }
     }
-    if (anyActiveBeat && closestBeatDist < 0.03 && closestBeatPower > 0.22){
-      const s = Math.min(1, closestBeatPower);
-      drawImpactBurst(closestBeatX, closestBeatY, s, closestBeatColor, s>0.85?13:9);
-      if (s > 0.82) drawScreenFlash(s, closestBeatColor);
+    if (anyActiveBeat && closestBeatDist < 0.03 && closestBeatPower > 0.25){
+      drawImpactBurst(closestBeatX, closestBeatY, Math.min(1, closestBeatPower), '#ffe27a');
     }
 
     raf = requestAnimationFrame(tick);
@@ -3919,6 +3846,134 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       cv.classList.remove('show');
       try{ ctx.clearRect(0,0,W,H); }catch(e){}
       document.body.classList.remove('apex-shake');
+    }
+  };
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden && running){ if(raf) cancelAnimationFrame(raf); }
+    else if(!document.hidden && running){ raf = requestAnimationFrame(tick); }
+  });
+})();
+
+// ===== WINDY FX — layered, curved wind flow (canvas) =====
+// Replaces the old straight-line CSS streaks with genuinely curved gust
+// paths (quadratic bezier, not straight lines), three depth layers for a
+// pseudo-3D feel (far layer: thin/dim/slow; near layer: thick/bright/fast),
+// and variable intensity over time — calm lulls alternating with stronger
+// bursts, per "sometimes extremely, sometimes less."
+//
+// Rendering stays defensive for WebView reliability, same approach as the
+// Apex rebuild: only bezier curves + plain 'source-over' strokes, no
+// blend-mode tricks, sized/guarded the same way (waits for a real canvas
+// size before drawing, stops cleanly on tab-hide).
+(function(){
+  const cv = document.getElementById('windFX');
+  if(!cv){ console.warn('[wind-fx] #windFX canvas not found in DOM'); return; }
+  const ctx = cv.getContext && cv.getContext('2d');
+  if(!ctx){ console.warn('[wind-fx] 2d context unavailable on this WebView'); return; }
+  let running=false, raf=0, W=0, H=0, DPR=1;
+  let startTime=0;
+
+  function resize(){
+    DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+    W = window.innerWidth || document.documentElement.clientWidth || 360;
+    H = window.innerHeight || document.documentElement.clientHeight || 640;
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+    cv.width = Math.max(1, Math.round(W*DPR));
+    cv.height = Math.max(1, Math.round(H*DPR));
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', function(){ if(running) resize(); }, {passive:true});
+
+  // Three depth layers. Each streak is a single flowing curve defined by a
+  // start point, a control-point wobble (for the curve), and a length —
+  // drifting rightward and slowly bobbing vertically as it travels so the
+  // whole path reads as flowing air rather than a straight dash.
+  const LAYERS = [
+    { count: 10, speed: 34,  width: 1.0, alpha: 0.18, curve: 26, label:'far'  },
+    { count: 9,  speed: 58,  width: 1.6, alpha: 0.32, curve: 40, label:'mid'  },
+    { count: 7,  speed: 92,  width: 2.4, alpha: 0.5,  curve: 58, label:'near' }
+  ];
+  let streaks = [];
+
+  function spawnStreak(layerIdx, atStart){
+    const L = LAYERS[layerIdx];
+    return {
+      layer: layerIdx,
+      x: atStart ? -60 - Math.random()*200 : Math.random()*W,
+      y: Math.random()*H,
+      len: 70 + Math.random()*110,
+      bob: Math.random()*Math.PI*2,
+      bobSpeed: 0.6 + Math.random()*0.8,
+      speedMul: 0.7 + Math.random()*0.6
+    };
+  }
+
+  function seed(){
+    streaks = [];
+    LAYERS.forEach(function(L, idx){
+      for (let i=0;i<L.count;i++) streaks.push(spawnStreak(idx, false));
+    });
+  }
+
+  // Global gust envelope: slow sine + occasional stronger burst multiplier,
+  // so intensity genuinely varies over time rather than staying constant.
+  function gustIntensity(tSec){
+    const base = 0.55 + Math.sin(tSec*0.15)*0.25; // slow breathing 0.3..0.8
+    const burst = Math.max(0, Math.sin(tSec*0.05 + 1.3)) > 0.85 ? 1.4 : 1.0; // occasional stronger passage
+    return Math.max(0.15, Math.min(1.3, base*burst));
+  }
+
+  function tick(now){
+    if(!running) return;
+    if(!startTime) startTime = now;
+    if (W <= 1 || H <= 1) { raf = requestAnimationFrame(tick); return; }
+
+    const tSec = (now-startTime)/1000;
+    const intensity = gustIntensity(tSec);
+    ctx.clearRect(0,0,W,H);
+
+    for (let i=0; i<streaks.length; i++){
+      const s = streaks[i];
+      const L = LAYERS[s.layer];
+      const dx = L.speed * s.speedMul * intensity * (1/60);
+      s.x += dx;
+      s.bob += 0.016 * s.bobSpeed;
+      const yWobble = Math.sin(s.bob) * L.curve * 0.4;
+
+      const x0 = s.x, y0 = s.y + yWobble;
+      const x1 = s.x + s.len*0.5, y1 = s.y + yWobble - L.curve*Math.sin(s.bob*1.3);
+      const x2 = s.x + s.len, y2 = s.y + yWobble;
+
+      ctx.strokeStyle = 'rgba(220,240,255,' + (L.alpha * Math.min(1, intensity)).toFixed(3) + ')';
+      ctx.lineWidth = L.width;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.quadraticCurveTo(x1, y1, x2, y2);
+      ctx.stroke();
+
+      if (s.x - 60 > W){
+        streaks[i] = spawnStreak(s.layer, true);
+      }
+    }
+
+    raf = requestAnimationFrame(tick);
+  }
+
+  window.__dgxenWindFX = {
+    start:function(){
+      if(running) return;
+      resize(); seed();
+      running=true; startTime=0;
+      cv.classList.add('show');
+      raf = requestAnimationFrame(tick);
+    },
+    stop:function(){
+      running=false;
+      if(raf) cancelAnimationFrame(raf);
+      cv.classList.remove('show');
+      try{ ctx.clearRect(0,0,W,H); }catch(e){}
     }
   };
   document.addEventListener('visibilitychange', function(){
@@ -4043,27 +4098,6 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     }
     box.innerHTML = html;
   }
-  function buildWindGusts(){
-    const box = document.getElementById('windGusts');
-    if (!box) return;
-    const n = Math.max(10, Math.round((opts.particles||60)/100*22));
-    let html = '';
-    for (let i=0;i<n;i++){
-      // Randomize per-streak intensity so gusts feel variable: some strong
-      // (wide, bright, fast) and some gentle (thin, dim, slow) — "sometimes
-      // extremely, sometimes less" per the theme brief.
-      const strength = Math.random();
-      const width = (60 + strength*260).toFixed(0);
-      const top = (Math.random()*100).toFixed(1);
-      const dur = (strength > 0.7 ? (1.4+Math.random()*0.8) : (3.5+Math.random()*4.5)).toFixed(2);
-      const delay = (Math.random()*6).toFixed(2);
-      const opacityMax = (0.25 + strength*0.6).toFixed(2);
-      html += '<i style="top:'+top+'%;width:'+width+'px;animation-duration:'+dur+'s;animation-delay:-'+delay+'s;opacity:0" data-op="'+opacityMax+'"></i>';
-    }
-    box.innerHTML = html;
-    // apply the per-streak peak opacity via CSS var so the keyframe can reference it
-    box.querySelectorAll('i').forEach(function(el){ el.style.setProperty('--peak', el.getAttribute('data-op')); });
-  }
   function stopSound(){
     try {
       if (audioEl) {
@@ -4133,15 +4167,19 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
     if (t === 'sakura' || t === 'fest_holi') buildPetals();
     if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
-    if (t === 'windy') buildWindGusts();
+    if (t === 'windy') {
+      if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
+    } else if (window.__dgxenWindFX) {
+      window.__dgxenWindFX.stop();
+    }
     if (t === 'metroid') {
-      if (window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
+      if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
     } else if (window.__dgxenMeteorFX) {
       window.__dgxenMeteorFX.stop();
     }
     if (t === 'apex') {
-      if (window.__dgxenApexFightFX) window.__dgxenApexFightFX.start();
-      else console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
+      if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
+      else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
     } else if (window.__dgxenApexFightFX) {
       window.__dgxenApexFightFX.stop();
     }
@@ -4285,10 +4323,30 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       danceAudio.preload = 'auto';
       danceAudio.volume = 0.85;
       danceAudio.loop = true; // gesture runs a fixed 12s regardless of the track's own length
+      danceAudio.onerror = function(){ console.warn('[join-fx] failed to load join button dance.mp3'); };
       window.__dgxenJoinDanceAudio = danceAudio;
+      try { danceAudio.load(); } catch(e){}
     }
     return danceAudio;
   }
+  let joinClickAudio = null;
+  function getJoinClickAudio(){
+    if (!joinClickAudio){
+      joinClickAudio = new Audio('./sounds/clicked on join button.mp3');
+      joinClickAudio.preload = 'auto';
+      joinClickAudio.onerror = function(){ console.warn('[join-fx] failed to load clicked on join button.mp3'); };
+      window.__dgxenJoinClickAudio = joinClickAudio;
+      try { joinClickAudio.load(); } catch(e){}
+    }
+    return joinClickAudio;
+  }
+  // Preload both sounds immediately on page load (same pattern as the 3D
+  // world's ultrasonic track) so the very first VIP tap / JOIN click has
+  // zero load delay — the browser has already buffered the file into cache
+  // well before the user interacts, instead of starting the fetch on the
+  // first tap.
+  getDanceAudio();
+  getJoinClickAudio();
 
   function pauseAmbientForDance(){
     try{
@@ -4368,12 +4426,12 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   vip.addEventListener('click', onVipTap);
 
   // Actual JOIN click sound — the one file that is NOT in the atm folder.
-  let joinClickAudio = null;
+  // Already preloaded above; just play it.
   badge.addEventListener('click', function(){
     try{
-      if (!joinClickAudio){ joinClickAudio = new Audio('./sounds/clicked on join button.mp3'); joinClickAudio.preload='auto'; window.__dgxenJoinClickAudio = joinClickAudio; }
-      joinClickAudio.currentTime = 0;
-      const p = joinClickAudio.play();
+      const a = getJoinClickAudio();
+      a.currentTime = 0;
+      const p = a.play();
       if (p && p.catch) p.catch(function(){});
     }catch(e){}
   });
@@ -4483,6 +4541,13 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   function enterWorld(){
     inWorld = true;
     try { if (window.__dgxenMeteorFX) window.__dgxenMeteorFX.stop(); } catch(e){}
+    // Apex's fight-scene canvas sits in the same 2D layer as the meteor FX
+    // and must also be stopped before entering the 3D world — otherwise the
+    // fighters kept drawing/animating underneath (or behind) the 3D canvas,
+    // visible as "both characters appear on screen looking bad." This stop
+    // is scoped to apex only, matching the "only applicable for apex theme"
+    // requirement — no other theme's 2D FX needs this treatment.
+    try { if (window.__dgxenApexFightFX) window.__dgxenApexFightFX.stop(); } catch(e){}
     // The 2D ambient theme track must not keep playing under the ultrasonic world
     // sound — stop it here so only one audio source is ever heard at a time.
     try { if (window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); } catch(e){}
@@ -4515,8 +4580,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       try { if (window.__dgxenResumeAtmSound) window.__dgxenResumeAtmSound(); } catch(e){}
       try { if (window.__dgxenUpdateMuteBtn) window.__dgxenUpdateMuteBtn(); } catch(e){} // native theme: hide speaker again back in 2D
       try {
+        // Resume whichever 2D FX actually belongs to the CURRENT theme —
+        // metroid gets meteor FX, apex gets its own fight FX. The previous
+        // version always restarted meteor FX for apex too, which visibly
+        // repainted apex's screen with falling meteors — looking exactly
+        // like "the theme auto-changed to metroid" even though the
+        // underlying atm-apex theme class never actually changed.
         const t = document.documentElement.getAttribute('data-atm');
-        if ((t === 'metroid' || t === 'apex') && window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
+        if (t === 'metroid' && window.__dgxenMeteorFX) window.__dgxenMeteorFX.start();
+        else if (t === 'apex' && window.__dgxenApexFightFX) window.__dgxenApexFightFX.start();
       } catch(e){}
     }, 260);
   }
