@@ -796,6 +796,118 @@ body.atm-windy .glass{border-color:rgba(191,233,255,.28)!important}
 /* Shared understated festival tint for added dates. */
 body[class*="atm-fest_"] .sky-layer .haze{opacity:.55}
 
+/* ===== FESTIVAL BACKGROUNDS — one per fest_* id, each matching that
+   festival's traditional colours. Same visual pattern as the base themes
+   above (2 radial accent glows + 1 dark linear base), so festivals feel
+   like a natural part of the same theme family instead of a bolt-on. */
+body.atm-fest_holi{background:
+  radial-gradient(circle at 20% 22%,rgba(255,90,160,.28),transparent 30%),
+  radial-gradient(circle at 80% 18%,rgba(255,210,60,.22),transparent 30%),
+  radial-gradient(circle at 55% 82%,rgba(80,210,140,.18),transparent 34%),
+  linear-gradient(160deg,#160613 0%,#1a1207 48%,#04120c 100%) !important}
+body.atm-fest_rakhi{background:
+  radial-gradient(circle at 82% 14%,rgba(255,140,190,.24),transparent 30%),
+  radial-gradient(circle at 15% 85%,rgba(255,195,110,.16),transparent 32%),
+  linear-gradient(160deg,#170a10 0%,#140c08 50%,#0a0605 100%) !important}
+body.atm-fest_janmashtami{background:
+  radial-gradient(circle at 82% 15%,rgba(255,200,80,.2),transparent 28%),
+  radial-gradient(circle at 15% 85%,rgba(70,90,220,.22),transparent 34%),
+  linear-gradient(165deg,#050818 0%,#0a0a1c 48%,#040309 100%) !important}
+body.atm-fest_diwali{background:
+  radial-gradient(circle at 80% 78%,rgba(255,150,40,.3),transparent 34%),
+  radial-gradient(circle at 18% 18%,rgba(255,210,110,.18),transparent 28%),
+  linear-gradient(165deg,#1a0c04 0%,#160e06 45%,#0a0603 100%) !important}
+body.atm-fest_sankranti{background:
+  radial-gradient(circle at 84% 12%,rgba(120,190,255,.16),transparent 26%),
+  radial-gradient(circle at 20% 82%,rgba(255,170,60,.26),transparent 32%),
+  linear-gradient(160deg,#170d04 0%,#0e1218 48%,#080a0c 100%) !important}
+body.atm-fest_dussehra{background:
+  radial-gradient(circle at 78% 72%,rgba(255,120,40,.28),transparent 34%),
+  radial-gradient(circle at 20% 20%,rgba(255,200,90,.16),transparent 28%),
+  linear-gradient(165deg,#1a0805 0%,#140a05 46%,#0a0503 100%) !important}
+body.atm-fest_ganesh{background:
+  radial-gradient(circle at 78% 75%,rgba(255,160,50,.28),transparent 34%),
+  radial-gradient(circle at 18% 16%,rgba(255,90,90,.16),transparent 28%),
+  linear-gradient(165deg,#1a0a04 0%,#150805 46%,#0a0503 100%) !important}
+body.atm-fest_ramnavami{background:
+  radial-gradient(circle at 80% 16%,rgba(255,150,60,.26),transparent 30%),
+  radial-gradient(circle at 18% 84%,rgba(255,200,110,.14),transparent 30%),
+  linear-gradient(160deg,#180a04 0%,#120a05 48%,#0a0603 100%) !important}
+body.atm-fest_hanuman{background:
+  radial-gradient(circle at 78% 22%,rgba(255,90,50,.28),transparent 30%),
+  radial-gradient(circle at 20% 82%,rgba(255,160,80,.16),transparent 30%),
+  linear-gradient(165deg,#1a0703 0%,#140804 46%,#0a0503 100%) !important}
+body.atm-fest_baisakhi{background:
+  radial-gradient(circle at 82% 18%,rgba(255,200,60,.26),transparent 30%),
+  radial-gradient(circle at 18% 84%,rgba(120,200,110,.16),transparent 30%),
+  linear-gradient(160deg,#171004 0%,#101207 48%,#070a05 100%) !important}
+body.atm-fest_akshaya{background:
+  radial-gradient(circle at 50% 22%,rgba(255,210,110,.26),transparent 32%),
+  radial-gradient(circle at 80% 80%,rgba(255,180,70,.16),transparent 30%),
+  linear-gradient(160deg,#181004 0%,#120c05 48%,#0a0603 100%) !important}
+body.atm-fest_rathyatra{background:
+  radial-gradient(circle at 78% 18%,rgba(255,150,50,.26),transparent 30%),
+  radial-gradient(circle at 20% 84%,rgba(255,210,110,.14),transparent 30%),
+  linear-gradient(160deg,#180b04 0%,#130a05 48%,#0a0603 100%) !important}
+body.atm-fest_republic{background:
+  radial-gradient(circle at 50% 8%,rgba(255,150,50,.2),transparent 26%),
+  radial-gradient(circle at 50% 92%,rgba(60,180,100,.2),transparent 30%),
+  linear-gradient(180deg,#120a04 0%,#0c1008 50%,#040a05 100%) !important}
+body.atm-fest_independence{background:
+  radial-gradient(circle at 50% 8%,rgba(255,150,50,.2),transparent 26%),
+  radial-gradient(circle at 50% 92%,rgba(60,180,100,.2),transparent 30%),
+  linear-gradient(180deg,#120a04 0%,#0c1008 50%,#040a05 100%) !important}
+body.atm-fest_kargil{background:
+  radial-gradient(circle at 50% 10%,rgba(255,150,50,.16),transparent 26%),
+  radial-gradient(circle at 50% 90%,rgba(70,160,90,.18),transparent 30%),
+  linear-gradient(180deg,#0f0c07 0%,#0b0f09 50%,#050805 100%) !important}
+body.atm-fest_christmas{background:
+  radial-gradient(circle at 20% 18%,rgba(90,210,140,.22),transparent 30%),
+  radial-gradient(circle at 82% 20%,rgba(255,90,90,.18),transparent 28%),
+  radial-gradient(circle at 55% 85%,rgba(255,210,120,.14),transparent 30%),
+  linear-gradient(160deg,#040f08 0%,#0a0f0c 48%,#040805 100%) !important}
+body.atm-fest_newyear{background:
+  radial-gradient(circle at 78% 20%,rgba(183,140,255,.26),transparent 30%),
+  radial-gradient(circle at 20% 80%,rgba(255,210,120,.16),transparent 30%),
+  linear-gradient(165deg,#0d0618 0%,#0a0714 48%,#04030a 100%) !important}
+body.atm-fest_teachers{background:
+  radial-gradient(circle at 80% 18%,rgba(255,207,122,.22),transparent 30%),
+  radial-gradient(circle at 20% 84%,rgba(160,190,255,.1),transparent 30%),
+  linear-gradient(160deg,#120e05 0%,#0d0e10 48%,#07080a 100%) !important}
+body.atm-fest_children{background:
+  radial-gradient(circle at 20% 16%,rgba(255,150,190,.18),transparent 28%),
+  radial-gradient(circle at 82% 20%,rgba(120,190,255,.16),transparent 28%),
+  radial-gradient(circle at 55% 85%,rgba(255,210,110,.16),transparent 30%),
+  linear-gradient(160deg,#0f0a10 0%,#0d0d10 48%,#07070a 100%) !important}
+body.atm-fest_gandhi{background:
+  radial-gradient(circle at 50% 20%,rgba(255,255,255,.08),transparent 28%),
+  radial-gradient(circle at 50% 88%,rgba(255,207,122,.14),transparent 30%),
+  linear-gradient(165deg,#0c0e0a 0%,#0e0f0c 48%,#060705 100%) !important}
+body.atm-fest_buddha{background:
+  radial-gradient(circle at 80% 18%,rgba(255,207,122,.2),transparent 30%),
+  radial-gradient(circle at 20% 84%,rgba(120,170,220,.16),transparent 30%),
+  linear-gradient(165deg,#0c0e14 0%,#0d0f10 48%,#05070a 100%) !important}
+body.atm-fest_vatsavitri{background:
+  radial-gradient(circle at 18% 18%,rgba(90,190,110,.22),transparent 30%),
+  radial-gradient(circle at 82% 82%,rgba(160,220,140,.12),transparent 32%),
+  linear-gradient(160deg,#070f08 0%,#0a0f0a 48%,#050a05 100%) !important}
+body.atm-fest_ganga{background:
+  radial-gradient(circle at 78% 18%,rgba(80,210,220,.22),transparent 30%),
+  radial-gradient(circle at 20% 84%,rgba(120,190,255,.14),transparent 30%),
+  linear-gradient(165deg,#04121a 0%,#081016 48%,#030a0e 100%) !important}
+body.atm-fest_yoga{background:
+  radial-gradient(circle at 50% 18%,rgba(110,210,224,.2),transparent 30%),
+  radial-gradient(circle at 50% 86%,rgba(160,220,190,.12),transparent 32%),
+  linear-gradient(165deg,#04141a 0%,#0a1614 48%,#030a0a 100%) !important}
+body.atm-fest_ugadi{background:
+  radial-gradient(circle at 20% 18%,rgba(143,224,160,.22),transparent 30%),
+  radial-gradient(circle at 82% 82%,rgba(255,210,120,.14),transparent 30%),
+  linear-gradient(160deg,#080f08 0%,#0d1008 48%,#050805 100%) !important}
+body.atm-fest_gurupurnima{background:
+  radial-gradient(circle at 50% 20%,rgba(255,207,122,.22),transparent 30%),
+  radial-gradient(circle at 50% 88%,rgba(255,230,180,.1),transparent 32%),
+  linear-gradient(165deg,#100c05 0%,#0e0d0a 48%,#070604 100%) !important}
+
 body[data-atm-intensity] .sky-layer{opacity:1}
 
 
