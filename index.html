@@ -915,6 +915,18 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 .offline-banner,.admin-notice,.recall-hint{z-index:120}
 .revoke-overlay{z-index:99999}
 
+
+/* Force-update modal (blocks unlock / auto-login when forceUpdate + stale version) */
+#forceUpdateModal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:24px}
+#forceUpdateModal.show{display:flex}
+#forceUpdateModal .fu-card{width:min(340px,92vw);border-radius:22px;padding:28px 22px 22px;text-align:center;background:linear-gradient(160deg,#14161a,#0b0c0e);border:1px solid rgba(255,255,255,.12);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+#forceUpdateModal .fu-logo{font-size:28px;font-weight:900;letter-spacing:1px;margin-bottom:12px;color:#fff}
+#forceUpdateModal .fu-title{font-size:18px;font-weight:800;color:#fff;margin:0 0 6px}
+#forceUpdateModal .fu-ver{font-size:13px;font-weight:700;color:rgba(255,255,255,.55);margin:0 0 12px}
+#forceUpdateModal .fu-desc{font-size:13px;line-height:1.45;color:rgba(255,255,255,.72);margin:0 0 20px}
+#forceUpdateModal .fu-btn{display:block;width:100%;padding:14px 16px;border:0;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#2a2d33,#1a1c20);color:#fff}
+#forceUpdateModal .fu-btn.primary{background:linear-gradient(135deg,#26f5a1,#00c96d);color:#03150b;margin-bottom:10px}
+
 </style>
 </head>
 <body>
@@ -5472,15 +5484,85 @@ async function reportAppVersionCode(preferredUid) {
 // the existing key-expiry system already is. JS's only job is: notice
 // staleness once, then get out of the way.
 let __killswitchTriggered = false;
+let __forceUpdateBlocked = false;
+let __lastAppUpdate = null;
 
-function triggerKillswitch() {
+function triggerKillswitch(msg) {
   if (__killswitchTriggered) return;
   __killswitchTriggered = true;
   try {
+    const text = (msg && String(msg).trim()) || 'App Expired — please update.';
+    try { if (typeof show === 'function') show(text, 'var(--error)'); } catch (e0) {}
     if (window.Android && typeof window.Android.startKillswitchTimer === 'function') {
       window.Android.startKillswitchTimer();
     }
   } catch (e) { console.warn('startKillswitchTimer bridge call failed', e); }
+}
+
+function showForceUpdateModal(v) {
+  const modal = document.getElementById('forceUpdateModal');
+  if (!modal) return;
+  const title = (v && (v.title || v.versionName)) ? String(v.title || ('Update to ' + v.versionName)) : 'New version available';
+  const ver = (v && v.versionName) ? ('v' + v.versionName) : (v && v.versionCode != null ? ('v' + v.versionCode) : '');
+  const desc = (v && (v.log || v.description)) ? String(v.log || v.description) : 'Please update to continue.';
+  const url = (v && v.url) ? String(v.url).trim() : '';
+  const tEl = document.getElementById('fuTitle');
+  const vEl = document.getElementById('fuVer');
+  const dEl = document.getElementById('fuDesc');
+  const btn = document.getElementById('fuUpdateBtn');
+  const closeBtn = document.getElementById('fuCloseBtn');
+  if (tEl) tEl.textContent = title;
+  if (vEl) vEl.textContent = ver;
+  if (dEl) dEl.textContent = desc;
+  if (btn) {
+    btn.onclick = function() {
+      if (url) {
+        try { window.open(url, '_blank'); } catch (e) {}
+        try {
+          if (window.Android && typeof window.Android.openUrl === 'function') window.Android.openUrl(url);
+        } catch (e2) {}
+        // fallback: location
+        try { if (!window.Android) location.href = url; } catch (e3) {}
+      }
+    };
+  }
+  // Force update: no dismiss — must update. (Close hidden)
+  if (closeBtn) closeBtn.style.display = 'none';
+  modal.classList.add('show');
+  __forceUpdateBlocked = true;
+}
+
+function hideForceUpdateModal() {
+  const modal = document.getElementById('forceUpdateModal');
+  if (modal) modal.classList.remove('show');
+  __forceUpdateBlocked = false;
+}
+
+/** Returns true if unlock must be blocked (stale + forceUpdate). */
+async function shouldBlockUnlockForForceUpdate() {
+  try {
+    if (!isVersionCodeTrusted()) return false;
+    let v = __lastAppUpdate;
+    if (!v) {
+      const snap = await get(ref(db, 'settings/appUpdate'));
+      if (!snap.exists()) return false;
+      v = snap.val() || {};
+      __lastAppUpdate = v;
+    }
+    if (!v.forceUpdate) return false;
+    const liveCode = getAppVersionCode();
+    const requiredCode = parseInt(v.versionCode, 10);
+    if (!Number.isFinite(requiredCode) || liveCode == null) return false;
+    if (liveCode >= requiredCode) {
+      hideForceUpdateModal();
+      return false;
+    }
+    showForceUpdateModal(v);
+    return true;
+  } catch (e) {
+    console.warn('forceUpdate gate', e);
+    return false;
+  }
 }
 
 function startKillswitchWatcher() {
@@ -5489,13 +5571,29 @@ function startKillswitchWatcher() {
   if (!isVersionCodeTrusted()) return;
   try {
     onValue(ref(db, 'settings/appUpdate'), (snap) => {
-      if (__killswitchTriggered || !snap.exists()) return;
+      if (!snap.exists()) return;
       const v = snap.val() || {};
-      if (!v.killOldVersions) return;
+      __lastAppUpdate = v;
+
       const liveCode = getAppVersionCode();
       const requiredCode = parseInt(v.versionCode, 10);
-      if (!Number.isFinite(requiredCode) || liveCode == null) return;
-      if (liveCode < requiredCode) triggerKillswitch();
+      const stale = Number.isFinite(requiredCode) && liveCode != null && liveCode < requiredCode;
+
+      // Killswitch ON + stale → native 30s crash (mid-session safe)
+      if (v.killOldVersions && stale && !__killswitchTriggered) {
+        const msg = (v.revokeMessage && String(v.revokeMessage).trim())
+          || ('App Expired — update required (v' + requiredCode + '). Closing in 30s.');
+        triggerKillswitch(msg);
+        return;
+      }
+
+      // Force Update ON + stale → block unlock / show modal (NO crash)
+      // This is the path that was looping with auto-login when killswitch was OFF.
+      if (v.forceUpdate && stale) {
+        showForceUpdateModal(v);
+      } else {
+        hideForceUpdateModal();
+      }
     });
   } catch (e) { console.warn('killswitch watcher failed to attach', e); }
 }
@@ -6201,6 +6299,15 @@ async function verifyKey(){
         } catch (gErr) { console.warn('guard start', gErr); }
         window.__lastMatchedUserId=null;
       } catch(e) {}
+      // Force-update gate: never unlock (or auto-login loop) while stale + forceUpdate
+      if (await shouldBlockUnlockForForceUpdate()) {
+        btn.disabled = false;
+        btn.classList.remove('success');
+        btn.textContent = 'UNLOCK APP';
+        show('Update required before unlock', 'var(--error)');
+        try { window.playSound(window.sfxFailed); } catch (e) {}
+        return;
+      }
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
@@ -6362,6 +6469,18 @@ document.addEventListener('visibilitychange', function(){
 
 
 </script>
+
+<div id="forceUpdateModal" aria-modal="true" role="dialog">
+  <div class="fu-card">
+    <div class="fu-logo">DGXEN</div>
+    <p class="fu-title" id="fuTitle">New version available</p>
+    <p class="fu-ver" id="fuVer"></p>
+    <p class="fu-desc" id="fuDesc">Please update to continue.</p>
+    <button type="button" class="fu-btn primary" id="fuUpdateBtn">Update Now</button>
+    <button type="button" class="fu-btn" id="fuCloseBtn" style="display:none">Close</button>
+  </div>
+</div>
+
 </body>
 </html>
 
