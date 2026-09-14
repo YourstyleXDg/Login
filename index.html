@@ -4833,54 +4833,35 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       else t = weatherTheme || hourTheme();
     }
     if (THEMES.indexOf(t) < 0) t = hourTheme();
-    // The very first paint applies a cached/default theme immediately (so
-    // there's no flash-of-wrong-theme), then Firebase's live admin config
-    // arrives a moment later and re-resolves the theme. If both calls land
-    // on the same actual theme, skip the heavy teardown/rebuild/audio-
-    // restart below — doing that twice in quick succession (clearAtm() +
-    // rebuilding every particle system + restarting ambient sound) is what
-    // produced the visible stutter on every load, even when the theme
-    // wasn't really changing. Lightweight settings (intensity, reduced
-    // motion, card skin) still get re-synced cheaply either way, in case
-    // only those changed between the two calls.
-    const sameTheme = (t === window.__dgxenCurrentAtm);
-    window.__dgxenCurrentAtm = t;
     isNativeTheme = (t === 'native');
-    if (!sameTheme) {
-      clearAtm();
-      document.body.classList.add('atm-' + t);
-    }
+    clearAtm();
+    document.body.classList.add('atm-' + t);
     if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
-    if (t !== 'native' && t !== 'minimal') {
-      document.body.classList.toggle('skin-' + t, !!opts.cardSkin);
+    if (opts.cardSkin && t !== 'native' && t !== 'minimal') document.body.classList.add('skin-' + t);
+    if (t === 'rain') buildRain();
+    if (t === 'morning') buildMorningLeaves();
+    if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
+    if (t === 'sakura' || t === 'fest_holi') buildPetals();
+    if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
+    if (t === 'windy') {
+      if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
+    } else if (window.__dgxenWindFX) {
+      window.__dgxenWindFX.stop();
     }
-    if (!sameTheme) {
-      if (t === 'rain') buildRain();
-      if (t === 'morning') buildMorningLeaves();
-      if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
-      if (t === 'sakura' || t === 'fest_holi') buildPetals();
-      if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
-      if (t === 'windy') {
-        if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
-      } else if (window.__dgxenWindFX) {
-        window.__dgxenWindFX.stop();
-      }
-      if (t === 'metroid') {
-        if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
-      } else if (window.__dgxenMeteorFX) {
-        window.__dgxenMeteorFX.stop();
-      }
-      if (t === 'apex') {
-        if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
-        else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
-      } else if (window.__dgxenApexFightFX) {
-        window.__dgxenApexFightFX.stop();
-      }
+    if (t === 'metroid') {
+      if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
+    } else if (window.__dgxenMeteorFX) {
+      window.__dgxenMeteorFX.stop();
+    }
+    if (t === 'apex') {
+      if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
+      else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
+    } else if (window.__dgxenApexFightFX) {
+      window.__dgxenApexFightFX.stop();
     }
     const sky = document.getElementById('skyLayer');
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
-    if (!sameTheme) { startSound(t); }
-    updateMuteBtn();
+    startSound(t); updateMuteBtn();
         try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
     try { localStorage.setItem('dgxen_last_theme', t); } catch(e){} // <-- UPDATE 1: Yahan current theme ko cache me save kiya
   };
