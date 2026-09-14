@@ -277,8 +277,7 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .light-cap.two{top:auto;left:auto;right:-23%;bottom:-27%;width:67%;height:51%;background:radial-gradient(closest-side,rgba(255,255,255,.08),transparent 72%)}
 .iridescent{position:absolute!important;z-index:0!important;inset:0;pointer-events:none;opacity:.18;mix-blend-mode:soft-light;background:linear-gradient(118deg,rgba(255,80,160,.24),rgba(255,210,110,.11) 24%,rgba(90,255,185,.15) 48%,rgba(90,155,255,.22) 72%,rgba(205,100,255,.18))}
 .content{position:relative;z-index:2;transform:translateZ(24px)}
-.logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12);opacity:0;visibility:hidden;transition:opacity .25s ease;color:transparent}
-.logo.loaded{opacity:1;visibility:visible}
+.logo{width:70px;height:70px;object-fit:cover;border-radius:50%;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);box-shadow:0 12px 35px rgba(0,0,0,.35),0 0 24px rgba(0,255,136,.12)}
 h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-shadow:0 0 22px rgba(0,255,136,.3);display:flex;align-items:center;justify-content:center;gap:7px}
 .dgxen-word{position:relative;display:inline-block;cursor:pointer;user-select:none;-webkit-user-select:none;transition:text-shadow .3s ease,color .3s ease;overflow:visible;touch-action:none}
 .dgxen-vip-wrap{position:relative;display:inline-flex;align-items:center;gap:7px}
@@ -3144,7 +3143,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
       <div class="content">
-        <img src="./assets/logo.png" alt="DGXEN" class="logo" id="dgxenLogo" onload="this.classList.add('loaded')" onerror="(function(img){ if(!img.dataset.retried){ img.dataset.retried='1'; setTimeout(function(){ img.src='./assets/logo.png?r='+Date.now(); }, 600); } else { img.style.display='none'; } })(this)">
+        <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
         <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
         <p class="tagline">Enter your access key to unlock.</p>
 
@@ -4833,35 +4832,54 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       else t = weatherTheme || hourTheme();
     }
     if (THEMES.indexOf(t) < 0) t = hourTheme();
+    // The very first paint applies a cached/default theme immediately (so
+    // there's no flash-of-wrong-theme), then Firebase's live admin config
+    // arrives a moment later and re-resolves the theme. If both calls land
+    // on the same actual theme, skip the heavy teardown/rebuild/audio-
+    // restart below — doing that twice in quick succession (clearAtm() +
+    // rebuilding every particle system + restarting ambient sound) is what
+    // produced the visible stutter on every load, even when the theme
+    // wasn't really changing. Lightweight settings (intensity, reduced
+    // motion, card skin) still get re-synced cheaply either way, in case
+    // only those changed between the two calls.
+    const sameTheme = (t === window.__dgxenCurrentAtm);
+    window.__dgxenCurrentAtm = t;
     isNativeTheme = (t === 'native');
-    clearAtm();
-    document.body.classList.add('atm-' + t);
+    if (!sameTheme) {
+      clearAtm();
+      document.body.classList.add('atm-' + t);
+    }
     if (opts.reduceMotion) document.body.classList.add('atm-reduce'); else document.body.classList.remove('atm-reduce');
-    if (opts.cardSkin && t !== 'native' && t !== 'minimal') document.body.classList.add('skin-' + t);
-    if (t === 'rain') buildRain();
-    if (t === 'morning') buildMorningLeaves();
-    if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
-    if (t === 'sakura' || t === 'fest_holi') buildPetals();
-    if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
-    if (t === 'windy') {
-      if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
-    } else if (window.__dgxenWindFX) {
-      window.__dgxenWindFX.stop();
+    if (t !== 'native' && t !== 'minimal') {
+      document.body.classList.toggle('skin-' + t, !!opts.cardSkin);
     }
-    if (t === 'metroid') {
-      if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
-    } else if (window.__dgxenMeteorFX) {
-      window.__dgxenMeteorFX.stop();
-    }
-    if (t === 'apex') {
-      if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
-      else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
-    } else if (window.__dgxenApexFightFX) {
-      window.__dgxenApexFightFX.stop();
+    if (!sameTheme) {
+      if (t === 'rain') buildRain();
+      if (t === 'morning') buildMorningLeaves();
+      if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
+      if (t === 'sakura' || t === 'fest_holi') buildPetals();
+      if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
+      if (t === 'windy') {
+        if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
+      } else if (window.__dgxenWindFX) {
+        window.__dgxenWindFX.stop();
+      }
+      if (t === 'metroid') {
+        if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
+      } else if (window.__dgxenMeteorFX) {
+        window.__dgxenMeteorFX.stop();
+      }
+      if (t === 'apex') {
+        if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
+        else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
+      } else if (window.__dgxenApexFightFX) {
+        window.__dgxenApexFightFX.stop();
+      }
     }
     const sky = document.getElementById('skyLayer');
     if (sky) sky.style.opacity = String(Math.max(0.4, Math.min(1, (opts.intensity||80)/100)));
-    startSound(t); updateMuteBtn();
+    if (!sameTheme) { startSound(t); }
+    updateMuteBtn();
         try { document.documentElement.setAttribute('data-atm', t); } catch(e){}
     try { localStorage.setItem('dgxen_last_theme', t); } catch(e){} // <-- UPDATE 1: Yahan current theme ko cache me save kiya
   };
