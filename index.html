@@ -5459,81 +5459,45 @@ async function reportAppVersionCode(preferredUid) {
 
 
 // ===== KILLSWITCH WATCHER =====
-// Continuously watches settings/appUpdate for a Version Code higher than
-// this device's real installed one while killOldVersions is on — even
-// mid-session, not just at open, since sessions can stay logged in
-// indefinitely (auto-login). On detection: corner "app expired" popup for
-// 30s, then a hard native process kill. Next app open will see the same
-// stale-version state immediately (nothing to restore), and will show
-// nothing at all once the device has actually been updated, since the
-// live versionCode comparison will pass.
-let __killswitchTimerId = null;
-let __killswitchShown = false;
+// Watches settings/appUpdate live (Firebase onValue, not a JS poll) for a
+// Version Code higher than this device's real installed one while
+// killOldVersions is on — even mid-session, not just at open, since
+// sessions can stay logged in indefinitely (auto-login). The instant
+// staleness is detected, JS hands off to the NATIVE killswitch timer
+// (Auth.startKillswitchTimer(), a fixed 30s countdown + overlay + hard
+// kill implemented in AuthKillswitch.smali) rather than running the
+// countdown itself — a WebView's JS-side setInterval/setTimeout can be
+// throttled or paused by Android in ways a native Handler.postDelayed
+// loop isn't, so the actual countdown/kill must be native, exactly like
+// the existing key-expiry system already is. JS's only job is: notice
+// staleness once, then get out of the way.
+let __killswitchTriggered = false;
 
-function showAppExpirePopup(message, seconds) {
-  if (__killswitchShown) return;
-  __killswitchShown = true;
-  const wrap = document.createElement('div');
-  wrap.id = 'appExpirePopup';
-  wrap.style.cssText = 'position:fixed;top:14px;right:14px;z-index:999999;max-width:280px;padding:14px 16px;border-radius:14px;background:rgba(20,4,4,.92);border:1.5px solid rgba(255,70,70,.65);box-shadow:0 8px 28px rgba(0,0,0,.5);backdrop-filter:blur(10px);font-family:inherit;color:#fff;animation:appExpireSlideIn .35s ease;';
-  wrap.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="font-size:16px;">⚠️</span><span style="font-weight:900;font-size:13px;letter-spacing:.02em;color:#ff5a5a;">APP EXPIRED</span></div>' +
-    '<div style="font-size:12px;line-height:1.4;color:rgba(255,255,255,.88);margin-bottom:10px;">' + (message || 'A new version is required. Closing in <span id="appExpireCountdown">' + seconds + '</span>s.') + '</div>';
-  if (!document.getElementById('appExpireStyle')) {
-    const st = document.createElement('style');
-    st.id = 'appExpireStyle';
-    st.textContent = '@keyframes appExpireSlideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}';
-    document.head.appendChild(st);
-  }
-  document.body.appendChild(wrap);
-
-  let remaining = seconds;
-  const cdEl = () => document.getElementById('appExpireCountdown');
-  const tick = setInterval(() => {
-    remaining--;
-    const el = cdEl();
-    if (el) el.textContent = String(Math.max(0, remaining));
-    if (remaining <= 0) {
-      clearInterval(tick);
-      try {
-        if (window.Android && typeof window.Android.expire === 'function') {
-          window.Android.expire();
-        }
-      } catch (e) {}
+function triggerKillswitch() {
+  if (__killswitchTriggered) return;
+  __killswitchTriggered = true;
+  try {
+    if (window.Android && typeof window.Android.startKillswitchTimer === 'function') {
+      window.Android.startKillswitchTimer();
     }
-  }, 1000);
+  } catch (e) { console.warn('startKillswitchTimer bridge call failed', e); }
 }
 
-async function checkKillswitchOnce() {
+function startKillswitchWatcher() {
   // Never enforce off a browser-mode/fallback version code — only a real
   // native-reported one can trigger a forced close.
   if (!isVersionCodeTrusted()) return;
   try {
-    const snap = await get(ref(db, 'settings/appUpdate'));
-    if (!snap.exists()) return;
-    const v = snap.val() || {};
-    if (!v.killOldVersions) return;
-    const liveCode = getAppVersionCode();
-    const requiredCode = parseInt(v.versionCode, 10);
-    if (!Number.isFinite(requiredCode) || liveCode == null) return;
-    if (liveCode < requiredCode) {
-      const msg = v.expiredMessage || 'This version has expired. Please update to continue.';
-      try {
-        if (window.Android && typeof window.Android.setRevokeMessage === 'function') {
-          window.Android.setRevokeMessage(msg);
-        }
-      } catch (e) {}
-      showAppExpirePopup(msg, 30);
-      // Once triggered, stop polling — the 30s countdown owns the exit.
-      if (__killswitchTimerId) { clearInterval(__killswitchTimerId); __killswitchTimerId = null; }
-    }
-  } catch (e) { console.warn('killswitch check failed', e); }
-}
-
-function startKillswitchWatcher() {
-  // Immediate check, then poll every 20s — frequent enough to catch a
-  // killswitch flip during an active session without hammering Firebase.
-  checkKillswitchOnce();
-  __killswitchTimerId = setInterval(checkKillswitchOnce, 20000);
+    onValue(ref(db, 'settings/appUpdate'), (snap) => {
+      if (__killswitchTriggered || !snap.exists()) return;
+      const v = snap.val() || {};
+      if (!v.killOldVersions) return;
+      const liveCode = getAppVersionCode();
+      const requiredCode = parseInt(v.versionCode, 10);
+      if (!Number.isFinite(requiredCode) || liveCode == null) return;
+      if (liveCode < requiredCode) triggerKillswitch();
+    });
+  } catch (e) { console.warn('killswitch watcher failed to attach', e); }
 }
 
 // Runs on every app open — before AND after login, since a stale version
@@ -6269,6 +6233,20 @@ async function verifyKey(){
     if(!finger) return;
     if(on) finger.classList.add('show'); else finger.classList.remove('show');
   }
+  function escapeHtml(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  // Turns any http(s) URL inside the admin's broadcast message into a real
+  // tappable link — same target="_blank" pattern already used by the JOIN
+  // badge and "Get Key" links elsewhere on this page. Everything else in
+  // the message is HTML-escaped first so the link is the only markup that
+  // ever gets injected.
+  function linkifyNotice(text){
+    const escaped=escapeHtml(text);
+    return escaped.replace(/(https?:\/\/[^\s<]+)/g, function(url){
+      return '<a href="'+url+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:underline;">'+url+'</a>';
+    });
+  }
   function hideNotice(){
     if(noticeEl) noticeEl.classList.remove('show');
     if(noticeTimer){ clearTimeout(noticeTimer); noticeTimer=null; }
@@ -6283,7 +6261,7 @@ async function verifyKey(){
     if(isShowing) return; // never restart mid-countdown
     isShowing=true;
     let left=Math.max(1, Math.floor(Number(seconds)||8));
-    noticeText.textContent=text;
+    noticeText.innerHTML=linkifyNotice(text);
     if(noticeCount) noticeCount.textContent=String(left)+'s';
     noticeEl.classList.add('show');
     if(noticeTimer) clearTimeout(noticeTimer);
