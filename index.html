@@ -5357,39 +5357,59 @@ function getDeviceFingerprint() {
 }
 
 
-function getAppVersion() {
+// Returns the REAL installed app versionCode, straight from the native
+// PackageManager via the Android JS bridge (Auth.smali's
+// getAppVersionCode()) — this can't be spoofed from JS, unlike a
+// self-reported string. Falls back to a URL param / localStorage value
+// only for browser-mode testing where no native bridge exists; that
+// fallback is never trusted for killswitch enforcement (see
+// isVersionCodeTrusted()).
+function getAppVersionCode() {
   try {
-    if (window.Android && typeof window.Android.getAppVersion === 'function') {
-      const v = String(window.Android.getAppVersion() || '').trim();
-      if (v) return v;
+    if (window.Android && typeof window.Android.getAppVersionCode === 'function') {
+      const v = parseInt(String(window.Android.getAppVersionCode() || '').trim(), 10);
+      if (Number.isFinite(v) && v > 0) return v;
     }
   } catch (e) {}
   try {
     const p = new URLSearchParams(location.search);
-    if (p.get('appVersion')) return p.get('appVersion').trim();
+    if (p.get('appVersionCode')) {
+      const v = parseInt(p.get('appVersionCode'), 10);
+      if (Number.isFinite(v)) return v;
+    }
   } catch (e) {}
-  return localStorage.getItem('dgxen_app_version') || '1.0.0';
+  const stored = parseInt(localStorage.getItem('dgxen_app_version_code') || '', 10);
+  return Number.isFinite(stored) ? stored : null;
 }
 
-async function reportAppVersion(preferredUid) {
+// True only when the version code came from the real native bridge —
+// i.e. it's safe to use for killswitch/crash decisions. A browser-mode
+// fallback value must never be able to trigger a forced close.
+function isVersionCodeTrusted() {
+  try {
+    return !!(window.Android && typeof window.Android.getAppVersionCode === 'function');
+  } catch (e) { return false; }
+}
+
+async function reportAppVersionCode(preferredUid) {
   try {
     const devId = getDeviceFingerprint();
-    const ver = getAppVersion();
-    if (!devId) return;
+    const code = getAppVersionCode();
+    if (!devId || code == null) return;
     const safeDev = String(devId).replace(/[.#$\[\]\/]/g, '_');
-    // knownDevices map (device → version)
+    // knownDevices map (device → version code)
     try {
       await set(ref(db, 'settings/knownDevices/' + safeDev), {
         lastSeen: Date.now(),
         id: devId,
-        appVersion: ver
+        appVersionCode: code
       });
     } catch (e1) { console.warn('knownDevices write', e1); }
 
     const writeUser = async (uid) => {
       if (!uid) return;
       try {
-        await set(ref(db, 'users/' + uid + '/appVersion'), ver);
+        await set(ref(db, 'users/' + uid + '/appVersionCode'), code);
         await set(ref(db, 'users/' + uid + '/lastDeviceId'), devId);
       } catch (e2) { console.warn('user version write', e2); }
     };
@@ -5433,14 +5453,94 @@ async function reportAppVersion(preferredUid) {
       }
     } catch (e) {}
   } catch (e) {
-    console.error('reportAppVersion failed', e);
+    console.error('reportAppVersionCode failed', e);
   }
 }
 
 
-// Global registry of this device ID on load
+// ===== KILLSWITCH WATCHER =====
+// Continuously watches settings/appUpdate for a Version Code higher than
+// this device's real installed one while killOldVersions is on — even
+// mid-session, not just at open, since sessions can stay logged in
+// indefinitely (auto-login). On detection: corner "app expired" popup for
+// 30s, then a hard native process kill. Next app open will see the same
+// stale-version state immediately (nothing to restore), and will show
+// nothing at all once the device has actually been updated, since the
+// live versionCode comparison will pass.
+let __killswitchTimerId = null;
+let __killswitchShown = false;
+
+function showAppExpirePopup(message, seconds) {
+  if (__killswitchShown) return;
+  __killswitchShown = true;
+  const wrap = document.createElement('div');
+  wrap.id = 'appExpirePopup';
+  wrap.style.cssText = 'position:fixed;top:14px;right:14px;z-index:999999;max-width:280px;padding:14px 16px;border-radius:14px;background:rgba(20,4,4,.92);border:1.5px solid rgba(255,70,70,.65);box-shadow:0 8px 28px rgba(0,0,0,.5);backdrop-filter:blur(10px);font-family:inherit;color:#fff;animation:appExpireSlideIn .35s ease;';
+  wrap.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;"><span style="font-size:16px;">⚠️</span><span style="font-weight:900;font-size:13px;letter-spacing:.02em;color:#ff5a5a;">APP EXPIRED</span></div>' +
+    '<div style="font-size:12px;line-height:1.4;color:rgba(255,255,255,.88);margin-bottom:10px;">' + (message || 'A new version is required. Closing in <span id="appExpireCountdown">' + seconds + '</span>s.') + '</div>';
+  if (!document.getElementById('appExpireStyle')) {
+    const st = document.createElement('style');
+    st.id = 'appExpireStyle';
+    st.textContent = '@keyframes appExpireSlideIn{from{transform:translateX(24px);opacity:0}to{transform:translateX(0);opacity:1}}';
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(wrap);
+
+  let remaining = seconds;
+  const cdEl = () => document.getElementById('appExpireCountdown');
+  const tick = setInterval(() => {
+    remaining--;
+    const el = cdEl();
+    if (el) el.textContent = String(Math.max(0, remaining));
+    if (remaining <= 0) {
+      clearInterval(tick);
+      try {
+        if (window.Android && typeof window.Android.expire === 'function') {
+          window.Android.expire();
+        }
+      } catch (e) {}
+    }
+  }, 1000);
+}
+
+async function checkKillswitchOnce() {
+  // Never enforce off a browser-mode/fallback version code — only a real
+  // native-reported one can trigger a forced close.
+  if (!isVersionCodeTrusted()) return;
+  try {
+    const snap = await get(ref(db, 'settings/appUpdate'));
+    if (!snap.exists()) return;
+    const v = snap.val() || {};
+    if (!v.killOldVersions) return;
+    const liveCode = getAppVersionCode();
+    const requiredCode = parseInt(v.versionCode, 10);
+    if (!Number.isFinite(requiredCode) || liveCode == null) return;
+    if (liveCode < requiredCode) {
+      const msg = v.expiredMessage || 'This version has expired. Please update to continue.';
+      try {
+        if (window.Android && typeof window.Android.setRevokeMessage === 'function') {
+          window.Android.setRevokeMessage(msg);
+        }
+      } catch (e) {}
+      showAppExpirePopup(msg, 30);
+      // Once triggered, stop polling — the 30s countdown owns the exit.
+      if (__killswitchTimerId) { clearInterval(__killswitchTimerId); __killswitchTimerId = null; }
+    }
+  } catch (e) { console.warn('killswitch check failed', e); }
+}
+
+function startKillswitchWatcher() {
+  // Immediate check, then poll every 20s — frequent enough to catch a
+  // killswitch flip during an active session without hammering Firebase.
+  checkKillswitchOnce();
+  __killswitchTimerId = setInterval(checkKillswitchOnce, 20000);
+}
+
+// Runs on every app open — before AND after login, since a stale version
+// should be caught even for an already-logged-in (auto-login) session.
 window.addEventListener('load', async () => {
-    try { await reportAppVersion(); } catch (e) {}
+    try { await reportAppVersionCode(); } catch (e) {}
+    startKillswitchWatcher();
 });
 
 // Single Tap "Get Key" → copy native device ID + Send directly to Admin
@@ -6093,7 +6193,7 @@ async function verifyKey(){
     if(isValid){
       try {
         const matchedUid = window.__lastMatchedUserId || null;
-        await reportAppVersion(matchedUid);
+        await reportAppVersionCode(matchedUid);
         try {
           const liveFp = getDeviceFingerprint();
           if (matchedUid && liveFp) {
