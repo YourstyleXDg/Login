@@ -6394,9 +6394,7 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
       // Extra trial block → remove
       try{ await set(ref(db, 'users/'+uid), null); }catch(e){}
     }
-    try{
-      await set(ref(db, 'settings/trialClaims/'+String(deviceId).replace(/[.#$\[\]\/]/g,'_')), null);
-    }catch(e){}
+    // IMPORTANT: do NOT delete settings/trialClaims — one free trial per device forever
   }catch(e){ console.warn('trial cleanup', e); }
 }
 
@@ -6474,6 +6472,7 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
         claimed = true;
         claimExpiresAt = Number(v.expiresAt || 0);
         claimKey = String(v.key || '');
+        try { localStorage.setItem('dgxen_trial_claimed_' + safePath(id), '1'); } catch(e){}
       }
     } catch(e){}
   }
@@ -6481,20 +6480,45 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
     if (claimed) return false;
     const id = deviceId();
     if (!id) return false;
-    // If already has a non-trial active user registration with a real key, not "new"
+    // Local permanent flag (survives even if Firebase claim was wiped by old merge bug)
     try {
+      if (localStorage.getItem('dgxen_trial_claimed_' + safePath(id)) === '1') {
+        claimed = true;
+        return false;
+      }
+    } catch(e){}
+    try {
+      // Direct path users/{nativeId}
       const us = await get(ref(db, 'users/' + id));
       if (us.exists()) {
         const u = us.val() || {};
         if (u.isTrial) {
-          // still trial user
-          if (u.keyExpiresAt && Number(u.keyExpiresAt) > Date.now()) {
+          claimed = true;
+          claimExpiresAt = Number(u.keyExpiresAt || 0);
+          claimKey = String(u.lastGeneratedKey || u.key || '');
+          return false; // already took trial (even if expired)
+        }
+        if (u.lastGeneratedKey || u.key || u.name) {
+          return false; // real registration on this path
+        }
+      }
+      // Real registration is often under UUID — scan by fingerprint / deviceId fields
+      const allSnap = await get(ref(db, 'users'));
+      if (allSnap.exists()) {
+        const all = allSnap.val() || {};
+        const norm = String(id).trim().toLowerCase();
+        for (const uid of Object.keys(all)) {
+          const u = all[uid] || {};
+          const ids = [uid, u.deviceId, u.fingerprint, u.lastDeviceId, u.androidId, u.lastLoginDevice]
+            .map(x => String(x || '').trim().toLowerCase()).filter(Boolean);
+          if (!ids.includes(norm)) continue;
+          if (u.isTrial) {
             claimed = true;
-            claimExpiresAt = Number(u.keyExpiresAt);
+            claimExpiresAt = Number(u.keyExpiresAt || 0);
             claimKey = String(u.lastGeneratedKey || u.key || '');
             return false;
           }
-        } else if (u.lastGeneratedKey || u.key) {
+          // Any non-trial account linked to this device → no free trial
           return false;
         }
       }
@@ -6588,6 +6612,7 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
       claimed = true;
       claimExpiresAt = expiresAt;
       claimKey = key;
+      try { localStorage.setItem('dgxen_trial_claimed_' + safePath(id), '1'); } catch(e){}
       try {
         if (navigator.clipboard) await navigator.clipboard.writeText(key);
       } catch(e){}
