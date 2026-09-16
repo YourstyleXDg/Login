@@ -5465,6 +5465,40 @@ function isVersionCodeTrusted() {
   } catch (e) { return false; }
 }
 
+
+function parseDeviceMeta() {
+  try {
+    const ua = navigator.userAgent || '';
+    let name = 'Device';
+    let model = '';
+    // Android: ...; MODEL Build/... or ...; MODEL)
+    let m = ua.match(/Android[^;]*;\s*([^;)]+?)(?:\s+Build|\))/i);
+    if (m) {
+      model = m[1].replace(/_/g, ' ').trim();
+      name = 'Android';
+    } else if (/iPhone/i.test(ua)) {
+      name = 'iPhone';
+      model = (ua.match(/iPhone[\d,]*/i) || ['iPhone'])[0];
+    } else if (/iPad/i.test(ua)) {
+      name = 'iPad';
+      model = 'iPad';
+    } else if (/Windows/i.test(ua)) {
+      name = 'Windows';
+      model = (/Windows NT [\d.]+/.exec(ua) || ['Windows'])[0];
+    } else if (/Mac OS/i.test(ua)) {
+      name = 'Mac';
+      model = 'Mac';
+    } else {
+      name = (navigator.platform || 'Web').toString().slice(0, 32);
+      model = ua.slice(0, 48);
+    }
+    // Prefer model as display when it looks like a phone codename/marketing name
+    return { deviceName: name, deviceModel: model || name, ua: ua.slice(0, 180) };
+  } catch (e) {
+    return { deviceName: 'Device', deviceModel: 'Unknown', ua: '' };
+  }
+}
+
 async function reportAppVersionCode(preferredUid) {
   try {
     const devId = getDeviceFingerprint();
@@ -5473,18 +5507,24 @@ async function reportAppVersionCode(preferredUid) {
     const safeDev = String(devId).replace(/[.#$\[\]\/]/g, '_');
     // knownDevices map (device → version code)
     try {
+      const meta = (typeof parseDeviceMeta === 'function') ? parseDeviceMeta() : { deviceName: '', deviceModel: '' };
       await set(ref(db, 'settings/knownDevices/' + safeDev), {
         lastSeen: Date.now(),
         id: devId,
-        appVersionCode: code
+        appVersionCode: code,
+        deviceName: meta.deviceName || null,
+        deviceModel: meta.deviceModel || null
       });
     } catch (e1) { console.warn('knownDevices write', e1); }
 
     const writeUser = async (uid) => {
       if (!uid) return;
       try {
+        const meta = (typeof parseDeviceMeta === 'function') ? parseDeviceMeta() : { deviceName: '', deviceModel: '' };
         await set(ref(db, 'users/' + uid + '/appVersionCode'), code);
         await set(ref(db, 'users/' + uid + '/lastDeviceId'), devId);
+        if (meta.deviceName) await set(ref(db, 'users/' + uid + '/deviceName'), meta.deviceName);
+        if (meta.deviceModel) await set(ref(db, 'users/' + uid + '/deviceModel'), meta.deviceModel);
       } catch (e2) { console.warn('user version write', e2); }
     };
 
@@ -5678,12 +5718,15 @@ if (getKeyLink) {
           try{ localId=String(localStorage.getItem('deviceId')||localStorage.getItem('dgxen_device_id')||'').trim(); }catch(e){}
           const safe=String(id).replace(/[.#$\[\]\/]/g,'_');
           const now=Date.now();
+          const meta = (typeof parseDeviceMeta === 'function') ? parseDeviceMeta() : {};
           await set(ref(db, 'deviceRequests/' + safe), {
             deviceId: id,
             localId: localId && localId!==id ? localId : null,
             localStorageId: localId || null,
             time: now,
-            expiresAt: now + 12*60*1000
+            expiresAt: now + 12*60*1000,
+            deviceName: meta.deviceName || null,
+            deviceModel: meta.deviceModel || null
           });
           try{ sessionStorage.setItem('dgxen_pending_getkey', safe); }catch(e){}
           // Pass native device id so key-gen can merge trial user → one block only
