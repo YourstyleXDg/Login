@@ -930,13 +930,42 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 .tagline.trial-cta{
   cursor:pointer;
-  color:var(--accent)!important;
-  font-weight:700;
-  text-decoration:underline;
-  text-underline-offset:3px;
-  transition:opacity .35s ease, color .35s ease, transform .25s ease;
+  font-weight:750;
+  font-size:13.5px;
+  letter-spacing:0.04em;
+  line-height:1.45;
+  text-decoration:none!important;
+  background:linear-gradient(105deg,#7dffc8 0%,#a8f0ff 28%,#e8d5ff 55%,#ffd6a8 78%,#7dffc8 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent!important;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 10px rgba(125,255,200,.22));
+  animation:trialShimmer 4.5s ease-in-out infinite;
+  transition:transform .3s cubic-bezier(.22,1,.36,1), filter .3s ease, opacity .35s ease;
+  position:relative;
 }
-.tagline.trial-cta:active{transform:scale(.98);opacity:.85}
+.tagline.trial-cta::after{
+  content:"";
+  position:absolute;
+  left:15%;
+  right:15%;
+  bottom:-5px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(168,240,255,.55),rgba(232,213,255,.5),transparent);
+  opacity:.85;
+  pointer-events:none;
+}
+.tagline.trial-cta:active{
+  transform:scale(.985);
+  opacity:.88;
+  filter:drop-shadow(0 0 6px rgba(125,255,200,.15));
+}
+@keyframes trialShimmer{
+  0%,100%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+}
 .tagline.trial-flash{
   transition:opacity .25s ease;
 }
@@ -6400,7 +6429,7 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
 
 // ===== TRIAL KEY (30 min, one per device) =====
 (function(){
-  const TRIAL_MSG = 'click me to get 30 min free key trial';
+  const TRIAL_MSG = '✦  Tap for your 30‑min free access  ·  once only';
   let trialEnabled = false;
   let trialDurationMs = 30 * 60 * 1000;
   let claimed = false;
@@ -6473,36 +6502,36 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
         claimExpiresAt = Number(v.expiresAt || 0);
         claimKey = String(v.key || '');
         try { localStorage.setItem('dgxen_trial_claimed_' + safePath(id), '1'); } catch(e){}
+      } else {
+        // Firebase has no claim → allow trial again (admin may have wiped data)
+        claimed = false;
+        claimExpiresAt = 0;
+        claimKey = '';
+        try { localStorage.removeItem('dgxen_trial_claimed_' + safePath(id)); } catch(e){}
       }
     } catch(e){}
   }
   async function isNewDeviceForTrial(){
+    // claimed = true only when settings/trialClaims/{deviceId} exists (loadClaim)
     if (claimed) return false;
     const id = deviceId();
     if (!id) return false;
-    // Local permanent flag (survives even if Firebase claim was wiped by old merge bug)
     try {
-      if (localStorage.getItem('dgxen_trial_claimed_' + safePath(id)) === '1') {
-        claimed = true;
-        return false;
-      }
-    } catch(e){}
-    try {
-      // Direct path users/{nativeId}
       const us = await get(ref(db, 'users/' + id));
       if (us.exists()) {
         const u = us.val() || {};
-        if (u.isTrial) {
-          claimed = true;
-          claimExpiresAt = Number(u.keyExpiresAt || 0);
-          claimKey = String(u.lastGeneratedKey || u.key || '');
-          return false; // already took trial (even if expired)
-        }
-        if (u.lastGeneratedKey || u.key || u.name) {
+        // isTrial alone does NOT block if admin wiped trialClaims (testing reset)
+        if (!u.isTrial && (u.name || u.lastGeneratedKey || u.key)) {
           return false; // real registration on this path
         }
+        if (u.isTrial && u.keyExpiresAt && Number(u.keyExpiresAt) > Date.now()) {
+          // live trial still running — show countdown path, not new CTA
+          claimExpiresAt = Number(u.keyExpiresAt);
+          claimKey = String(u.lastGeneratedKey || u.key || '');
+          claimed = true;
+          return false;
+        }
       }
-      // Real registration is often under UUID — scan by fingerprint / deviceId fields
       const allSnap = await get(ref(db, 'users'));
       if (allSnap.exists()) {
         const all = allSnap.val() || {};
@@ -6513,12 +6542,15 @@ async function cleanupTrialDuplicates(deviceId, matchedUid){
             .map(x => String(x || '').trim().toLowerCase()).filter(Boolean);
           if (!ids.includes(norm)) continue;
           if (u.isTrial) {
-            claimed = true;
-            claimExpiresAt = Number(u.keyExpiresAt || 0);
-            claimKey = String(u.lastGeneratedKey || u.key || '');
-            return false;
+            if (u.keyExpiresAt && Number(u.keyExpiresAt) > Date.now()) {
+              claimed = true;
+              claimExpiresAt = Number(u.keyExpiresAt);
+              claimKey = String(u.lastGeneratedKey || u.key || '');
+              return false;
+            }
+            continue; // expired trial leftover without claim → ignore for eligibility
           }
-          // Any non-trial account linked to this device → no free trial
+          // Real (non-trial) account linked to this device
           return false;
         }
       }
