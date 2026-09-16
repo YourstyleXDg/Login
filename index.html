@@ -927,6 +927,20 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 #forceUpdateModal .fu-btn{display:block;width:100%;padding:14px 16px;border:0;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#2a2d33,#1a1c20);color:#fff}
 #forceUpdateModal .fu-btn.primary{background:linear-gradient(135deg,#26f5a1,#00c96d);color:#03150b;margin-bottom:10px}
 
+
+.tagline.trial-cta{
+  cursor:pointer;
+  color:var(--accent)!important;
+  font-weight:700;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  transition:opacity .35s ease, color .35s ease, transform .25s ease;
+}
+.tagline.trial-cta:active{transform:scale(.98);opacity:.85}
+.tagline.trial-flash{
+  transition:opacity .25s ease;
+}
+
 </style>
 </head>
 <body>
@@ -3145,7 +3159,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
         <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
-        <p class="tagline">Enter your access key to unlock.</p>
+        <p class="tagline" id="loginTagline">Enter your access key to unlock.</p>
 
         <div class="key-wrap">
           <input type="text" id="keyInput" placeholder="Enter Access Key..." autocomplete="off" autocapitalize="none" spellcheck="false">
@@ -6342,6 +6356,278 @@ async function verifyKey(){
 }
 
 
+
+// ===== TRIAL KEY (30 min, one per device) =====
+(function(){
+  const TRIAL_MSG = 'click me to get 30 min free key trial';
+  let trialEnabled = false;
+  let trialDurationMs = 30 * 60 * 1000;
+  let claimed = false;
+  let claimExpiresAt = 0;
+  let claimKey = '';
+  let showingCountdown = false;
+  let tagEl = null;
+
+  function getTag(){
+    if (!tagEl) tagEl = document.getElementById('loginTagline') || document.querySelector('.tagline');
+    return tagEl;
+  }
+  function deviceId(){
+    try { return (typeof getDeviceFingerprint === 'function' ? getDeviceFingerprint() : '') || ''; }
+    catch(e){ return ''; }
+  }
+  function safePath(id){
+    return String(id||'').replace(/[.#$\[\]\/]/g,'_');
+  }
+  function storeDefaultTagline(){
+    const t = getTag();
+    if (!t) return;
+    if (!t.dataset.adminTagline && !t.dataset.defaultTagline) {
+      t.dataset.defaultTagline = t.textContent || 'Enter your access key to unlock.';
+    }
+  }
+  function adminOrDefaultText(){
+    const t = getTag();
+    if (!t) return 'Enter your access key to unlock.';
+    // Prefer last admin-applied text if stored
+    if (t.dataset.adminTagline) return t.dataset.adminTagline;
+    if (t.dataset.defaultTagline) return t.dataset.defaultTagline;
+    return t.textContent || 'Enter your access key to unlock.';
+  }
+  function setTagText(text, isTrial){
+    const t = getTag();
+    if (!t) return;
+    t.textContent = text;
+    if (isTrial) {
+      t.classList.add('trial-cta');
+      t.setAttribute('role','button');
+      t.tabIndex = 0;
+    } else {
+      t.classList.remove('trial-cta');
+      t.removeAttribute('role');
+      t.removeAttribute('tabindex');
+    }
+  }
+  function formatRemain(ms){
+    ms = Math.max(0, ms|0);
+    const s = Math.ceil(ms/1000);
+    const m = Math.floor(s/60);
+    const r = s % 60;
+    return m + ':' + String(r).padStart(2,'0');
+  }
+  function randomTrialKey(){
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let out = 'DGXEN-TRIAL-';
+    for (let i=0;i<8;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    return out;
+  }
+  async function loadClaim(){
+    const id = deviceId();
+    if (!id) return;
+    try {
+      const snap = await get(ref(db, 'settings/trialClaims/' + safePath(id)));
+      if (snap.exists()) {
+        const v = snap.val() || {};
+        claimed = true;
+        claimExpiresAt = Number(v.expiresAt || 0);
+        claimKey = String(v.key || '');
+      }
+    } catch(e){}
+  }
+  async function isNewDeviceForTrial(){
+    if (claimed) return false;
+    const id = deviceId();
+    if (!id) return false;
+    // If already has a non-trial active user registration with a real key, not "new"
+    try {
+      const us = await get(ref(db, 'users/' + id));
+      if (us.exists()) {
+        const u = us.val() || {};
+        if (u.isTrial) {
+          // still trial user
+          if (u.keyExpiresAt && Number(u.keyExpiresAt) > Date.now()) {
+            claimed = true;
+            claimExpiresAt = Number(u.keyExpiresAt);
+            claimKey = String(u.lastGeneratedKey || u.key || '');
+            return false;
+          }
+        } else if (u.lastGeneratedKey || u.key) {
+          return false;
+        }
+      }
+    } catch(e){}
+    return true;
+  }
+  async function refreshTaglineUI(){
+    storeDefaultTagline();
+    if (!trialEnabled) {
+      // restore admin/default without forcing trial
+      setTagText(adminOrDefaultText(), false);
+      return;
+    }
+    await loadClaim();
+    const neu = await isNewDeviceForTrial();
+    if (neu) {
+      setTagText(TRIAL_MSG, true);
+    } else {
+      setTagText(adminOrDefaultText(), false);
+    }
+  }
+  async function claimTrial(){
+    if (!trialEnabled) return;
+    if (showingCountdown) return;
+    const id = deviceId();
+    if (!id) {
+      try { show('Device id missing','var(--error)'); } catch(e){}
+      return;
+    }
+    await loadClaim();
+    if (claimed && claimKey) {
+      // second tap: show countdown 2s then restore tagline
+      showingCountdown = true;
+      const t = getTag();
+      const remain = claimExpiresAt > Date.now() ? (claimExpiresAt - Date.now()) : 0;
+      const prev = t ? t.textContent : '';
+      if (t) {
+        t.classList.add('trial-flash');
+        t.style.opacity = '0';
+        setTimeout(function(){
+          setTagText(remain > 0 ? ('Trial left ' + formatRemain(remain)) : 'Trial expired', false);
+          t.style.opacity = '1';
+        }, 220);
+        setTimeout(function(){
+          t.style.opacity = '0';
+          setTimeout(function(){
+            setTagText(adminOrDefaultText(), false);
+            t.style.opacity = '1';
+            t.classList.remove('trial-flash');
+            showingCountdown = false;
+          }, 220);
+        }, 2200);
+      } else {
+        showingCountdown = false;
+      }
+      // also copy key again for convenience
+      try {
+        if (navigator.clipboard && claimKey) await navigator.clipboard.writeText(claimKey);
+        try { show('Trial key copied · ' + (remain>0?formatRemain(remain)+' left':'expired'), remain>0?'var(--accent)':'var(--error)'); } catch(e){}
+      } catch(e){}
+      return;
+    }
+
+    // First claim
+    try {
+      const key = randomTrialKey();
+      const expiresAt = Date.now() + trialDurationMs;
+      const uid = id;
+      const userPayload = {
+        name: 'Trial User',
+        lastGeneratedKey: key,
+        key: key,
+        keyExpiresAt: expiresAt,
+        isTrial: true,
+        status: 'active',
+        deviceId: id,
+        fingerprint: id,
+        lastDeviceId: id,
+        lastLoginDevice: id,
+        joined: Date.now(),
+        createdAt: Date.now()
+      };
+      await set(ref(db, 'users/' + uid), userPayload);
+      await set(ref(db, 'settings/trialClaims/' + safePath(id)), {
+        key: key,
+        expiresAt: expiresAt,
+        claimedAt: Date.now(),
+        deviceId: id,
+        uid: uid
+      });
+      claimed = true;
+      claimExpiresAt = expiresAt;
+      claimKey = key;
+      try {
+        if (navigator.clipboard) await navigator.clipboard.writeText(key);
+      } catch(e){}
+      try {
+        const input = document.getElementById('keyInput') || document.querySelector('input[type="text"]');
+        if (input) input.value = key;
+      } catch(e){}
+      try { show('Trial key copied · valid 30 min','var(--accent)'); window.playSound && window.playSound(window.sfxSuccess); } catch(e){}
+      setTagText(adminOrDefaultText(), false);
+    } catch (e) {
+      try { show('Trial claim failed: ' + (e.message||e), 'var(--error)'); } catch(e2){}
+    }
+  }
+
+  function bindTagTap(){
+    const t = getTag();
+    if (!t || t._trialBound) return;
+    t._trialBound = true;
+    t.addEventListener('click', function(e){
+      if (!trialEnabled) return;
+      if (!t.classList.contains('trial-cta') && !claimed) return;
+      // allow countdown path when claimed
+      if (!t.classList.contains('trial-cta') && claimed) {
+        claimTrial();
+        return;
+      }
+      if (t.classList.contains('trial-cta')) {
+        e.preventDefault();
+        claimTrial();
+      }
+    });
+  }
+
+  // Hook notice applyTagline so admin tagline is preserved in data-adminTagline
+  const _origApply = window.__dgxenApplyRemoteAtmConfig;
+  // Patch applyNotice path inside notice IIFE by observing tagline changes from notice listener
+  try {
+    onValue(ref(db, 'settings/trialKey'), async function(snap){
+      const v = snap.exists() ? (snap.val()||{}) : {};
+      trialEnabled = !!(v.enabled === true || v.enabled === 'true' || v.enabled === 1);
+      if (v.durationMin) trialDurationMs = Math.max(1, Number(v.durationMin)) * 60 * 1000;
+      await refreshTaglineUI();
+      bindTagTap();
+    });
+  } catch(e){}
+
+  // When notice updates tagline, store as admin text then re-apply trial if needed
+  try {
+    const t = getTag();
+    if (t) {
+      const obs = new MutationObserver(function(){
+        if (t.classList.contains('trial-cta')) return;
+        if (showingCountdown) return;
+        const txt = (t.textContent||'').trim();
+        if (txt && txt !== TRIAL_MSG && !/^Trial left /.test(txt) && txt !== 'Trial expired') {
+          t.dataset.adminTagline = txt;
+        }
+      });
+      obs.observe(t, { characterData: true, childList: true, subtree: true });
+    }
+  } catch(e){}
+
+  // After notice boot, refresh trial UI
+  setTimeout(async function(){
+    storeDefaultTagline();
+    const t = getTag();
+    if (t && !t.dataset.adminTagline) {
+      const txt = (t.textContent||'').trim();
+      if (txt && txt !== TRIAL_MSG) t.dataset.adminTagline = txt;
+    }
+    try {
+      const snap = await get(ref(db, 'settings/trialKey'));
+      if (snap.exists()) {
+        const v = snap.val()||{};
+        trialEnabled = !!(v.enabled === true || v.enabled === 'true' || v.enabled === 1);
+        if (v.durationMin) trialDurationMs = Math.max(1, Number(v.durationMin)) * 60 * 1000;
+      }
+    } catch(e){}
+    await refreshTaglineUI();
+    bindTagTap();
+  }, 1200);
+})();
+
 // ===== ADMIN NOTICE + JOIN FINGER =====
 (function(){
   const finger=document.getElementById('joinFinger');
@@ -6408,8 +6694,14 @@ async function verifyKey(){
       const tag=document.querySelector('.tagline');
       if(tag){
         if(!tag.dataset.defaultTagline) tag.dataset.defaultTagline=tag.textContent;
-        if(v.taglineEnabled && v.tagline) tag.textContent=String(v.tagline);
-        else tag.textContent=tag.dataset.defaultTagline||tag.textContent;
+        if(v.taglineEnabled && v.tagline) {
+          tag.dataset.adminTagline=String(v.tagline);
+          if(!tag.classList.contains('trial-cta')) tag.textContent=String(v.tagline);
+        } else {
+          const def=tag.dataset.defaultTagline||tag.textContent;
+          tag.dataset.adminTagline=def;
+          if(!tag.classList.contains('trial-cta')) tag.textContent=def;
+        }
       }
     }catch(e){}
 
