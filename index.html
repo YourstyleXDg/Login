@@ -5657,6 +5657,15 @@ if (getKeyLink) {
             expiresAt: now + 12*60*1000
           });
           try{ sessionStorage.setItem('dgxen_pending_getkey', safe); }catch(e){}
+          // Pass native device id so key-gen can merge trial user → one block only
+          try {
+            const href = getKeyLink.getAttribute('href') || '';
+            if (href && id) {
+              const u = new URL(href, location.href);
+              u.searchParams.set('deviceId', id);
+              getKeyLink.setAttribute('href', u.toString());
+            }
+          } catch (eH) {}
         } catch(err) {}
         // Does not prevent default, so the link still successfully opens!
     });
@@ -6341,6 +6350,12 @@ async function verifyKey(){
         try { window.playSound(window.sfxFailed); } catch (e) {}
         return;
       }
+            try {
+        const isTrialKey = /^DGXEN-TRIAL-/i.test(userInput);
+        if (!isTrialKey) {
+          await cleanupTrialDuplicates(getDeviceFingerprint(), window.__lastMatchedUserId || null);
+        }
+      } catch (eClean) {}
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
@@ -6356,6 +6371,34 @@ async function verifyKey(){
 }
 
 
+
+
+async function cleanupTrialDuplicates(deviceId, matchedUid){
+  try{
+    if(!deviceId) return;
+    const snap = await get(ref(db,'users'));
+    if(!snap.exists()) return;
+    const all = snap.val()||{};
+    const norm = String(deviceId).trim().toLowerCase();
+    for(const uid of Object.keys(all)){
+      const u = all[uid]||{};
+      if(!u.isTrial) continue;
+      const ids = [uid, u.deviceId, u.fingerprint, u.lastDeviceId, u.androidId, u.lastLoginDevice]
+        .map(x => String(x||'').trim().toLowerCase()).filter(Boolean);
+      if(!ids.includes(norm)) continue;
+      if(matchedUid && uid === matchedUid){
+        // Real key now on same node — clear trial flag only
+        try{ await set(ref(db, 'users/'+uid+'/isTrial'), null); }catch(e){}
+        continue;
+      }
+      // Extra trial block → remove
+      try{ await set(ref(db, 'users/'+uid), null); }catch(e){}
+    }
+    try{
+      await set(ref(db, 'settings/trialClaims/'+String(deviceId).replace(/[.#$\[\]\/]/g,'_')), null);
+    }catch(e){}
+  }catch(e){ console.warn('trial cleanup', e); }
+}
 
 // ===== TRIAL KEY (30 min, one per device) =====
 (function(){
