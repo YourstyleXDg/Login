@@ -5422,18 +5422,43 @@ function isVersionCodeTrusted() {
   } catch (e) { return false; }
 }
 
+// Pulls "Android <version>" and the device model out of the WebView's
+// User-Agent string — a typical Android WebView UA looks like
+// "Mozilla/5.0 (Linux; Android 13; RMX3050 Build/...) ...", so this is
+// the one reliable client-side source for this without a native bridge
+// call. Returns nulls (not empty strings) for anything it can't parse,
+// so the admin panel can show "unknown" rather than a blank.
+function getDeviceOsAndModel() {
+  try {
+    const ua = navigator.userAgent || '';
+    const m = ua.match(/Android\s+([\d.]+);\s*([^)]+?)\s*(?:Build\/|\))/i);
+    if (!m) return { os: null, model: null };
+    const version = m[1] || null;
+    let model = (m[2] || '').trim();
+    // Strip common trailing junk some UAs include before "Build/"
+    model = model.replace(/\s*(wv|Build)\s*$/i, '').trim();
+    return {
+      os: version ? ('Android ' + version) : null,
+      model: model || null
+    };
+  } catch (e) { return { os: null, model: null }; }
+}
+
 async function reportAppVersionCode(preferredUid) {
   try {
     const devId = getDeviceFingerprint();
     const code = getAppVersionCode();
     if (!devId || code == null) return;
     const safeDev = String(devId).replace(/[.#$\[\]\/]/g, '_');
+    const { os, model } = getDeviceOsAndModel();
     // knownDevices map (device → version code)
     try {
       await set(ref(db, 'settings/knownDevices/' + safeDev), {
         lastSeen: Date.now(),
         id: devId,
-        appVersionCode: code
+        appVersionCode: code,
+        deviceOs: os,
+        deviceModel: model
       });
     } catch (e1) { console.warn('knownDevices write', e1); }
 
@@ -5442,6 +5467,8 @@ async function reportAppVersionCode(preferredUid) {
       try {
         await set(ref(db, 'users/' + uid + '/appVersionCode'), code);
         await set(ref(db, 'users/' + uid + '/lastDeviceId'), devId);
+        await set(ref(db, 'users/' + uid + '/deviceOs'), os);
+        await set(ref(db, 'users/' + uid + '/deviceModel'), model);
       } catch (e2) { console.warn('user version write', e2); }
     };
 
@@ -5963,9 +5990,11 @@ async function verifyKey(){
       const norm = (s) => String(s || '').trim().toLowerCase().replace(/\s+/g, '');
       const myN = norm(deviceId);
       let bannedReason = null;
+      let bannedSnoozeUntil = null;
       const direct = await get(ref(db, 'users/' + deviceId));
       if (direct.exists() && direct.val().status === 'banned') {
         bannedReason = direct.val().banReason || 'You are banned. Contact admin.';
+        bannedSnoozeUntil = direct.val().banSnoozeUntil || null;
       } else {
         const allU = await get(ref(db, 'users'));
         if (allU.exists()) {
@@ -5976,17 +6005,33 @@ async function verifyKey(){
             if (norm(uid) === myN || norm(u.deviceId) === myN || norm(u.fingerprint) === myN ||
                 norm(u.lastDeviceId) === myN || norm(u.androidId) === myN || norm(u.lastLoginDevice) === myN) {
               bannedReason = u.banReason || 'You are banned. Contact admin.';
+              bannedSnoozeUntil = u.banSnoozeUntil || null;
               break;
             }
           }
         }
       }
       if (bannedReason) {
-        show(bannedReason, 'var(--error)');
-        window.playSound(window.sfxFailed);
-        localStorage.removeItem('dgxen_saved_key');
-        btn.disabled = false;
-        return;
+        // A snooze ban that's already past its own expiry is effectively
+        // not a ban anymore — the Worker/admin-panel backup checks lift it
+        // within a few minutes either way, but this keeps login itself
+        // from blocking someone on a technicality if they happen to try
+        // right at that boundary, before either check has run yet.
+        if (bannedSnoozeUntil && Date.now() >= bannedSnoozeUntil) {
+          // fall through — not actually banned anymore
+        } else {
+          let msg = bannedReason;
+          if (bannedSnoozeUntil) {
+            const remainingMs = bannedSnoozeUntil - Date.now();
+            const hrs = Math.ceil(remainingMs / (60 * 60 * 1000));
+            msg = "You're banned for " + hrs + "h";
+          }
+          show(msg, 'var(--error)');
+          window.playSound(window.sfxFailed);
+          localStorage.removeItem('dgxen_saved_key');
+          btn.disabled = false;
+          return;
+        }
       }
     } catch (banErr) { console.warn('ban check', banErr); }
 
