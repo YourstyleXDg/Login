@@ -5422,26 +5422,24 @@ function isVersionCodeTrusted() {
   } catch (e) { return false; }
 }
 
-// Pulls "Android <version>" and the device model out of the WebView's
-// User-Agent string — a typical Android WebView UA looks like
-// "Mozilla/5.0 (Linux; Android 13; RMX3050 Build/...) ...", so this is
-// the one reliable client-side source for this without a native bridge
-// call. Returns nulls (not empty strings) for anything it can't parse,
-// so the admin panel can show "unknown" rather than a blank.
+// Real device model + OS version via the native Auth.getDeviceModel()
+// bridge (Build.MODEL / Build.VERSION.RELEASE) — navigator.userAgent
+// can't be used for this: Chrome/WebView permanently freezes the model
+// and Android version fields in the UA string to a fake constant
+// ("Android 10; K") for privacy, on every device, so parsing it never
+// gives a real value. No browser-JS fallback exists for this in a
+// WebView (User-Agent Client Hints are also disabled there), so without
+// the native bridge this returns nulls and the admin panel shows
+// "unknown" rather than a fabricated guess.
 function getDeviceOsAndModel() {
   try {
-    const ua = navigator.userAgent || '';
-    const m = ua.match(/Android\s+([\d.]+);\s*([^)]+?)\s*(?:Build\/|\))/i);
-    if (!m) return { os: null, model: null };
-    const version = m[1] || null;
-    let model = (m[2] || '').trim();
-    // Strip common trailing junk some UAs include before "Build/"
-    model = model.replace(/\s*(wv|Build)\s*$/i, '').trim();
-    return {
-      os: version ? ('Android ' + version) : null,
-      model: model || null
-    };
-  } catch (e) { return { os: null, model: null }; }
+    if (window.Android && typeof window.Android.getDeviceModel === 'function') {
+      const raw = String(window.Android.getDeviceModel() || '').trim();
+      const parts = raw.split('\u00b7').map(s => s.trim());
+      if (parts.length === 2 && parts[0] && parts[1]) return { os: parts[0], model: parts[1] };
+    }
+  } catch (e) {}
+  return { os: null, model: null };
 }
 
 async function reportAppVersionCode(preferredUid) {
@@ -6024,7 +6022,7 @@ async function verifyKey(){
           if (bannedSnoozeUntil) {
             const remainingMs = bannedSnoozeUntil - Date.now();
             const hrs = Math.ceil(remainingMs / (60 * 60 * 1000));
-            msg = "You're banned for " + hrs + "h";
+            msg = bannedReason + " — You're banned for " + hrs + "h";
           }
           show(msg, 'var(--error)');
           window.playSound(window.sfxFailed);
