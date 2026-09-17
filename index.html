@@ -5790,38 +5790,39 @@ async function refreshTrialPromptState() {
   const promptEl = document.getElementById('trialKeyPrompt');
   if (!promptEl) return;
   try {
-    const trialSettingsSnap = await get(ref(db, 'settings/trialKey'));
-    const trialSettings = trialSettingsSnap.exists() ? (trialSettingsSnap.val() || {}) : {};
-    if (!trialSettings.enabled) { promptEl.style.display = 'none'; return; }
-
     const devId = getDeviceFingerprint();
     if (!devId) return;
 
+    // Self-heal a stale trial:true flag on THIS device's own record
+    // regardless of whether the trial feature is currently on or off —
+    // this must run unconditionally, every load, since it's correcting
+    // stale data (a real key having overwritten a trial record without
+    // clearing the flag), not deciding whether to offer a new trial. The
+    // previous version of this function only reached this check after an
+    // "is the feature enabled" gate, so toggling the feature off left any
+    // already-stale badge stuck forever — this is what actually caused
+    // the "needs a second login to clear" symptom you saw, since a
+    // restart alone re-ran this function but exited before ever reaching
+    // the self-heal.
     const existing = await findExistingUserRecordForThisDevice(devId);
     const claimSnap = await get(ref(db, 'settings/trialClaims/' + devId));
     const hasClaim = claimSnap.exists();
 
     if (existing && existing.data && existing.data.trial) {
-      // This device's own account currently has trial:true — but that
-      // flag alone isn't trustworthy once other writers (the web "Get
-      // Key" page, generating a REAL key under this same device id) can
-      // overwrite this same record. Cross-check against what was
-      // actually claimed: only treat this as a genuine live trial if the
-      // record's current key still matches the exact key issued at
-      // claim time. If it doesn't match, the record has been legitimately
-      // superseded by a real key since — self-heal by clearing the stale
-      // trial:true flag so nothing downstream (admin panel's TRIAL badge
-      // included) keeps misreporting it as a trial.
       const claimData = hasClaim ? claimSnap.val() : null;
       const keyStillMatchesClaim = claimData && claimData.key &&
         String(existing.data.lastGeneratedKey || '').trim() === String(claimData.key).trim();
-
       if (!keyStillMatchesClaim) {
         try { await update(ref(db, 'users/' + existing.uid), { trial: false }); } catch (e) {}
-        promptEl.style.display = 'none';
-        return;
+        existing.data.trial = false; // reflect the heal locally too, for the checks below
       }
+    }
 
+    const trialSettingsSnap = await get(ref(db, 'settings/trialKey'));
+    const trialSettings = trialSettingsSnap.exists() ? (trialSettingsSnap.val() || {}) : {};
+    if (!trialSettings.enabled) { promptEl.style.display = 'none'; return; }
+
+    if (existing && existing.data && existing.data.trial) {
       // This device's own account IS the trial account — check whether
       // it's still within its 30-minute window.
       const stillLive = existing.data.keyExpiresAt && Number(existing.data.keyExpiresAt) > Date.now();
