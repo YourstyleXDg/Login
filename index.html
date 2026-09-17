@@ -3145,7 +3145,8 @@ body[data-atm-intensity] .sky-layer{opacity:1}
       <div class="content">
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
         <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
-        <p class="tagline">Enter your access key to unlock.</p>
+        <p class="tagline" id="taglineText">Enter your access key to unlock.</p>
+        <p class="tagline" id="trialKeyPrompt" style="display:none;color:var(--accent);font-weight:800;cursor:pointer;user-select:none;transition:opacity .35s ease;" onclick="handleTrialKeyTap()">Click me to get 30 min free key trial</p>
 
         <div class="key-wrap">
           <input type="text" id="keyInput" placeholder="Enter Access Key..." autocomplete="off" autocapitalize="none" spellcheck="false">
@@ -5647,7 +5648,123 @@ function startKillswitchWatcher() {
 window.addEventListener('load', async () => {
     try { await reportAppVersionCode(); } catch (e) {}
     startKillswitchWatcher();
+    try { await checkTrialKeyEligibility(); } catch (e) { console.warn('trial key check', e); }
 });
+
+// ===== 30-MINUTE TRIAL KEY =====
+// Fully independent of the admin-controlled tagline text (#taglineText) —
+// this is a separate sibling element (#trialKeyPrompt) that only becomes
+// visible when eligible, and never reads or writes the real tagline's
+// content in any way.
+//
+// Eligibility (checked once per page load): the toggle is on, AND this
+// device has never logged in by any method before (no users/<id> record)
+// AND has never claimed a trial before (no settings/trialClaims/<id>
+// record — this second check matters because generating a trial key
+// itself creates a users/<id> record immediately, before the device has
+// actually logged in with it, so the users/<id> check alone isn't
+// suficient to block a second claim attempt).
+let __trialState = 'idle'; // idle -> generated -> revealed
+let __trialKeyValue = null;
+
+async function checkTrialKeyEligibility() {
+  const promptEl = document.getElementById('trialKeyPrompt');
+  if (!promptEl) return;
+  try {
+    const toggleSnap = await get(ref(db, 'settings/trialKeyEnabled'));
+    if (!toggleSnap.exists() || !toggleSnap.val()) return; // feature off
+
+    const devId = getDeviceFingerprint();
+    if (!devId) return;
+
+    const userSnap = await get(ref(db, 'users/' + devId));
+    if (userSnap.exists()) return; // has logged in / registered by any method before
+
+    const claimSnap = await get(ref(db, 'settings/trialClaims/' + devId));
+    if (claimSnap.exists()) return; // already claimed a trial before (even if never used)
+
+    promptEl.style.display = 'block';
+  } catch (e) { console.warn('trial eligibility check failed', e); }
+}
+
+window.handleTrialKeyTap = async function() {
+  const promptEl = document.getElementById('trialKeyPrompt');
+  if (!promptEl) return;
+
+  if (__trialState === 'idle') {
+    // First tap: generate the key, copy it, auto-fill it — but do NOT
+    // touch the real tagline text, only this sibling element's own text.
+    promptEl.style.pointerEvents = 'none';
+    promptEl.textContent = 'Generating your trial key…';
+    try {
+      const devId = getDeviceFingerprint();
+      if (!devId) throw new Error('no device id');
+
+      // Re-check right before writing — closes the gap between the
+      // load-time eligibility check and this tap, in case of a slow user
+      // or a second tab.
+      const claimSnap = await get(ref(db, 'settings/trialClaims/' + devId));
+      if (claimSnap.exists()) {
+        promptEl.textContent = 'Trial already used on this device.';
+        setTimeout(() => { promptEl.style.display = 'none'; }, 2500);
+        return;
+      }
+
+      const newKey = "DGXEN-" +
+        Math.random().toString(36).substring(2,6).toUpperCase() + "-" +
+        Math.random().toString(36).substring(2,6).toUpperCase() + "-" +
+        Math.random().toString(36).substring(2,6).toUpperCase() + "-" +
+        Math.random().toString(36).substring(2,6).toUpperCase();
+      const expiresAt = Date.now() + (30 * 60 * 1000);
+
+      await set(ref(db, 'users/' + devId), {
+        name: 'Trial User',
+        status: 'active',
+        joined: new Date().toISOString(),
+        lastGeneratedKey: newKey,
+        keyExpiresAt: expiresAt,
+        trial: true
+      });
+      await set(ref(db, 'settings/trialClaims/' + devId), { claimedAt: Date.now() });
+
+      __trialKeyValue = newKey;
+      __trialState = 'generated';
+
+      try { await navigator.clipboard.writeText(newKey); } catch (e) {}
+      const keyInputEl = document.getElementById('keyInput');
+      if (keyInputEl) keyInputEl.value = newKey;
+
+      promptEl.style.pointerEvents = 'auto';
+      promptEl.textContent = 'Trial key copied! Tap again to see timer';
+    } catch (e) {
+      console.warn('trial key generation failed', e);
+      promptEl.style.pointerEvents = 'auto';
+      promptEl.textContent = 'Click me to get 30 min free key trial';
+    }
+    return;
+  }
+
+  if (__trialState === 'generated') {
+    // Second tap: fade out, 2s countdown-style pause, fade back in showing
+    // the 30-min validity — matches the requested tap-again interaction.
+    __trialState = 'revealed';
+    promptEl.style.pointerEvents = 'none';
+    promptEl.style.opacity = '0';
+    let count = 2;
+    setTimeout(function tick() {
+      promptEl.style.opacity = '1';
+      if (count > 0) {
+        promptEl.textContent = 'Unlocking in ' + count + '…';
+        count--;
+        setTimeout(tick, 1000);
+      } else {
+        promptEl.textContent = 'Trial key valid for 30 minutes';
+      }
+    }, 350);
+    return;
+  }
+  // __trialState === 'revealed' → no further action on tap.
+};
 
 // Single Tap "Get Key" → copy native device ID + Send directly to Admin
 const getKeyLink = document.getElementById('getKeyLink');
@@ -6448,7 +6565,7 @@ async function verifyKey(){
     v=v||{};
     setFinger(v.fingerHint===true||v.fingerHint==='on'||v.fingerHint===1);
     try{
-      const tag=document.querySelector('.tagline');
+      const tag=document.getElementById('taglineText') || document.querySelector('.tagline');
       if(tag){
         if(!tag.dataset.defaultTagline) tag.dataset.defaultTagline=tag.textContent;
         if(v.taglineEnabled && v.tagline) tag.textContent=String(v.tagline);
