@@ -358,6 +358,44 @@ h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-sh
   100%{opacity:0;transform:scale(9) rotate(-140deg)}
 }
 .tagline{color:var(--muted);font-size:13px;margin:0 0 25px}
+.tagline.trial-cta{
+  cursor:pointer;
+  font-weight:750;
+  font-size:13.5px;
+  letter-spacing:0.04em;
+  line-height:1.45;
+  text-decoration:none!important;
+  background:linear-gradient(105deg,#7dffc8 0%,#a8f0ff 28%,#e8d5ff 55%,#ffd6a8 78%,#7dffc8 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent!important;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 10px rgba(125,255,200,.22));
+  animation:trialShimmer 4.5s ease-in-out infinite;
+  transition:transform .3s cubic-bezier(.22,1,.36,1), filter .3s ease, opacity .35s ease;
+  position:relative;
+}
+.tagline.trial-cta::after{
+  content:"";
+  position:absolute;
+  left:15%;
+  right:15%;
+  bottom:-5px;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(168,240,255,.55),rgba(232,213,255,.5),transparent);
+  opacity:.85;
+  pointer-events:none;
+}
+.tagline.trial-cta:active{
+  transform:scale(.985);
+  opacity:.88;
+  filter:drop-shadow(0 0 6px rgba(125,255,200,.15));
+}
+@keyframes trialShimmer{
+  0%,100%{ background-position:0% 50%; }
+  50%{ background-position:100% 50%; }
+}
 
 .key-wrap{position:relative;margin-bottom:16px}
 input[type=text]{width:100%;padding:15px;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.13);color:#fff;border-radius:14px;text-align:center;font-size:15px;font-weight:750;letter-spacing:.8px;outline:none;box-shadow:inset 0 2px 8px rgba(0,0,0,.3);transition:.22s;-webkit-user-select:text!important;-moz-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
@@ -3146,7 +3184,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
         <img src="./assets/logo.png" alt="DGXEN" class="logo" onerror="this.style.display='none'">
         <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
         <p class="tagline" id="taglineText">Enter your access key to unlock.</p>
-        <p class="tagline" id="trialKeyPrompt" style="display:none;color:var(--accent);font-weight:800;cursor:pointer;user-select:none;transition:opacity .35s ease;" onclick="handleTrialKeyTap()">Click me to get 30 min free key trial</p>
+        <p class="tagline trial-cta" id="trialKeyPrompt" style="display:none;user-select:none;" onclick="handleTrialKeyTap()">Click me to get 30 min free key trial</p>
 
         <div class="key-wrap">
           <input type="text" id="keyInput" placeholder="Enter Access Key..." autocomplete="off" autocapitalize="none" spellcheck="false">
@@ -5648,7 +5686,7 @@ function startKillswitchWatcher() {
 window.addEventListener('load', async () => {
     try { await reportAppVersionCode(); } catch (e) {}
     startKillswitchWatcher();
-    try { await checkTrialKeyEligibility(); } catch (e) { console.warn('trial key check', e); }
+    try { await refreshTrialPromptState(); } catch (e) { console.warn('trial key check', e); }
 });
 
 // ===== 30-MINUTE TRIAL KEY =====
@@ -5656,34 +5694,97 @@ window.addEventListener('load', async () => {
 // this is a separate sibling element (#trialKeyPrompt) that only becomes
 // visible when eligible, and never reads or writes the real tagline's
 // content in any way.
-//
-// Eligibility (checked once per page load): the toggle is on, AND this
-// device has never logged in by any method before (no users/<id> record)
-// AND has never claimed a trial before (no settings/trialClaims/<id>
-// record — this second check matters because generating a trial key
-// itself creates a users/<id> record immediately, before the device has
-// actually logged in with it, so the users/<id> check alone isn't
-// suficient to block a second claim attempt).
 let __trialState = 'idle'; // idle -> generated -> revealed
 let __trialKeyValue = null;
+let __trialExpiresAt = null;
 
-async function checkTrialKeyEligibility() {
+// True if ANY users/ record — under ANY key scheme, not just this
+// device's own fingerprint key — already belongs to this device. The web
+// "Get Key" page (index.html) registers under its own separately-
+// generated UUID, not this native fingerprint, so a plain
+// users/<fingerprint> existence check alone misses that case and would
+// wrongly still offer the trial to a device that already has a real,
+// differently-keyed account. Mirrors the same candidate-field matching
+// already used for the ban check elsewhere in this file.
+async function findExistingUserRecordForThisDevice(devId) {
+  const norm = (s) => String(s || '').trim().toLowerCase();
+  const myN = norm(devId);
+  try {
+    const direct = await get(ref(db, 'users/' + devId));
+    if (direct.exists()) return { uid: devId, data: direct.val() };
+  } catch (e) {}
+  try {
+    const allSnap = await get(ref(db, 'users'));
+    if (allSnap.exists()) {
+      const all = allSnap.val();
+      for (const uid in all) {
+        const u = all[uid] || {};
+        if (norm(uid) === myN || norm(u.deviceId) === myN || norm(u.fingerprint) === myN ||
+            norm(u.lastDeviceId) === myN || norm(u.androidId) === myN || norm(u.lastLoginDevice) === myN) {
+          return { uid, data: u };
+        }
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+// Decides what the trial prompt element should show right now, and
+// restores it correctly across app restarts — this is the part that was
+// previously wrong: generating a trial key writes a users/ record before
+// the person ever actually logs in with it, so "a users/ record exists"
+// on its own does NOT mean "not eligible" — it can also mean "trial
+// already generated, still within its 30 minutes, show the live
+// countdown state again", which is what should happen on a restart in
+// that window, rather than either hiding the prompt or offering a fresh
+// trial.
+async function refreshTrialPromptState() {
   const promptEl = document.getElementById('trialKeyPrompt');
   if (!promptEl) return;
   try {
     const toggleSnap = await get(ref(db, 'settings/trialKeyEnabled'));
-    if (!toggleSnap.exists() || !toggleSnap.val()) return; // feature off
+    if (!toggleSnap.exists() || !toggleSnap.val()) { promptEl.style.display = 'none'; return; }
 
     const devId = getDeviceFingerprint();
     if (!devId) return;
 
-    const userSnap = await get(ref(db, 'users/' + devId));
-    if (userSnap.exists()) return; // has logged in / registered by any method before
-
+    const existing = await findExistingUserRecordForThisDevice(devId);
     const claimSnap = await get(ref(db, 'settings/trialClaims/' + devId));
-    if (claimSnap.exists()) return; // already claimed a trial before (even if never used)
+    const hasClaim = claimSnap.exists();
 
+    if (existing && existing.data && existing.data.trial) {
+      // This device's own account IS the trial account — check whether
+      // it's still within its 30-minute window.
+      const stillLive = existing.data.keyExpiresAt && Number(existing.data.keyExpiresAt) > Date.now();
+      if (stillLive) {
+        __trialState = 'generated';
+        __trialKeyValue = existing.data.lastGeneratedKey || null;
+        __trialExpiresAt = Number(existing.data.keyExpiresAt);
+        promptEl.classList.remove('trial-cta'); // shimmer is only for the initial offer
+        promptEl.style.display = 'block';
+        promptEl.style.opacity = '1';
+        promptEl.textContent = 'Trial key copied! Tap again to see timer';
+        return;
+      }
+      // Trial existed but has expired — not eligible again (one per
+      // device, ever), and nothing live left to show either.
+      promptEl.style.display = 'none';
+      return;
+    }
+
+    if (existing || hasClaim) {
+      // A real (non-trial) account exists for this device, or a trial was
+      // already claimed at some point before — never eligible again.
+      promptEl.style.display = 'none';
+      return;
+    }
+
+    // Genuinely untouched device — show the initial offer.
+    __trialState = 'idle';
+    promptEl.classList.add('trial-cta');
     promptEl.style.display = 'block';
+    promptEl.style.opacity = '1';
+    promptEl.textContent = 'Click me to get 30 min free key trial';
   } catch (e) { console.warn('trial eligibility check failed', e); }
 }
 
@@ -5694,6 +5795,7 @@ window.handleTrialKeyTap = async function() {
   if (__trialState === 'idle') {
     // First tap: generate the key, copy it, auto-fill it — but do NOT
     // touch the real tagline text, only this sibling element's own text.
+    promptEl.classList.remove('trial-cta'); // shimmer off once past the initial offer
     promptEl.style.pointerEvents = 'none';
     promptEl.textContent = 'Generating your trial key…';
     try {
@@ -5701,10 +5803,10 @@ window.handleTrialKeyTap = async function() {
       if (!devId) throw new Error('no device id');
 
       // Re-check right before writing — closes the gap between the
-      // load-time eligibility check and this tap, in case of a slow user
-      // or a second tab.
+      // load-time eligibility check and this tap.
+      const existing = await findExistingUserRecordForThisDevice(devId);
       const claimSnap = await get(ref(db, 'settings/trialClaims/' + devId));
-      if (claimSnap.exists()) {
+      if (existing || claimSnap.exists()) {
         promptEl.textContent = 'Trial already used on this device.';
         setTimeout(() => { promptEl.style.display = 'none'; }, 2500);
         return;
@@ -5723,11 +5825,14 @@ window.handleTrialKeyTap = async function() {
         joined: new Date().toISOString(),
         lastGeneratedKey: newKey,
         keyExpiresAt: expiresAt,
-        trial: true
+        trial: true,
+        deviceId: devId,
+        fingerprint: devId
       });
       await set(ref(db, 'settings/trialClaims/' + devId), { claimedAt: Date.now() });
 
       __trialKeyValue = newKey;
+      __trialExpiresAt = expiresAt;
       __trialState = 'generated';
 
       try { await navigator.clipboard.writeText(newKey); } catch (e) {}
@@ -5745,8 +5850,9 @@ window.handleTrialKeyTap = async function() {
   }
 
   if (__trialState === 'generated') {
-    // Second tap: fade out, 2s countdown-style pause, fade back in showing
-    // the 30-min validity — matches the requested tap-again interaction.
+    // Second tap (including after a restart, since refreshTrialPromptState
+    // restores this same state): fade out, 2s countdown-style pause, fade
+    // back in showing the 30-min validity.
     __trialState = 'revealed';
     promptEl.style.pointerEvents = 'none';
     promptEl.style.opacity = '0';
