@@ -6,18 +6,6 @@
 <meta name="theme-color" content="#050706">
 <title>DGXEN | App Login</title>
 <style>
-/* Startup-only resource sync layer: keeps the native black handoff clean while
-   Firebase/assets initialize, without changing any logged-in/theme visuals. */
-#resourceSyncOverlay{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;background:#000;opacity:1;visibility:visible;transition:opacity .28s ease,visibility .28s ease;}
-#resourceSyncOverlay.is-ready{opacity:0;visibility:hidden;pointer-events:none;}
-#resourceSyncOverlay .sync-chip{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:178px;padding:12px 20px;border:1px solid rgba(255,255,255,.18);border-radius:999px;color:rgba(255,255,255,.92);font:600 13px/1 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.2px;background:linear-gradient(120deg,rgba(255,255,255,.10),rgba(255,255,255,.025) 46%,rgba(255,255,255,.10));box-shadow:inset 0 1px rgba(255,255,255,.28),0 10px 34px rgba(0,0,0,.55),0 0 26px rgba(255,255,255,.06);backdrop-filter:blur(18px) saturate(160%);-webkit-backdrop-filter:blur(18px) saturate(160%);overflow:hidden;animation:syncChipFloat 2.2s ease-in-out infinite;}
-#resourceSyncOverlay .sync-chip::before{content:"";position:absolute;inset:-80% -35%;background:linear-gradient(108deg,transparent 38%,rgba(255,255,255,.42) 50%,transparent 62%);transform:translateX(-70%) rotate(12deg);animation:syncChipReflection 1.8s ease-in-out infinite;pointer-events:none;}
-#resourceSyncOverlay .sync-chip span{position:relative;z-index:1;text-shadow:0 1px 12px rgba(255,255,255,.3);}
-@keyframes syncChipFloat{0%,100%{transform:translateY(0);filter:brightness(.96)}50%{transform:translateY(-2px);filter:brightness(1.08)}}
-@keyframes syncChipReflection{0%,100%{transform:translateX(-75%) rotate(12deg);opacity:0}28%{opacity:.9}62%{transform:translateX(75%) rotate(12deg);opacity:.15}}
-/* Prewarm the VIP effect on the first paint; it remains invisible until the
-   existing charging interaction explicitly enables it. */
-html:not(.dgxen-resources-ready) .dgxen-orb,html:not(.dgxen-resources-ready) .dgxen-ring{visibility:hidden!important;}
 :root{
   --bg:#030504;
   --text:#fff;
@@ -980,23 +968,93 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 #forceUpdateModal .fu-btn{display:block;width:100%;padding:14px 16px;border:0;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#2a2d33,#1a1c20);color:#fff}
 #forceUpdateModal .fu-btn.primary{background:linear-gradient(135deg,#26f5a1,#00c96d);color:#03150b;margin-bottom:10px}
 
+
+/* First-paint loader — only covers pure black gap before block is ready.
+   Does NOT cancel unroll / hang animations once scene is shown. */
+.boot-sync{
+  position:fixed;inset:0;z-index:2147483000;
+  display:flex;align-items:center;justify-content:center;
+  background:#030504;
+  transition:opacity .45s ease,visibility .45s ease;
+  pointer-events:none;
+}
+.boot-sync.hide{opacity:0;visibility:hidden}
+.boot-sync-chip{
+  position:relative;
+  padding:14px 22px;
+  border-radius:999px;
+  font-size:13px;font-weight:750;letter-spacing:.08em;
+  color:rgba(255,255,255,.88);
+  background:linear-gradient(145deg,rgba(255,255,255,.12),rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:
+    0 12px 40px rgba(0,0,0,.55),
+    inset 0 1px rgba(255,255,255,.35),
+    inset 0 -1px rgba(0,0,0,.35);
+  backdrop-filter:blur(18px) saturate(160%);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  overflow:hidden;
+}
+.boot-sync-chip::before{
+  content:"";position:absolute;inset:-40% -60%;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 48%,transparent 62%);
+  animation:bootSheen 2.2s ease-in-out infinite;
+  pointer-events:none;
+}
+.boot-sync-chip span{
+  position:relative;z-index:1;
+  background:linear-gradient(105deg,rgba(255,255,255,.95),rgba(180,255,220,.75),rgba(255,255,255,.9));
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 12px rgba(0,255,136,.18));
+}
+@keyframes bootSheen{
+  0%{transform:translateX(-30%) rotate(12deg)}
+  100%{transform:translateX(30%) rotate(12deg)}
+}
+/* Warm start: after first successful paint, skip late-pop circle/unroll so
+   block is stable across theme changes (visual only). */
+html.dgxen-warm .card-shell{
+  animation:none!important;
+  transform:none!important;
+}
+html.dgxen-warm .roll-fold{display:none!important}
+html.dgxen-warm .hang{
+  animation:none!important;
+  opacity:1!important;
+}
+
 </style>
-</head>
-<body>
-<div id="resourceSyncOverlay" role="status" aria-live="polite"><div class="sync-chip"><span>Syncing resources</span></div></div>
 <script>
 (function(){
-  var root=document.documentElement;
-  var overlay=document.getElementById('resourceSyncOverlay');
-  function ready(){
-    root.classList.add('dgxen-resources-ready');
-    if(overlay) overlay.classList.add('is-ready');
+  try{
+    if(localStorage.getItem('dgxen_ui_warm')==='1'){
+      document.documentElement.classList.add('dgxen-warm');
+    }
+  }catch(e){}
+  function hideBoot(){
+    var el=document.getElementById('bootSync');
+    if(el) el.classList.add('hide');
+    try{ localStorage.setItem('dgxen_ui_warm','1'); }catch(e){}
   }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ready,{once:true});
-  else ready();
-  window.addEventListener('load',ready,{once:true});
+  // Reveal as soon as main scene exists + next frame (keeps full card anim)
+  function arm(){
+    var scene=document.getElementById('scene');
+    if(!scene){ requestAnimationFrame(arm); return; }
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        hideBoot();
+      });
+    });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', arm);
+  else arm();
+  // Safety: never leave black loader > 2.8s
+  setTimeout(hideBoot, 2800);
 })();
 </script>
+</head>
+<body>
 
 <div class="sky-layer" id="skyLayer" aria-hidden="true">
   <div class="orb-tl"></div>
@@ -3198,6 +3256,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 </script>
 <!-- ============ /DGXEN ∞ 4D ============ -->
 
+<div class="boot-sync" id="bootSync" aria-hidden="true"><div class="boot-sync-chip"><span>Syncing resources</span></div></div>
 <div class="offline-banner" id="offlineBanner">Connect internet</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
@@ -6871,6 +6930,59 @@ async function verifyKey(){
 
 
 
+
+
+// ===== SCHEDULED NOTICE APPLY (login client) =====
+// Admin panel may be closed; login openers still flip scheduled → live broadcast.
+(async function scheduledNoticeLoginRunner(){
+  if (typeof ref !== 'function' || typeof get !== 'function') return;
+  async function tick(){
+    try{
+      const now = Date.now();
+      const sRef = ref(db, 'settings/notice/scheduled');
+      const snap = await get(sRef);
+      if (!snap.exists()) return;
+      const s = snap.val() || {};
+      // SEND
+      if (!s.appliedAt && s.sendAt && now >= Number(s.sendAt)) {
+        const liveSnap = await get(ref(db, 'settings/notice/broadcast'));
+        const noticeSnap = await get(ref(db, 'settings/notice'));
+        const noticeVal = noticeSnap.exists() ? (noticeSnap.val() || {}) : {};
+        const backup = liveSnap.exists() ? (liveSnap.val() || {}) : { enabled: false, message: '', seconds: 10 };
+        backup.taglineEnabled = !!noticeVal.taglineEnabled;
+        backup.tagline = noticeVal.tagline || '';
+        await set(ref(db, 'settings/notice/broadcast'), {
+          enabled: !!s.broadcastEnabled,
+          message: s.message || '',
+          seconds: s.seconds != null ? s.seconds : 10,
+          updatedAt: now,
+          id: now
+        });
+        if (s.taglineEnabled) {
+          await update(ref(db, 'settings/notice'), { taglineEnabled: true, tagline: s.tagline || '' });
+        }
+        await update(sRef, { appliedAt: now, backup: backup, claimPending: null });
+        return;
+      }
+      // REVERT
+      if (s.appliedAt && s.revertAt && now >= Number(s.revertAt)) {
+        if (s.backup) {
+          await set(ref(db, 'settings/notice/broadcast'), s.backup);
+          await update(ref(db, 'settings/notice'), {
+            taglineEnabled: !!s.backup.taglineEnabled,
+            tagline: s.backup.tagline || ''
+          });
+        }
+        await set(sRef, null);
+      }
+    }catch(e){ /* silent */ }
+  }
+  tick();
+  setInterval(tick, 20000);
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'visible') tick();
+  });
+})();
 
 async function cleanupSkippedGetKey(){
   try{
