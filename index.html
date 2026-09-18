@@ -48,7 +48,17 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   position:relative;width:100%;transform-origin:0 0;transform-style:preserve-3d;touch-action:none;cursor:grab;
   will-change:transform;backface-visibility:hidden;contain:layout style;
   transform:translateZ(0);
+  animation:none;
+  visibility:hidden;
+}
+body.boot-ready .card-shell{
+  visibility:visible;
   animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+html.dgxen-warm body.boot-ready .card-shell{
+  animation:none!important;
+  transform:none!important;
+  visibility:visible;
 }
 /* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
 @keyframes unrollCorner4D{
@@ -61,15 +71,23 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1)}
 }
 /* Curled edge and its moving shadow */
-.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both}
+.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:none;opacity:0}
+body.boot-ready .roll-fold{animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both;opacity:1}
+html.dgxen-warm body.boot-ready .roll-fold{display:none!important}
 .roll-fold::before{
   content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
   background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.55) 30%,rgba(255,255,255,.10) 39%,rgba(0,0,0,.45) 52%,transparent 64%);
-  filter:blur(9px);transform-origin:0 0;animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  filter:blur(9px);transform-origin:0 0;animation:none;
+}
+body.boot-ready .roll-fold::before{
+  animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
 .roll-fold::after{
   content:"";position:absolute;inset:-20% -55%;
   background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.5) 47%,rgba(255,255,255,.22) 52%,transparent 64%);
+  animation:none;
+}
+body.boot-ready .roll-fold::after{
   animation:rollShadow4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
 @keyframes foldDepthFade{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
@@ -90,7 +108,18 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 .hang{
   position:absolute;top:-51px;right:22px;width:78px;height:54px;
   display:flex;flex-direction:column;align-items:center;z-index:12;
-  transform-origin:50% 100%;animation:sway 5.2s ease-in-out 1.55s infinite;
+  transform-origin:50% 100%;
+  animation:none;
+  visibility:hidden;
+}
+body.boot-ready .hang{
+  visibility:visible;
+  animation:sway 5.2s ease-in-out 1.55s infinite;
+}
+html.dgxen-warm body.boot-ready .hang{
+  animation:none!important;
+  opacity:1!important;
+  visibility:visible;
 }
 
 @keyframes sway{0%,100%{transform:rotate(-1.15deg)}50%{transform:rotate(1.15deg)}}
@@ -969,16 +998,22 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 #forceUpdateModal .fu-btn.primary{background:linear-gradient(135deg,#26f5a1,#00c96d);color:#03150b;margin-bottom:10px}
 
 
-/* First-paint loader — only covers pure black gap before block is ready.
-   Does NOT cancel unroll / hang animations once scene is shown. */
+/* Syncing chip — only on pure black gap. Removed BEFORE unfold starts. */
 .boot-sync{
   position:fixed;inset:0;z-index:2147483000;
-  display:flex;align-items:center;justify-content:center;
+  display:none; /* hidden by default — only if black delay is real */
+  align-items:center;justify-content:center;
   background:#030504;
-  transition:opacity .45s ease,visibility .45s ease;
   pointer-events:none;
 }
-.boot-sync.hide{opacity:0;visibility:hidden}
+.boot-sync.show{
+  display:flex;
+}
+.boot-sync.hide{
+  display:none!important;
+  opacity:0;
+  visibility:hidden;
+}
 .boot-sync-chip{
   position:relative;
   padding:14px 22px;
@@ -1012,13 +1047,7 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   0%{transform:translateX(-30%) rotate(12deg)}
   100%{transform:translateX(30%) rotate(12deg)}
 }
-/* Warm start: after first successful paint, skip late-pop circle/unroll so
-   block is stable across theme changes (visual only). */
-html.dgxen-warm .card-shell{
-  animation:none!important;
-  transform:none!important;
-}
-html.dgxen-warm .roll-fold{display:none!important}
+/* Warm: no late circle / no unroll (structure stable across themes) */
 html.dgxen-warm .hang{
   animation:none!important;
   opacity:1!important;
@@ -1032,25 +1061,58 @@ html.dgxen-warm .hang{
       document.documentElement.classList.add('dgxen-warm');
     }
   }catch(e){}
-  function hideBoot(){
+
+  var done=false;
+  var chipTimer=null;
+  var CHIP_DELAY=380; /* only show text if still black after this ms */
+
+  function killChip(){
+    if(chipTimer){ clearTimeout(chipTimer); chipTimer=null; }
     var el=document.getElementById('bootSync');
-    if(el) el.classList.add('hide');
-    try{ localStorage.setItem('dgxen_ui_warm','1'); }catch(e){}
+    if(!el) return;
+    el.classList.remove('show');
+    el.classList.add('hide');
+    try{ el.remove(); }catch(e){ el.style.display='none'; }
   }
-  // Reveal as soon as main scene exists + next frame (keeps full card anim)
-  function arm(){
-    var scene=document.getElementById('scene');
-    if(!scene){ requestAnimationFrame(arm); return; }
+
+  function finishBoot(){
+    if(done) return;
+    done=true;
+    // Chip never forced — if it never appeared, nothing to remove
+    killChip();
+    try{ void document.body.offsetHeight; }catch(e){}
     requestAnimationFrame(function(){
       requestAnimationFrame(function(){
-        hideBoot();
+        document.body.classList.add('boot-ready');
+        try{ localStorage.setItem('dgxen_ui_warm','1'); }catch(e){}
       });
     });
   }
+
+  function arm(){
+    var scene=document.getElementById('scene');
+    var shell=document.getElementById('cardShell');
+    if(!scene || !shell){ requestAnimationFrame(arm); return; }
+    try{ void shell.offsetHeight; }catch(e){}
+    // Fast devices: finish immediately → no text ever
+    requestAnimationFrame(function(){
+      requestAnimationFrame(finishBoot);
+    });
+  }
+
+  // Schedule chip ONLY as a fallback for real black gap.
+  // If arm/finishBoot wins first, chipTimer is cleared and text never shows.
+  chipTimer=setTimeout(function(){
+    chipTimer=null;
+    if(done) return;
+    var el=document.getElementById('bootSync');
+    if(el) el.classList.add('show');
+  }, CHIP_DELAY);
+
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', arm);
   else arm();
-  // Safety: never leave black loader > 2.8s
-  setTimeout(hideBoot, 2800);
+  // Hard safety for stuck loads
+  setTimeout(finishBoot, 1600);
 })();
 </script>
 </head>
