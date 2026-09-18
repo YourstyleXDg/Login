@@ -5691,6 +5691,15 @@ window.addEventListener('load', async () => {
     startKillswitchWatcher();
     try { await refreshTrialPromptState(); } catch (e) { console.warn('trial key check', e); }
 });
+// Also re-run the trial self-heal/state check on foreground — closes any
+// narrow timing gap between a real login's own cleanup call and this
+// device's trial badge/prompt reflecting it, without requiring a full
+// app restart to converge.
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        refreshTrialPromptState().catch(e => console.warn('trial key check', e));
+    }
+});
 
 // ===== 30-MINUTE TRIAL KEY =====
 // Fully independent of the admin-controlled tagline text (#taglineText) —
