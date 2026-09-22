@@ -5532,6 +5532,149 @@ function getDeviceFingerprint() {
     return "dev_" + Math.abs(hash).toString(16);
 }
 
+// ============================================================
+// STREAK ELITE — master-key login tick.
+// index.html handles the streak-tick for normal (generated-key) logins,
+// at key-generation time. Master-key holders never generate a key
+// through that page at all — verifyMasterKeyLogin() below is the
+// equivalent tick for them, run once a master-key login has fully
+// succeeded here in login.html. Same date/reset-hour math and the same
+// streakAdvance() cycle logic as index.html (duplicated rather than
+// shared, since this and index.html are two separate pages/bundles —
+// kept deliberately identical so a master-key streak and a
+// normal-key streak on the same device always agree on what "today" is
+// and how the 1-7 cycle moves).
+//
+// Device identity: uses getDeviceFingerprint() (defined above), which
+// already checks localStorage's 'dgxen_device_id' key as one of its
+// candidate sources — the same key index.html's key-generation flow
+// sets. So a device that has ever generated a key through index.html
+// keeps a single, unified streak across both master-key logins and
+// normal key generations here. A device that has ONLY ever used a
+// master key (never visited index.html) gets its own fingerprint-based
+// ID the first time it logs in here, and tickStreakForMasterLogin()
+// below persists that same ID back into 'dgxen_device_id' so that if
+// this device later does visit index.html, the two stay unified instead
+// of silently starting a second, separate streak.
+const DEFAULT_STREAK_BONUS_LOGIN = { 1: 0, 2: 20, 3: 40, 4: 60, 5: 80, 6: 120, 7: 180 };
+
+function streakTodayKeyLogin(resetHour) {
+    const now = new Date();
+    const boundary = new Date(now);
+    boundary.setHours(resetHour, 0, 0, 0);
+    const effective = new Date(now);
+    if (now < boundary) effective.setDate(effective.getDate() - 1);
+    const y = effective.getFullYear();
+    const m = String(effective.getMonth() + 1).padStart(2, '0');
+    const d = String(effective.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+function streakYesterdayKeyLogin(resetHour) {
+    const now = new Date();
+    const boundary = new Date(now);
+    boundary.setHours(resetHour, 0, 0, 0);
+    const effective = new Date(now);
+    if (now < boundary) effective.setDate(effective.getDate() - 1);
+    effective.setDate(effective.getDate() - 1);
+    const y = effective.getFullYear();
+    const m = String(effective.getMonth() + 1).padStart(2, '0');
+    const d = String(effective.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+function streakAdvanceLogin(prevStreak, todayKey, yesterdayKey, masterInfo) {
+    const prev = prevStreak || {};
+    const wasContinuing = prev.lastUnlockDate === yesterdayKey && Number(prev.lifetimeDays) >= 1;
+    const isMasterUser = !!(masterInfo && masterInfo.isMasterUser);
+    const masterKeyUsed = (masterInfo && masterInfo.masterKeyUsed) || null;
+
+    if (!wasContinuing) {
+        return {
+            lifetimeDays: 1, cycleDay: 1, cycleDirection: 'up', lastUnlockDate: todayKey,
+            pendingBonusAvailable: false, pendingBonusMinutes: 0, isMasterUser, masterKeyUsed
+        };
+    }
+    let cycleDay = Number(prev.cycleDay) || 1;
+    let direction = prev.cycleDirection === 'down' ? 'down' : 'up';
+    if (direction === 'up') {
+        if (cycleDay >= 7) { direction = 'down'; cycleDay = 6; } else { cycleDay += 1; }
+    } else {
+        if (cycleDay <= 1) { direction = 'up'; cycleDay = 2; } else { cycleDay -= 1; }
+    }
+    return {
+        lifetimeDays: (Number(prev.lifetimeDays) || 0) + 1, cycleDay, cycleDirection: direction,
+        lastUnlockDate: todayKey, pendingBonusAvailable: false, pendingBonusMinutes: 0,
+        isMasterUser, masterKeyUsed
+    };
+}
+
+// Runs once, right after a master-key login has fully succeeded (past
+// the force-update gate). Ensures a users/<deviceId> record exists for
+// this device (master-key holders otherwise never get one — see the
+// comment above), reads settings/streakSystem + settings/streakSystem's
+// includeMasterKeyLogins flag, and ticks the streak exactly once per
+// reset-window, tagged with which master key was used. A device that
+// already unlocked today (via either a master-key login or a normal key
+// generation) is left untouched — this never double-ticks.
+async function tickStreakForMasterLogin(masterKeyString) {
+    try {
+        const sysSnap = await get(ref(db, 'settings/streakSystem'));
+        const sys = sysSnap.exists() ? sysSnap.val() : {};
+        if (!sys.enabled) return; // streak system off — no tracking at all, per spec
+        if (sys.includeMasterKeyLogins === false) return; // admin has excluded master-key logins from streak
+
+        const resetHour = Number.isFinite(sys.resetHour) ? sys.resetHour : 4;
+
+        let deviceId = null;
+        try { deviceId = localStorage.getItem('dgxen_device_id'); } catch (e) {}
+        if (!deviceId) {
+            // No prior index.html visit on this device — mint the same
+            // fingerprint getDeviceFingerprint() would return, and persist
+            // it under the SAME key index.html uses, so this device has
+            // exactly one identity/streak going forward regardless of
+            // which page it uses next.
+            deviceId = getDeviceFingerprint();
+            try { localStorage.setItem('dgxen_device_id', deviceId); } catch (e) {}
+        }
+
+        const userRef = ref(db, 'users/' + deviceId);
+        const userSnap = await get(userRef);
+        const userData = userSnap.exists() ? userSnap.val() : null;
+
+        if (userData && userData.status === 'banned') return; // never track/grant streak progress for a banned device
+
+        const todayKey = streakTodayKeyLogin(resetHour);
+        const yesterdayKey = streakYesterdayKeyLogin(resetHour);
+        const prevStreak = userData ? userData.streak : null;
+
+        if (prevStreak && prevStreak.lastUnlockDate === todayKey) return; // already ticked today — no-op
+
+        const nextStreak = streakAdvanceLogin(prevStreak, todayKey, yesterdayKey, {
+            isMasterUser: true,
+            masterKeyUsed: masterKeyString || null
+        });
+
+        if (!userSnap.exists()) {
+            // First time this device is ever seen — create a minimal
+            // users/<deviceId> record. Deliberately does NOT set
+            // lastGeneratedKey/keyExpiresAt (this device has no generated
+            // key at all; it authenticates purely via the master key), so
+            // it never gets mistaken for a normal-key user elsewhere in
+            // the admin panel or index.html's own access checks.
+            await set(userRef, {
+                name: 'Master Key User',
+                createdAt: Date.now(),
+                streak: nextStreak
+            });
+        } else {
+            await update(userRef, { streak: nextStreak });
+        }
+    } catch (e) {
+        // Streak tracking is never allowed to block or visibly disrupt a
+        // real login — any failure here is silent.
+        console.warn('master-key streak tick failed', e);
+    }
+}
+
 
 // Returns the REAL installed app versionCode, straight from the native
 // PackageManager via the Android JS bridge (Auth.smali's
@@ -6765,6 +6908,7 @@ async function verifyKey(){
     }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
 
     if(isValid){
+      const isMaster = !userInput.startsWith('DGXEN-');
       try {
         const matchedUid = window.__lastMatchedUserId || null;
         await reportAppVersionCode(matchedUid);
@@ -6779,7 +6923,6 @@ async function verifyKey(){
           }
         } catch (eWrite) { console.warn('native id write', eWrite); }
         // Start live session guard (ban / key ban / master delete) while user uses app
-        const isMaster = !userInput.startsWith('DGXEN-');
         try {
           let expAt = null;
           try {
@@ -6833,6 +6976,13 @@ async function verifyKey(){
         try { window.playSound(window.sfxFailed); } catch (e) {}
         return;
       }
+      // Streak Elite: master-key logins tick the streak here, at the
+      // point a login is fully confirmed successful — normal (generated
+      // key) logins instead tick at key-generation time in index.html,
+      // since master-key holders never pass through that page at all.
+      // Fire-and-forget: never awaited/blocking, so a Firebase hiccup
+      // here can't delay or fail the actual unlock.
+      if (isMaster) { tickStreakForMasterLogin(userInput); }
       window.playSoundReliable(window.sfxSuccess);
       btn.classList.add('success');btn.textContent='ACCESS GRANTED';
       save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
