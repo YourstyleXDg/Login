@@ -413,14 +413,14 @@ input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--acc
   border:0;background:transparent;
 }
 .checkbox-box{position:relative;z-index:1;width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid rgba(255,255,255,.28);background:rgba(0,0,0,.5);display:grid;place-items:center;overflow:visible;pointer-events:none;transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .3s ease}
-.checkbox-check{width:13px;height:13px;display:block;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s;pointer-events:none}
+.checkbox-check{width:13px;height:13px;display:block;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;opacity:0;visibility:hidden;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s,opacity .15s ease,visibility .15s ease;pointer-events:none}
 @keyframes checkPulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.55)}70%{box-shadow:0 0 0 11px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
-.spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0;pointer-events:none}
+.spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%)}
 @keyframes sparkOut{0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(0)}}
 .spark:nth-of-type(1){--sx:-16px;--sy:-12px}.spark:nth-of-type(2){--sx:16px;--sy:-12px}.spark:nth-of-type(3){--sx:-16px;--sy:12px}.spark:nth-of-type(4){--sx:16px;--sy:12px}.spark:nth-of-type(5){--sx:0;--sy:-18px}.spark:nth-of-type(6){--sx:0;--sy:18px}
 .checkbox-container input:checked+.checkbox-box{background:var(--accent);border-color:var(--accent);transform:scale(1.12);animation:checkPulse .55s ease}
-.checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
-.checkbox-container input:checked+.checkbox-box .spark{animation:sparkOut .55s ease-out forwards}
+.checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0;opacity:1;visibility:visible}
+.checkbox-container input:checked+.checkbox-box .spark{visibility:visible;animation:sparkOut .55s ease-out forwards}
 
 .recall-hint{position:fixed;left:50%;bottom:28px;z-index:100;max-width:calc(100vw - 36px);padding:10px 15px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(12,15,13,.82);color:#d8dedb;font-size:12px;font-weight:700;letter-spacing:.15px;text-align:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .25s,transform .25s}
 .recall-hint.show{opacity:1;transform:translate(-50%,0)}
