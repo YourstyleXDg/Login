@@ -48,63 +48,43 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   position:relative;width:100%;transform-origin:0 0;transform-style:preserve-3d;touch-action:none;cursor:grab;
   will-change:transform;backface-visibility:hidden;contain:layout style;
   transform:translateZ(0);
-  animation:unrollCorner4D 1.7s cubic-bezier(.19,1,.22,1) both;
+  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
-/* Soft, fluid page release: instead of a rigid paper snapping through a
-   long chain of sharp direction-changes, this moves through ONE
-   continuous, gently-decelerating arc from the folded corner to flat —
-   like the card is suspended in a soft, viscous medium (a gelatin/water
-   settle) rather than springing on a mechanical hinge. Two physical
-   ideas drive the redesign vs. the old multi-bounce version:
-     1. Fewer, wider-spaced stops with mostly-monotonic motion on each
-        axis (translate/rotate all ease toward 0 without doubling back
-        on themselves) — a fluid mass doesn't zigzag through several
-        reversals, it flows.
-     2. Correlated squash-and-stretch: where the old version scaled
-        x/y/z independently and let them overshoot >1 on all three at
-        once (rigid-spring feel — "clang" rather than "wobble"), this
-        version keeps a soft push-past-100%-then-settle on ONLY the
-        dominant plane (x/y) with a gentle compensating dip on scaleZ,
-        mimicking how a soft, semi-incompressible body bulges one way
-        as it compresses another — closer to a droplet/jelly settling
-        than a spring released.
-   Single overshoot, single settle — no secondary/tertiary bounce. */
+/* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
 @keyframes unrollCorner4D{
-  0%{transform:translate3d(-40px,-36px,-170px) rotateX(-82deg) rotateY(60deg) rotateZ(-9deg) scale3d(.14,.1,.3)}
-  30%{transform:translate3d(-22px,-19px,-70px) rotateX(-46deg) rotateY(34deg) rotateZ(-5deg) scale3d(.5,.44,.62)}
-  58%{transform:translate3d(-4px,-3px,-6px) rotateX(-6deg) rotateY(4.5deg) rotateZ(-.6deg) scale3d(.94,.93,.97)}
-  78%{transform:translate3d(3px,3px,10px) rotateX(4deg) rotateY(-3deg) rotateZ(.5deg) scale3d(1.018,1.014,.985)}
+  0%{transform:translate3d(-38px,-34px,-180px) rotateX(-88deg) rotateY(64deg) rotateZ(-10deg) scale3d(.12,.08,.12)}
+  18%{transform:translate3d(-34px,-29px,-130px) rotateX(-76deg) rotateY(56deg) rotateZ(-8deg) scale3d(.24,.18,.24)}
+  43%{transform:translate3d(-18px,-15px,-48px) rotateX(-43deg) rotateY(31deg) rotateZ(-4.2deg) scale3d(.58,.52,.58)}
+  70%{transform:translate3d(5px,5px,18px) rotateX(9deg) rotateY(-7deg) rotateZ(1.15deg) scale3d(1.025,1.018,1.025)}
+  84%{transform:translate3d(-1px,-2px,-3px) rotateX(-3.2deg) rotateY(2.4deg) rotateZ(-.4deg) scale3d(.994,.996,.994)}
+  93%{transform:translate3d(0,1px,2px) rotateX(1.1deg) rotateY(-.8deg) rotateZ(.12deg) scale3d(1.003,1.002,1.003)}
   100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1)}
 }
 /* Curled edge and its moving shadow */
-.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:foldDepthFade 1.7s cubic-bezier(.19,1,.22,1) both}
+.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both}
 .roll-fold::before{
   content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
-  background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.5) 30%,rgba(255,255,255,.09) 39%,rgba(0,0,0,.4) 52%,transparent 64%);
-  filter:blur(11px);transform-origin:0 0;animation:foldRelease4D 1.7s cubic-bezier(.19,1,.22,1) both;
+  background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.55) 30%,rgba(255,255,255,.10) 39%,rgba(0,0,0,.45) 52%,transparent 64%);
+  filter:blur(9px);transform-origin:0 0;animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
 .roll-fold::after{
   content:"";position:absolute;inset:-20% -55%;
-  background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.44) 47%,rgba(255,255,255,.19) 52%,transparent 64%);
-  animation:rollShadow4D 1.7s cubic-bezier(.19,1,.22,1) both;
+  background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.5) 47%,rgba(255,255,255,.22) 52%,transparent 64%);
+  animation:rollShadow4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
-/* Slightly later fade-out than the old version (was fully gone by 100%)
-   — the fold's trailing shadow now lingers a beat after the card itself
-   has settled, the way a soft material's surface ripple keeps moving
-   for a moment after the main mass has stopped. That lag is what reads
-   as "fluid" rather than "rigid" on settle. */
-@keyframes foldDepthFade{0%,30%{opacity:1}70%{opacity:.5}92%{opacity:.12}100%{opacity:0}}
+@keyframes foldDepthFade{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
 @keyframes foldRelease4D{
-  0%{opacity:1;transform:translate(-20%,-22%) rotate(-15deg) skew(-6deg,-4deg) scale(1.34)}
-  32%{opacity:.95;transform:translate(2%,-1%) rotate(-7deg) skew(-3deg,-1.5deg) scale(1.08)}
-  64%{opacity:.6;transform:translate(46%,40%) rotate(5deg) skew(1.5deg,.8deg) scale(.78)}
-  100%{opacity:0;transform:translate(108%,96%) rotate(12deg) scale(.34)}
+  0%{opacity:1;transform:translate(-22%,-24%) rotate(-18deg) skew(-8deg,-5deg) scale(1.48)}
+  28%{opacity:.98;transform:translate(-5%,-7%) rotate(-10deg) skew(-4deg,-2deg) scale(1.2)}
+  62%{opacity:.68;transform:translate(43%,38%) rotate(6deg) skew(2deg,1deg) scale(.88)}
+  84%{opacity:.2;transform:translate(88%,78%) rotate(13deg) scale(.52)}
+  100%{opacity:0;transform:translate(122%,110%) rotate(16deg) scale(.2)}
 }
 @keyframes rollShadow4D{
-  0%{opacity:.9;transform:translate3d(-68%,-6%,0) skewX(-15deg) scaleX(1.22)}
-  40%{opacity:.7;transform:translate3d(-18%,0,0) skewX(-11deg) scaleX(1.05)}
-  74%{opacity:.28;transform:translate3d(48%,5%,0) skewX(-7deg) scaleX(.72)}
-  100%{opacity:0;transform:translate3d(94%,8%,0) skewX(-5deg) scaleX(.42)}
+  0%{opacity:.96;transform:translate3d(-72%,-7%,0) skewX(-18deg) scaleX(1.3)}
+  38%{opacity:.82;transform:translate3d(-25%,0,0) skewX(-14deg) scaleX(1.12)}
+  72%{opacity:.35;transform:translate3d(45%,5%,0) skewX(-9deg) scaleX(.8)}
+  100%{opacity:0;transform:translate3d(92%,8%,0) skewX(-6deg) scaleX(.45)}
 }
 
 .hang{
@@ -422,17 +402,25 @@ h2{color:var(--accent);margin:0 0 6px;font-size:22px;letter-spacing:.3px;text-sh
 .key-wrap{position:relative;margin-bottom:16px}
 input[type=text]{width:100%;padding:15px;background:rgba(0,0,0,.38);border:1px solid rgba(255,255,255,.13);color:#fff;border-radius:14px;text-align:center;font-size:15px;font-weight:750;letter-spacing:.8px;outline:none;box-shadow:inset 0 2px 8px rgba(0,0,0,.3);transition:.22s;-webkit-user-select:text!important;-moz-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft),inset 0 2px 8px rgba(0,0,0,.3)}
-.checkbox-container{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 21px;padding:5px;color:var(--muted);font-size:13px;cursor:pointer}
-.checkbox-container>input{position:absolute;opacity:0;width:0;height:0}
-.checkbox-box{position:relative;width:21px;height:21px;flex:none;border-radius:7px;border:1.5px solid rgba(255,255,255,.22);background:rgba(0,0,0,.42);display:grid;place-items:center;overflow:visible;transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1)}
-.checkbox-check{width:13px;height:13px;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:20;stroke-dashoffset:20;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s}
+.checkbox-container{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 21px;padding:5px;color:var(--muted);font-size:13px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+/* Hide native control fully — Android WebView still paints a tiny native
+   checkbox when width/height are 0 + opacity 0 (the "dot in a brown box"
+   bug). appearance:none + clip removes it; the label still toggles state. */
+.checkbox-container>input[type=checkbox]{
+  position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;
+  opacity:0;cursor:pointer;z-index:2;
+  -webkit-appearance:none;appearance:none;
+  border:0;background:transparent;
+}
+.checkbox-box{position:relative;z-index:1;width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid rgba(255,255,255,.28);background:rgba(0,0,0,.5);display:grid;place-items:center;overflow:visible;pointer-events:none;transition:background .3s ease,border-color .3s ease,transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .3s ease}
+.checkbox-check{width:13px;height:13px;display:block;fill:none;stroke:#03150b;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;opacity:0;visibility:hidden;transition:stroke-dashoffset .35s cubic-bezier(.34,1.56,.64,1) .08s,opacity .15s ease,visibility .15s ease;pointer-events:none}
 @keyframes checkPulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.55)}70%{box-shadow:0 0 0 11px rgba(0,255,136,0)}100%{box-shadow:0 0 0 0 rgba(0,255,136,0)}}
-.spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0;pointer-events:none}
+.spark{position:absolute;top:50%;left:50%;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%)}
 @keyframes sparkOut{0%{opacity:1;transform:translate(-50%,-50%) translate(0,0) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) translate(var(--sx),var(--sy)) scale(0)}}
 .spark:nth-of-type(1){--sx:-16px;--sy:-12px}.spark:nth-of-type(2){--sx:16px;--sy:-12px}.spark:nth-of-type(3){--sx:-16px;--sy:12px}.spark:nth-of-type(4){--sx:16px;--sy:12px}.spark:nth-of-type(5){--sx:0;--sy:-18px}.spark:nth-of-type(6){--sx:0;--sy:18px}
 .checkbox-container input:checked+.checkbox-box{background:var(--accent);border-color:var(--accent);transform:scale(1.12);animation:checkPulse .55s ease}
-.checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0}
-.checkbox-container input:checked+.checkbox-box .spark{animation:sparkOut .55s ease-out forwards}
+.checkbox-container input:checked+.checkbox-box .checkbox-check{stroke-dashoffset:0;opacity:1;visibility:visible}
+.checkbox-container input:checked+.checkbox-box .spark{visibility:visible;animation:sparkOut .55s ease-out forwards}
 
 .recall-hint{position:fixed;left:50%;bottom:28px;z-index:100;max-width:calc(100vw - 36px);padding:10px 15px;border:1px solid rgba(255,255,255,.15);border-radius:999px;background:rgba(12,15,13,.82);color:#d8dedb;font-size:12px;font-weight:700;letter-spacing:.15px;text-align:center;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;pointer-events:none;transform:translate(-50%,12px);transition:opacity .25s,transform .25s}
 .recall-hint.show{opacity:1;transform:translate(-50%,0)}
@@ -986,6 +974,544 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 #forceUpdateModal .fu-desc{font-size:13px;line-height:1.45;color:rgba(255,255,255,.72);margin:0 0 20px}
 #forceUpdateModal .fu-btn{display:block;width:100%;padding:14px 16px;border:0;border-radius:14px;font-weight:800;font-size:15px;cursor:pointer;background:linear-gradient(135deg,#2a2d33,#1a1c20);color:#fff}
 #forceUpdateModal .fu-btn.primary{background:linear-gradient(135deg,#26f5a1,#00c96d);color:#03150b;margin-bottom:10px}
+
+
+/* =========================================================
+   DGXEN LIQUID GLASS FINAL
+   Safe override for the existing card, drag and tilt systems
+   ========================================================= */
+
+:root{
+  --glass-radius:38px;
+  --glass-blur:42px;
+  --glass-saturation:210%;
+  --glass-border:rgba(255,255,255,.30);
+  --glass-top-light:rgba(255,255,255,.54);
+  --glass-bottom-dark:rgba(0,0,0,.32);
+}
+
+/* Preserve the existing scene perspective and drag position. */
+.scene{
+  perspective:1800px;
+  isolation:isolate;
+}
+
+/* Main thick liquid-glass body. */
+.glass{
+  position:relative;
+  overflow:hidden;
+  isolation:isolate;
+  border-radius:var(--glass-radius);
+  padding:43px 29px 34px;
+
+  background:
+    radial-gradient(
+      115% 82% at 13% 1%,
+      rgba(255,255,255,.22) 0%,
+      rgba(255,255,255,.095) 24%,
+      transparent 58%
+    ),
+    radial-gradient(
+      105% 85% at 92% 105%,
+      rgba(100,175,255,.13) 0%,
+      rgba(255,115,182,.065) 38%,
+      transparent 70%
+    ),
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.145) 0%,
+      rgba(255,255,255,.072) 27%,
+      rgba(255,255,255,.032) 58%,
+      rgba(255,255,255,.062) 100%
+    );
+
+  border:1px solid rgba(255,255,255,.22);
+
+  -webkit-backdrop-filter:
+    blur(var(--glass-blur))
+    saturate(var(--glass-saturation))
+    contrast(112%)
+    brightness(108%);
+
+  backdrop-filter:
+    blur(var(--glass-blur))
+    saturate(var(--glass-saturation))
+    contrast(112%)
+    brightness(108%);
+
+  box-shadow:
+    0 48px 105px rgba(0,0,0,.56),
+    0 18px 42px rgba(0,0,0,.32),
+    0 1px 0 rgba(255,255,255,.18),
+    0 0 46px rgba(110,190,255,.045),
+
+    inset 0 2px 1px var(--glass-top-light),
+    inset 2px 0 1px rgba(255,255,255,.20),
+    inset -2px 0 1px rgba(255,255,255,.10),
+    inset 0 -2px 3px var(--glass-bottom-dark),
+    inset 0 18px 34px rgba(255,255,255,.032),
+    inset 0 -18px 30px rgba(0,0,0,.105);
+
+  transform-style:preserve-3d;
+  backface-visibility:hidden;
+  will-change:transform,filter,box-shadow;
+
+  transition:
+    transform .22s cubic-bezier(.22,1,.36,1),
+    filter .18s cubic-bezier(.4,0,.2,1),
+    box-shadow .26s cubic-bezier(.22,1,.36,1),
+    border-color .3s ease;
+}
+
+/* Refracted thick border.
+   The mask keeps this layer on the edge only. */
+.glass::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:7;
+  border-radius:inherit;
+  padding:1.7px;
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      132deg,
+      rgba(255,255,255,.92) 0%,
+      rgba(255,255,255,.42) 14%,
+      rgba(255,111,181,.62) 28%,
+      rgba(255,153,52,.72) 40%,
+      rgba(255,255,255,.15) 53%,
+      rgba(85,183,255,.58) 72%,
+      rgba(255,255,255,.86) 100%
+    );
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+  -webkit-mask-composite:xor;
+
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+
+  mask-composite:exclude;
+
+  filter:
+    drop-shadow(0 0 4px rgba(255,255,255,.18))
+    saturate(125%);
+
+  opacity:.92;
+}
+
+/* Slow curved reflection travelling over the glass. */
+.glass::after{
+  content:"";
+  position:absolute;
+  z-index:4;
+  top:-74%;
+  left:-82%;
+  width:75%;
+  height:250%;
+  border-radius:50%;
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      112deg,
+      transparent 7%,
+      rgba(255,255,255,.015) 23%,
+      rgba(255,255,255,.12) 39%,
+      rgba(255,255,255,.38) 49%,
+      rgba(255,255,255,.10) 59%,
+      rgba(155,214,255,.035) 72%,
+      transparent 89%
+    );
+
+  filter:blur(1.5px);
+  opacity:.72;
+  transform:translate3d(-30%,0,0) rotate(17deg) skewX(-7deg);
+  animation:dgxenLiquidSheen 9.5s cubic-bezier(.45,0,.25,1) infinite;
+  will-change:transform,opacity;
+}
+
+@keyframes dgxenLiquidSheen{
+  0%{
+    transform:translate3d(-55%,0,0) rotate(17deg) skewX(-7deg);
+    opacity:0;
+  }
+
+  10%{
+    opacity:.38;
+  }
+
+  42%{
+    opacity:.78;
+  }
+
+  67%{
+    transform:translate3d(285%,0,0) rotate(17deg) skewX(-7deg);
+    opacity:.42;
+  }
+
+  76%,100%{
+    transform:translate3d(285%,0,0) rotate(17deg) skewX(-7deg);
+    opacity:0;
+  }
+}
+
+/* Large soft refraction pocket at the upper edge. */
+.light-cap{
+  position:absolute!important;
+  z-index:0!important;
+  top:-28%;
+  left:-21%;
+  width:92%;
+  height:69%;
+  border-radius:48% 52% 59% 41% / 56% 39% 61% 44%;
+
+  background:
+    radial-gradient(
+      ellipse at 43% 55%,
+      rgba(255,255,255,.42) 0%,
+      rgba(255,255,255,.15) 28%,
+      rgba(176,222,255,.055) 51%,
+      transparent 74%
+    );
+
+  filter:blur(17px);
+  opacity:.86;
+  pointer-events:none;
+  animation:dgxenRefractionDrift 10s ease-in-out infinite alternate;
+}
+
+/* Lower warm/blue refracted glass pocket. */
+.light-cap.two{
+  top:auto;
+  left:auto;
+  right:-24%;
+  bottom:-29%;
+  width:82%;
+  height:65%;
+
+  background:
+    radial-gradient(
+      ellipse at 48% 45%,
+      rgba(255,164,78,.16) 0%,
+      rgba(255,92,181,.10) 29%,
+      rgba(82,174,255,.075) 51%,
+      transparent 73%
+    );
+
+  filter:blur(21px);
+  opacity:.78;
+  animation-direction:alternate-reverse;
+}
+
+@keyframes dgxenRefractionDrift{
+  0%{
+    transform:translate3d(-3px,-2px,0) rotate(-2deg) scale(1);
+  }
+
+  50%{
+    transform:translate3d(8px,5px,0) rotate(2deg) scale(1.06);
+  }
+
+  100%{
+    transform:translate3d(-1px,8px,0) rotate(-1deg) scale(1.025);
+  }
+}
+
+.iridescent{
+  position:absolute!important;
+  z-index:0!important;
+  inset:-8%;
+  pointer-events:none;
+  opacity:.25;
+
+  background:
+    linear-gradient(
+      118deg,
+      rgba(255,80,158,.20) 0%,
+      rgba(255,180,79,.14) 22%,
+      rgba(255,255,255,.025) 38%,
+      rgba(65,222,199,.12) 53%,
+      rgba(72,153,255,.19) 73%,
+      rgba(199,94,255,.16) 100%
+    );
+
+  background-size:180% 180%;
+  mix-blend-mode:screen;
+  filter:blur(7px) saturate(130%);
+  animation:dgxenIridescentFlow 13s ease-in-out infinite alternate;
+}
+
+@keyframes dgxenIridescentFlow{
+  0%{
+    background-position:0% 25%;
+    transform:translate3d(-2%,0,0) scale(1);
+  }
+
+  100%{
+    background-position:100% 75%;
+    transform:translate3d(2%,1%,0) scale(1.035);
+  }
+}
+
+/* Keep content sharper than the refracted glass underneath. */
+.content{
+  position:relative;
+  z-index:8;
+  transform:translateZ(26px);
+}
+
+/* More natural film grain, less dirty looking. */
+.grain{
+  opacity:.038!important;
+  mix-blend-mode:soft-light!important;
+}
+
+/* Softer internal travelling shadow. */
+.glass-shadow-runner{
+  opacity:.22!important;
+  filter:blur(13px);
+  background:
+    linear-gradient(
+      105deg,
+      transparent 10%,
+      rgba(0,0,0,.12) 34%,
+      rgba(255,255,255,.09) 51%,
+      transparent 76%
+    );
+}
+
+/* =========================================================
+   INPUT AND CONTROLS
+   ========================================================= */
+
+input[type=text]{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.105),
+      rgba(255,255,255,.045)
+    );
+
+  border:1px solid rgba(255,255,255,.22);
+
+  -webkit-backdrop-filter:blur(16px) saturate(165%);
+  backdrop-filter:blur(16px) saturate(165%);
+
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.16),
+    inset 0 -2px 7px rgba(0,0,0,.22),
+    0 7px 20px rgba(0,0,0,.12);
+
+  transition:
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background .22s ease;
+}
+
+input[type=text]:focus{
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.135),
+      rgba(255,255,255,.055)
+    );
+
+  border-color:rgba(120,255,196,.72);
+
+  box-shadow:
+    0 0 0 4px rgba(0,255,136,.13),
+    0 0 24px rgba(0,255,136,.09),
+    inset 0 1px rgba(255,255,255,.22),
+    inset 0 -2px 7px rgba(0,0,0,.20);
+}
+
+.btn{
+  border-radius:16px;
+
+  background:
+    linear-gradient(
+      155deg,
+      rgba(255,255,255,.98),
+      rgba(229,237,233,.90)
+    );
+
+  box-shadow:
+    0 13px 30px rgba(0,0,0,.34),
+    inset 0 1.5px 1px rgba(255,255,255,.96),
+    inset 0 -2px 4px rgba(0,0,0,.10);
+
+  transition:
+    transform .15s cubic-bezier(.4,0,.2,1),
+    filter .15s cubic-bezier(.4,0,.2,1),
+    box-shadow .18s ease;
+}
+
+/* =========================================================
+   PRECISE TOUCH RESPONSE
+   Avoids transform conflicts on the draggable scene itself
+   ========================================================= */
+
+.btn,
+.join-badge,
+.atm-mute-btn,
+.get-key,
+.vip-word{
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+
+  transition:
+    transform .15s cubic-bezier(.4,0,.2,1),
+    filter .15s cubic-bezier(.4,0,.2,1),
+    opacity .15s cubic-bezier(.4,0,.2,1),
+    box-shadow .18s ease;
+}
+
+.btn:active{
+  transform:translateZ(0) scale(.94);
+  filter:brightness(.96);
+  box-shadow:
+    0 6px 16px rgba(0,0,0,.28),
+    inset 0 2px 5px rgba(0,0,0,.10);
+}
+
+.join-badge:active{
+  transform:translateY(1px) scale(.92);
+  filter:brightness(.96);
+}
+
+.atm-mute-btn:active{
+  transform:scale(.86);
+  filter:brightness(.92);
+}
+
+.get-key:active,
+.vip-word:active{
+  transform:scale(.94);
+  opacity:.82;
+}
+
+/* Auto notch needs translateX preserved or it jumps sideways. */
+.auto-notch{
+  transition:
+    transform .15s cubic-bezier(.4,0,.2,1),
+    filter .15s ease,
+    background .2s ease;
+}
+
+.auto-notch:active{
+  transform:translateX(-50%) scale(.93);
+  filter:brightness(.93);
+}
+
+/* Checkbox input covers the visual box, so react through its label. */
+.checkbox-container:active .checkbox-box{
+  transform:scale(.88);
+  filter:brightness(.92);
+}
+
+/* Physical pressure response without taking over glass.transform.
+   This remains compatible with the existing pointer-tilt code. */
+.glass.dgxen-touching{
+  filter:brightness(.975) saturate(1.04);
+
+  box-shadow:
+    0 30px 72px rgba(0,0,0,.54),
+    0 10px 28px rgba(0,0,0,.30),
+    inset 0 3px 4px rgba(255,255,255,.42),
+    inset 0 -3px 7px rgba(0,0,0,.32),
+    inset 0 22px 38px rgba(255,255,255,.028);
+}
+
+.glass.dgxen-touching::before{
+  opacity:1;
+  filter:
+    drop-shadow(0 0 6px rgba(255,255,255,.24))
+    saturate(138%);
+}
+
+.glass.dgxen-touching .light-cap{
+  opacity:1;
+}
+
+/* Hold has started, but the card has not begun moving yet. */
+body.dgxen-card-holding .glass{
+  filter:brightness(.985) saturate(1.025);
+}
+
+/* Heavier physical feeling while moving the block. */
+body.is-dragging .glass{
+  filter:brightness(1.025) saturate(1.07);
+
+  box-shadow:
+    0 64px 130px rgba(0,0,0,.62),
+    0 26px 52px rgba(0,0,0,.34),
+    0 0 48px rgba(130,205,255,.065),
+    inset 0 2px 2px rgba(255,255,255,.56),
+    inset 0 -2px 5px rgba(0,0,0,.28)!important;
+}
+
+body.is-dragging .glass::before{
+  opacity:1;
+  filter:
+    drop-shadow(0 0 7px rgba(255,255,255,.25))
+    saturate(145%);
+}
+
+body.is-recalling .glass{
+  filter:brightness(1.015) saturate(1.05);
+}
+
+/* Do not freeze the glass reflection while dragging. */
+body.is-dragging .glass::after,
+body.is-recalling .glass::after{
+  display:block!important;
+  opacity:.74!important;
+  animation-play-state:running!important;
+}
+
+/* Fallback for WebViews without backdrop-filter. */
+@supports not ((backdrop-filter:blur(1px)) or
+               (-webkit-backdrop-filter:blur(1px))){
+  .glass{
+    background:
+      radial-gradient(
+        circle at 18% 12%,
+        rgba(255,255,255,.16),
+        transparent 35%
+      ),
+      linear-gradient(
+        145deg,
+        rgba(37,43,42,.97),
+        rgba(12,17,15,.97)
+      );
+  }
+}
+
+/* Accessibility and low-power behaviour. */
+@media (prefers-reduced-motion:reduce){
+  .glass::after,
+  .light-cap,
+  .iridescent{
+    animation:none!important;
+  }
+
+  .btn,
+  .join-badge,
+  .atm-mute-btn,
+  .get-key,
+  .vip-word,
+  .auto-notch{
+    transition-duration:.001ms!important;
+  }
+}
+
 
 </style>
 </head>
@@ -3409,6 +3935,63 @@ function restoreCardPosition(){
 }
 restoreCardPosition();
 
+/* DGXEN liquid-glass touch pressure.
+   This does not replace the existing hold-to-drag system. */
+(function(){
+  const liquidGlass = document.getElementById('glass');
+  const shell = document.getElementById('cardShell');
+
+  if(!liquidGlass || !shell) return;
+
+  let pressedPointer = null;
+
+  function isDirectControl(target){
+    return !!(
+      target &&
+      target.closest &&
+      target.closest(
+        'button,a,input,label,.auto-notch,.atm-mute-btn,' +
+        '.vip-word,.dgxen-word'
+      )
+    );
+  }
+
+  function pressStart(event){
+    if(event.button !== undefined && event.button !== 0) return;
+
+    pressedPointer = event.pointerId;
+    liquidGlass.classList.add('dgxen-touching');
+
+    if(!isDirectControl(event.target)){
+      document.body.classList.add('dgxen-card-holding');
+    }
+  }
+
+  function pressEnd(event){
+    if(
+      pressedPointer !== null &&
+      event &&
+      event.pointerId !== undefined &&
+      event.pointerId !== pressedPointer
+    ){
+      return;
+    }
+
+    pressedPointer = null;
+    liquidGlass.classList.remove('dgxen-touching');
+    document.body.classList.remove('dgxen-card-holding');
+  }
+
+  shell.addEventListener('pointerdown',pressStart,{passive:true});
+  window.addEventListener('pointerup',pressEnd,{passive:true});
+  window.addEventListener('pointercancel',pressEnd,{passive:true});
+  window.addEventListener('blur',pressEnd);
+
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden) pressEnd();
+  });
+})();
+
 function setMoveMode(type,on){
   document.body.classList.toggle(type,on);
   scene.classList.toggle('drag-active',on||dragging||recallFollowing);
@@ -3423,7 +4006,17 @@ function cardMostlyOutside(){
   const visibleH=Math.max(0,Math.min(innerHeight,r.bottom)-Math.max(0,r.top));
   return visibleW*visibleH<r.width*r.height*.32;
 }
-function cancelCardHold(){clearTimeout(holdTimer);holdTimer=0;pressing=false}
+function cancelCardHold(){
+  clearTimeout(holdTimer);
+  holdTimer = 0;
+  pressing = false;
+
+  document.body.classList.remove('dgxen-card-holding');
+
+  if(!dragging){
+    glass.classList.remove('dgxen-touching');
+  }
+}
 
 /* Desktop-only optical tilt. It is suspended during drag/recall to avoid competing frames. */
 if(!reduceMotion&&matchMedia('(pointer:fine)').matches){
@@ -3470,14 +4063,35 @@ cardShell.addEventListener('pointermove',e=>{
   }
   e.preventDefault();
   moved=true;
-  queuePosition(baseX+dx,baseY+dy);
+  queuePosition(baseX + dx, baseY + dy);
+
+/* Small physical glass tilt while the block follows the finger.
+   Rotation is deliberately limited to avoid a cheap card-flip look. */
+const dragTiltX = Math.max(-3.2, Math.min(3.2, -dy * 0.012));
+const dragTiltY = Math.max(-3.8, Math.min(3.8,  dx * 0.014));
+
+glass.style.transform =
+  `rotateX(${dragTiltX}deg) ` +
+  `rotateY(${dragTiltY}deg) ` +
+  `translateZ(7px) scale(1.006)`;
 },{passive:false});
 
 function finishDrag(e){
   if(activePointer!==e.pointerId)return;
   cancelCardHold();
   if(dragging&&cardShell.hasPointerCapture(e.pointerId))cardShell.releasePointerCapture(e.pointerId);
-  const wasDragging=dragging;dragging=false;activePointer=null;cardShell.style.cursor='grab';
+  const wasDragging = dragging;
+dragging = false;
+activePointer = null;
+cardShell.style.cursor = 'grab';
+
+document.body.classList.remove('dgxen-card-holding');
+glass.classList.remove('dgxen-touching');
+
+if(wasDragging){
+  glass.style.transform =
+    'rotateX(0deg) rotateY(0deg) translateZ(0) scale(1)';
+}
   flushPosition();setMoveMode('is-dragging',false);scene.classList.remove('drag-active');
   if(wasDragging){saveCardPosition();if(cardMostlyOutside())showRecallHint()}
 }
@@ -5010,11 +5624,10 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       let revealed = false;
       function reveal(){ if (revealed) return; revealed = true; muteBtn.classList.add('unfolded'); }
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      // unrollCorner4D's main motion lands around 78% of its 1.7s run
-      // (~1.33s); the remaining time is just the gentle single settle
-      // overshoot recovering, so reveal there instead of waiting for the
-      // animation to fully end (which reads as "late").
-      setTimeout(reveal, reduced ? 60 : 1330);
+      // unrollCorner4D's main motion lands around 70% of its 1.85s run (~1.3s);
+      // the remaining time is just an imperceptible settle wobble, so reveal there
+      // instead of waiting for the animation to fully end (which reads as "late").
+      setTimeout(reveal, reduced ? 60 : 1300);
     })();
     muteBtn.addEventListener('click', function(){
       if (!opts.sound) return;
