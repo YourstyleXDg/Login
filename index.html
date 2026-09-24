@@ -48,7 +48,16 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   position:relative;width:100%;transform-origin:0 0;transform-style:preserve-3d;touch-action:none;cursor:grab;
   will-change:transform;backface-visibility:hidden;contain:layout style;
   transform:translateZ(0);
+}
+/* Native boot unroll only (enhanced uses its own keyframes below) */
+html[data-glass-mode="native"] .card-shell:not(.boot-done){
   animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
+  animation:unrollJellyEnhanced 1.95s cubic-bezier(.16,.84,.18,1) both;
+}
+.card-shell.boot-done{
+  animation:none!important;
 }
 /* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
 @keyframes unrollCorner4D{
@@ -996,7 +1005,7 @@ html[data-glass-mode="enhanced"] .glass{
   position:relative;
   overflow:hidden;
   isolation:isolate;
-  border-radius:var(--glass-radius);
+  border-radius:var(--card-radius, 34px); /* same outer size as native — no growth */
   padding:43px 29px 34px;
   background:
     radial-gradient(140% 95% at 20% -8%, rgba(255,255,255,.38) 0%, rgba(255,255,255,.14) 26%, transparent 58%),
@@ -1162,44 +1171,48 @@ html[data-glass-mode="enhanced"] body.is-recalling .glass::after{
   }
 }
 
-/* Bottom jelly rail — silent affordance, no labels */
+/* Bottom pill — movable, springs back, never reaches card edge */
 .glass-mode-rail{
-  position:absolute; left:16%; right:16%; bottom:6px; height:20px;
-  z-index:30; display:flex; align-items:center; justify-content:center;
-  pointer-events:auto; touch-action:none; cursor:grab;
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height:28px;
+  z-index:30;
+  pointer-events:auto;
+  touch-action:none;
+  cursor:grab;
   -webkit-tap-highlight-color:transparent;
+  overflow:visible;
 }
-.glass-mode-rail::before{
-  content:""; width:40px; height:4px; border-radius:999px;
-  background:linear-gradient(90deg, rgba(255,255,255,.12), rgba(255,255,255,.42), rgba(255,255,255,.12));
-  box-shadow:0 0 10px rgba(255,255,255,.10), inset 0 1px rgba(255,255,255,.3);
-  transition: width .35s cubic-bezier(.34,1.45,.44,1), transform .35s cubic-bezier(.34,1.45,.44,1),
-    background .3s ease, box-shadow .3s ease;
+.glass-mode-pill{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:44px;
+  height:5px;
+  margin-left:-22px;
+  margin-top:-2.5px;
+  border-radius:999px;
+  background:rgba(255,255,255,.38);
+  box-shadow:0 0 8px rgba(255,255,255,.12), inset 0 1px rgba(255,255,255,.45);
+  pointer-events:none;
+  will-change:transform;
+  transition: transform .55s cubic-bezier(.34,1.4,.44,1),
+              background .25s ease,
+              box-shadow .25s ease,
+              width .25s cubic-bezier(.34,1.4,.44,1);
 }
-.glass-mode-rail.is-swiping::before,
-.glass-mode-rail:active::before{
-  width:58px; transform:scaleY(1.4);
-  background:linear-gradient(90deg, rgba(0,255,180,.4), rgba(255,255,255,.75), rgba(120,180,255,.45));
-  box-shadow:0 0 18px rgba(0,255,180,.28), inset 0 1px rgba(255,255,255,.55);
+.glass-mode-rail.is-swiping .glass-mode-pill{
+  width:52px;
+  margin-left:-26px;
+  background:rgba(255,255,255,.55);
+  box-shadow:0 0 14px rgba(0,255,180,.22), inset 0 1px rgba(255,255,255,.6);
+  transition: width .15s ease, background .15s ease, box-shadow .15s ease; /* no transform transition while dragging */
 }
-.glass-mode-rail::after{
-  content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
-  background:
-    radial-gradient(circle at 10% 50%, rgba(255,255,255,.28) 0 2.2px, transparent 3px),
-    radial-gradient(circle at 90% 50%, rgba(255,255,255,.28) 0 2.2px, transparent 3px);
-  transition:opacity .25s ease;
+html[data-glass-mode="enhanced"] .glass-mode-pill{
+  background:linear-gradient(90deg, rgba(255,150,90,.5), rgba(255,255,255,.5), rgba(100,170,255,.45));
 }
-html[data-glass-mode="enhanced"] .glass-mode-rail::before{
-  background:linear-gradient(90deg, rgba(255,140,80,.4), rgba(255,255,255,.55), rgba(90,170,255,.42));
-}
-.glass-mode-rail .rail-blob{
-  position:absolute; width:26px; height:8px; border-radius:999px;
-  background:rgba(255,255,255,.4); filter:blur(1.5px); opacity:0; pointer-events:none;
-  left:50%; margin-left:-13px; transition:opacity .15s ease;
-}
-.glass-mode-rail.is-swiping .rail-blob{ opacity:.9; }
 
-/* White slant wipe */
+/* White slant wipe — does not resize card */
 .glass-mode-wipe{
   position:fixed; inset:0; z-index:99990; pointer-events:none; opacity:0; overflow:hidden;
 }
@@ -1207,62 +1220,72 @@ html[data-glass-mode="enhanced"] .glass-mode-rail::before{
 .glass-mode-wipe .wipe-blade{
   position:absolute; top:-20%; left:-30%; width:160%; height:140%;
   background:linear-gradient(105deg,
-    transparent 38%, rgba(255,255,255,.08) 46%, rgba(255,255,255,.95) 50%,
-    rgba(255,255,255,.08) 54%, transparent 62%);
-  transform:translateX(-40%) skewX(-12deg); filter:blur(.5px);
+    transparent 40%, rgba(255,255,255,.06) 47%, rgba(255,255,255,.9) 50%,
+    rgba(255,255,255,.06) 53%, transparent 60%);
+  transform:translateX(-40%) skewX(-12deg);
 }
 .glass-mode-wipe.on .wipe-blade{
-  animation:glassModeWipe .85s cubic-bezier(.22,1,.36,1) forwards;
+  animation:glassModeWipe .75s cubic-bezier(.22,1,.36,1) forwards;
 }
 @keyframes glassModeWipe{
-  0%{ transform:translateX(-55%) skewX(-12deg); opacity:0; }
-  15%{ opacity:1; }
-  55%{ opacity:1; }
-  100%{ transform:translateX(55%) skewX(-12deg); opacity:0; }
+  0%{ transform:translateX(-50%) skewX(-12deg); opacity:0; }
+  12%{ opacity:1; }
+  100%{ transform:translateX(50%) skewX(-12deg); opacity:0; }
 }
 
+/* Fade only — no scale growth (card size stays fixed) */
 .scene.glass-switching .card-shell{
-  animation:glassModeMorphOut .4s cubic-bezier(.4,0,.2,1) forwards;
+  animation:glassModeFadeOut .35s ease forwards;
 }
 .scene.glass-switching.in .card-shell{
-  animation:glassModeMorphIn .55s cubic-bezier(.22,1.15,.36,1) forwards;
+  animation:glassModeFadeIn .45s cubic-bezier(.22,1,.36,1) forwards;
 }
-@keyframes glassModeMorphOut{
-  0%{ filter:blur(0) brightness(1); opacity:1; transform:scale(1); }
-  100%{ filter:blur(7px) brightness(1.18); opacity:.3; transform:scale(.965); }
+@keyframes glassModeFadeOut{
+  0%{ filter:blur(0) brightness(1); opacity:1; }
+  100%{ filter:blur(5px) brightness(1.1); opacity:.4; }
 }
-@keyframes glassModeMorphIn{
-  0%{ filter:blur(9px) brightness(1.22); opacity:.15; transform:scale(.93); }
-  55%{ filter:blur(1px) brightness(1.06); opacity:1; transform:scale(1.025); }
-  100%{ filter:blur(0) brightness(1); opacity:1; transform:scale(1); }
+@keyframes glassModeFadeIn{
+  0%{ filter:blur(6px) brightness(1.12); opacity:.35; }
+  100%{ filter:blur(0) brightness(1); opacity:1; }
 }
 
-/* Enhanced boot unroll = jelly pop; native keeps unrollCorner4D */
-html[data-glass-mode="enhanced"] .card-shell{
-  animation:unrollJellyEnhanced 1.95s cubic-bezier(.16,.84,.18,1) both;
-}
+/* Enhanced boot unroll (only when enhanced + not boot-done) */
 @keyframes unrollJellyEnhanced{
-  0%{ transform:translate3d(0,28px,-120px) rotateX(-55deg) scale3d(.55,.4,.55); filter:blur(4px); opacity:0; }
-  22%{ transform:translate3d(0,12px,-50px) rotateX(-22deg) scale3d(.82,.78,.82); filter:blur(1px); opacity:.75; }
-  48%{ transform:translate3d(0,-6px,12px) rotateX(8deg) scale3d(1.04,1.02,1.04); filter:blur(0); opacity:1; }
-  68%{ transform:translate3d(0,3px,-4px) rotateX(-3deg) scale3d(.988,.992,.988); }
-  84%{ transform:translate3d(0,-1px,2px) rotateX(1.2deg) scale3d(1.006,1.004,1.006); }
+  0%{ transform:translate3d(0,24px,-100px) rotateX(-48deg) scale3d(.62,.48,.62); filter:blur(3px); opacity:0; }
+  25%{ transform:translate3d(0,10px,-40px) rotateX(-18deg) scale3d(.86,.82,.86); filter:blur(1px); opacity:.8; }
+  52%{ transform:translate3d(0,-4px,10px) rotateX(6deg) scale3d(1.02,1.01,1.02); filter:blur(0); opacity:1; }
+  72%{ transform:translate3d(0,2px,-2px) rotateX(-2deg) scale3d(.995,.997,.995); }
   100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
 }
 
+/* Minimal modern toast */
 .glass-mode-toast{
-  position:fixed; left:50%; bottom:max(28px, env(safe-area-inset-bottom, 0px));
-  transform:translate(-50%, 16px); z-index:99995;
-  max-width:min(320px, calc(100vw - 32px));
-  padding:12px 18px; border-radius:14px;
-  background:rgba(8,12,10,.92); border:1px solid rgba(255,200,80,.35);
-  color:#f0e6c8; font-size:12.5px; font-weight:750; letter-spacing:.2px; text-align:center;
-  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
-  box-shadow:0 12px 36px rgba(0,0,0,.45);
-  opacity:0; pointer-events:none;
-  transition:opacity .3s ease, transform .35s cubic-bezier(.22,1,.36,1);
+  position:fixed;
+  left:50%;
+  bottom:max(22px, env(safe-area-inset-bottom, 0px));
+  transform:translate(-50%, 12px);
+  z-index:99995;
+  padding:9px 16px;
+  border-radius:999px;
+  background:rgba(16,18,20,.88);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.78);
+  font-size:11.5px;
+  font-weight:600;
+  letter-spacing:.15px;
+  line-height:1.2;
+  white-space:nowrap;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .28s ease, transform .32s cubic-bezier(.22,1,.36,1);
 }
-.glass-mode-toast.show{ opacity:1; transform:translate(-50%, 0); }
+.glass-mode-toast.show{
+  opacity:1;
+  transform:translate(-50%, 0);
+}
 
 @media (prefers-reduced-motion:reduce){
   html[data-glass-mode="enhanced"] .glass::after,
@@ -1271,6 +1294,7 @@ html[data-glass-mode="enhanced"] .card-shell{
   .glass-mode-wipe .wipe-blade,
   .scene.glass-switching .card-shell,
   .scene.glass-switching.in .card-shell{ animation-duration:.01ms!important; }
+  .glass-mode-pill{ transition-duration:.01ms!important; }
 }
 
 
@@ -3504,7 +3528,7 @@ html[data-glass-mode="enhanced"] .card-shell{
     <div class="glass" id="glass">
       <div class="auto-notch" id="autoNotch" role="button" tabindex="0" aria-pressed="false"><div class="notch-led"></div><span>AUTO-LOGIN</span></div>
       <div class="light-cap"></div><div class="light-cap two"></div><div class="iridescent"></div><div class="glass-shadow-runner"></div><div class="grain"></div><div class="roll-fold"></div>
-      <div class="glass-mode-rail" id="glassModeRail" aria-hidden="true"><span class="rail-blob" id="railBlob"></span></div>
+      <div class="glass-mode-rail" id="glassModeRail" aria-hidden="true"><span class="glass-mode-pill" id="glassModePill"></span></div>
       <div class="content">
         <h2><span class="dgxen-vip-wrap"><span id="dgxenHoldTarget" class="dgxen-word">DGXEN<span class="dgxen-ring" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:30px;--orbit-dur:1.15s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:38px;--orbit-dur:.85s" aria-hidden="true"></span><span class="dgxen-orb" style="--orbit-r:24px;--orbit-dur:1.4s" aria-hidden="true"></span></span><span class="vip-word">VIP</span><button type="button" class="atm-mute-btn" id="atmMuteBtn" title="Toggle atmosphere sound" aria-label="Toggle atmosphere sound"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v4a2 2 0 0 0 2 2h.5a1.5 1.5 0 0 0 1.5-1.5v-3A1.5 1.5 0 0 0 6.5 14H4z"/><path d="M20 14v4a2 2 0 0 1-2 2h-.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H20z"/><path d="M4 14a8 8 0 0 1 16 0"/></svg></button></span></h2>
         <p class="tagline" id="taglineText">Enter your access key to unlock.</p>
@@ -3550,35 +3574,70 @@ const INTERACTIVE='#keyInput';
 (function(){
   const KEY = 'dgxen_glass_mode_v1';
   const rail = document.getElementById('glassModeRail');
-  const blob = document.getElementById('railBlob');
+  const pill = document.getElementById('glassModePill');
   const wipe = document.getElementById('glassModeWipe');
   const toast = document.getElementById('glassModeToast');
   const sceneEl = document.getElementById('scene');
-  if(!rail) return;
+  const shell = document.getElementById('cardShell');
+  if(!rail || !pill) return;
 
   let mode = 'native';
   try{
     const s = localStorage.getItem(KEY);
     if(s === 'enhanced' || s === 'native') mode = s;
   }catch(e){}
-
-  // Apply before paint of enhanced layers
   document.documentElement.setAttribute('data-glass-mode', mode);
+
+  /* One-shot boot animation, then lock so mode switch never re-unrolls */
+  if(shell){
+    const markDone = function(){ shell.classList.add('boot-done'); };
+    shell.addEventListener('animationend', function onEnd(ev){
+      if(ev.target !== shell) return;
+      shell.removeEventListener('animationend', onEnd);
+      markDone();
+    });
+    setTimeout(markDone, 2200);
+  }
 
   let switching = false;
   let pid = null, sx = 0, sy = 0, lx = 0, active = false;
+  let pillX = 0;
+
+  function maxTravel(){
+    /* stay clear of card edges — ~22% inset each side */
+    const w = rail.clientWidth || 280;
+    return Math.max(36, w * 0.28);
+  }
+
+  function setPill(x, dragging){
+    const lim = maxTravel();
+    pillX = Math.max(-lim, Math.min(lim, x));
+    if(dragging){
+      pill.style.transition = 'none';
+    }else{
+      pill.style.transition = 'transform .55s cubic-bezier(.34,1.4,.44,1), background .25s ease, box-shadow .25s ease, width .25s cubic-bezier(.34,1.4,.44,1)';
+    }
+    pill.style.transform = 'translateX(' + pillX + 'px)';
+  }
+
+  function springHome(){
+    pillX = 0;
+    pill.style.transition = 'transform .55s cubic-bezier(.34,1.4,.44,1)';
+    pill.style.transform = 'translateX(0)';
+  }
 
   function showToast(){
     if(!toast) return;
+    toast.textContent = 'Screen may feel laggy';
     toast.classList.add('show');
     clearTimeout(showToast._t);
     showToast._t = setTimeout(function(){ toast.classList.remove('show'); }, 3000);
   }
 
-  function applyMode(next, fromSwipe){
-    if(switching || next === mode) return;
+  function applyMode(next){
+    if(switching) return;
+    if(next === mode){ springHome(); return; }
     switching = true;
-    const goingEnhanced = next === 'enhanced';
 
     if(sceneEl){
       sceneEl.classList.remove('in');
@@ -3590,28 +3649,27 @@ const INTERACTIVE='#keyInput';
       wipe.classList.add('on');
     }
 
-    // Mid-wipe: swap mode
     setTimeout(function(){
       mode = next;
       document.documentElement.setAttribute('data-glass-mode', mode);
       try{ localStorage.setItem(KEY, mode); }catch(e){}
-      if(goingEnhanced) showToast();
-      if(sceneEl){
-        sceneEl.classList.add('in');
-      }
-    }, 320);
+      /* never re-run boot unroll on switch */
+      if(shell) shell.classList.add('boot-done');
+      if(next === 'enhanced') showToast();
+      if(sceneEl) sceneEl.classList.add('in');
+    }, 280);
 
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
       if(wipe) wipe.classList.remove('on');
       switching = false;
-    }, 920);
+      springHome();
+    }, 780);
   }
 
   function onDown(e){
     if(switching) return;
     if(e.button !== undefined && e.button !== 0) return;
-    // only the rail zone
     active = true;
     pid = e.pointerId;
     sx = e.clientX; sy = e.clientY; lx = sx;
@@ -3624,33 +3682,35 @@ const INTERACTIVE='#keyInput';
     if(!active || e.pointerId !== pid) return;
     const dx = e.clientX - sx;
     lx = e.clientX;
-    if(blob){
-      blob.style.transform = 'translateX(' + (dx * 0.35) + 'px) scaleX(' + (1 + Math.min(0.8, Math.abs(dx)/120)) + ')';
-    }
+    setPill(dx, true);
     e.preventDefault();
     e.stopPropagation();
   }
   function onUp(e){
-    if(!active || (e.pointerId !== undefined && e.pointerId !== pid)) return;
+    if(!active) return;
+    if(e.pointerId !== undefined && e.pointerId !== pid) return;
     active = false;
     rail.classList.remove('is-swiping');
-    if(blob) blob.style.transform = '';
     const dx = (e.clientX != null ? e.clientX : lx) - sx;
     const dy = (e.clientY != null ? e.clientY : sy) - sy;
-    try{ rail.releasePointerCapture(pid); }catch(err){}
+    try{ if(pid != null) rail.releasePointerCapture(pid); }catch(err){}
     pid = null;
-    // horizontal dominant, threshold
-    if(Math.abs(dx) < 42 || Math.abs(dx) < Math.abs(dy) * 1.1) return;
-    if(dx > 0) applyMode('enhanced', true);      // L → R
-    else applyMode('native', true);              // R → L
+
+    const lim = maxTravel();
+    /* commit if past ~45% of allowed travel and mostly horizontal */
+    const commit = Math.abs(dx) >= lim * 0.45 && Math.abs(dx) > Math.abs(dy) * 0.85;
+    if(commit){
+      if(dx > 0) applyMode('enhanced');
+      else applyMode('native');
+    }else{
+      springHome();
+    }
   }
 
   rail.addEventListener('pointerdown', onDown, {passive:false});
-  rail.addEventListener('pointermove', onMove, {passive:false});
-  rail.addEventListener('pointerup', onUp, {passive:false});
-  rail.addEventListener('pointercancel', onUp, {passive:false});
-
-  // Stop card hold-drag when interacting with rail
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp, {passive:false});
+  window.addEventListener('pointercancel', onUp, {passive:false});
   rail.addEventListener('pointerdown', function(e){ e.stopPropagation(); }, true);
 })();
 
