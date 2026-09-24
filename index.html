@@ -977,28 +977,26 @@ body[data-atm-intensity] .sky-layer{opacity:1}
 
 
 /* =========================================================
-   DGXEN ADVANCED LIQUID GLASS (CSS-only max fidelity)
-   Techniques: multi-layer jelly fill, SVG refraction filter,
-   thick edge mask, dual specular, soft colour bleed, grain OFF
+   DGXEN LIQUID GLASS FINAL
+   Safe override for the existing card, drag and tilt systems
    ========================================================= */
 
 :root{
-  --glass-radius:40px;
-  --glass-blur:58px;
-  --glass-sat:250%;
-  --glass-bright:107%;
-  --rim-pad:2.4px;
-  --spec-top:rgba(255,255,255,.68);
-  --spec-side:rgba(255,255,255,.28);
-  --depth-dark:rgba(0,0,0,.30);
+  --glass-radius:38px;
+  --glass-blur:42px;
+  --glass-saturation:210%;
+  --glass-border:rgba(255,255,255,.30);
+  --glass-top-light:rgba(255,255,255,.54);
+  --glass-bottom-dark:rgba(0,0,0,.32);
 }
 
+/* Preserve the existing scene perspective and drag position. */
 .scene{
   perspective:1800px;
   isolation:isolate;
 }
 
-/* ---- Main jelly body ---- */
+/* Main thick liquid-glass body. */
 .glass{
   position:relative;
   overflow:hidden;
@@ -1006,70 +1004,53 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   border-radius:var(--glass-radius);
   padding:43px 29px 34px;
 
-  /* Layer stack = thickness of liquid glass */
   background:
-    /* 1) top specular (thick glass catch-light) */
     radial-gradient(
-      140% 95% at 20% -8%,
-      rgba(255,255,255,.38) 0%,
-      rgba(255,255,255,.14) 26%,
+      115% 82% at 13% 1%,
+      rgba(255,255,255,.22) 0%,
+      rgba(255,255,255,.095) 24%,
       transparent 58%
     ),
-    /* 2) secondary soft highlight */
     radial-gradient(
-      90% 60% at 70% 8%,
-      rgba(255,255,255,.10) 0%,
-      transparent 55%
-    ),
-    /* 3) warm bleed from artwork behind (jelly colour pick-up) */
-    radial-gradient(
-      110% 85% at 92% 110%,
-      rgba(255,110,50,.22) 0%,
-      rgba(255,70,120,.10) 38%,
+      105% 85% at 92% 105%,
+      rgba(100,175,255,.13) 0%,
+      rgba(255,115,182,.065) 38%,
       transparent 70%
     ),
-    /* 4) cool bottom-left pocket */
-    radial-gradient(
-      95% 75% at 5% 100%,
-      rgba(70,150,255,.12) 0%,
-      transparent 58%
-    ),
-    /* 5) open frosted plate — lets backdrop show through */
     linear-gradient(
-      158deg,
-      rgba(255,255,255,.17) 0%,
-      rgba(255,255,255,.075) 30%,
-      rgba(255,255,255,.025) 55%,
-      rgba(255,255,255,.06) 100%
+      145deg,
+      rgba(255,255,255,.145) 0%,
+      rgba(255,255,255,.072) 27%,
+      rgba(255,255,255,.032) 58%,
+      rgba(255,255,255,.062) 100%
     );
 
-  border:1px solid rgba(255,255,255,.30);
+  border:1px solid rgba(255,255,255,.22);
 
   -webkit-backdrop-filter:
     blur(var(--glass-blur))
-    saturate(var(--glass-sat))
-    contrast(107%)
-    brightness(var(--glass-bright));
+    saturate(var(--glass-saturation))
+    contrast(112%)
+    brightness(108%);
+
   backdrop-filter:
     blur(var(--glass-blur))
-    saturate(var(--glass-sat))
-    contrast(107%)
-    brightness(var(--glass-bright));
-
-  /* Optional SVG liquid warp on whole card (subtle) */
-  filter:url(#dgxenLiquidRefract);
+    saturate(var(--glass-saturation))
+    contrast(112%)
+    brightness(108%);
 
   box-shadow:
-    0 42px 96px rgba(0,0,0,.52),
-    0 16px 38px rgba(0,0,0,.30),
-    0 1px 0 rgba(255,255,255,.24),
-    0 0 48px rgba(255,130,70,.05),
-    inset 0 2.8px 1.2px var(--spec-top),
-    inset 2.2px 0 1.5px var(--spec-side),
-    inset -2.2px 0 1.5px rgba(255,255,255,.12),
-    inset 0 -2.8px 5px var(--depth-dark),
-    inset 0 24px 44px rgba(255,255,255,.05),
-    inset 0 -22px 40px rgba(0,0,0,.13);
+    0 48px 105px rgba(0,0,0,.56),
+    0 18px 42px rgba(0,0,0,.32),
+    0 1px 0 rgba(255,255,255,.18),
+    0 0 46px rgba(110,190,255,.045),
+
+    inset 0 2px 1px var(--glass-top-light),
+    inset 2px 0 1px rgba(255,255,255,.20),
+    inset -2px 0 1px rgba(255,255,255,.10),
+    inset 0 -2px 3px var(--glass-bottom-dark),
+    inset 0 18px 34px rgba(255,255,255,.032),
+    inset 0 -18px 30px rgba(0,0,0,.105);
 
   transform-style:preserve-3d;
   backface-visibility:hidden;
@@ -1082,256 +1063,299 @@ body[data-atm-intensity] .sky-layer{opacity:1}
     border-color .3s ease;
 }
 
-/* Thick multi-colour refracted rim (mask keeps it on edge only) */
+/* Refracted thick border.
+   The mask keeps this layer on the edge only. */
 .glass::before{
   content:"";
   position:absolute;
   inset:0;
   z-index:7;
   border-radius:inherit;
-  padding:var(--rim-pad);
+  padding:1.7px;
   pointer-events:none;
 
   background:
     linear-gradient(
       132deg,
-      rgba(255,255,255,.98) 0%,
-      rgba(255,255,255,.62) 10%,
-      rgba(255,170,110,.58) 24%,
-      rgba(255,100,150,.48) 38%,
-      rgba(255,255,255,.10) 52%,
-      rgba(90,175,255,.52) 70%,
-      rgba(255,255,255,.92) 100%
+      rgba(255,255,255,.92) 0%,
+      rgba(255,255,255,.42) 14%,
+      rgba(255,111,181,.62) 28%,
+      rgba(255,153,52,.72) 40%,
+      rgba(255,255,255,.15) 53%,
+      rgba(85,183,255,.58) 72%,
+      rgba(255,255,255,.86) 100%
     );
 
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
+
   -webkit-mask-composite:xor;
+
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
+
   mask-composite:exclude;
 
   filter:
-    drop-shadow(0 0 6px rgba(255,255,255,.25))
+    drop-shadow(0 0 4px rgba(255,255,255,.18))
     saturate(125%);
-  opacity:.90;
+
+  opacity:.92;
 }
 
-/* Wide soft liquid sheen */
+/* Slow curved reflection travelling over the glass. */
 .glass::after{
   content:"";
   position:absolute;
   z-index:4;
-  top:-82%;
-  left:-95%;
-  width:88%;
-  height:270%;
+  top:-74%;
+  left:-82%;
+  width:75%;
+  height:250%;
   border-radius:50%;
   pointer-events:none;
 
   background:
     linear-gradient(
-      114deg,
-      transparent 6%,
-      rgba(255,255,255,.02) 20%,
-      rgba(255,255,255,.16) 36%,
-      rgba(255,255,255,.46) 48%,
-      rgba(255,255,255,.14) 58%,
-      rgba(170,210,255,.045) 72%,
-      transparent 90%
+      112deg,
+      transparent 7%,
+      rgba(255,255,255,.015) 23%,
+      rgba(255,255,255,.12) 39%,
+      rgba(255,255,255,.38) 49%,
+      rgba(255,255,255,.10) 59%,
+      rgba(155,214,255,.035) 72%,
+      transparent 89%
     );
 
-  filter:blur(3px);
-  opacity:.68;
-  transform:translate3d(-30%,0,0) rotate(15deg) skewX(-6deg);
-  animation:dgxenLiquidSheen 11.5s cubic-bezier(.4,0,.2,1) infinite;
+  filter:blur(1.5px);
+  opacity:.72;
+  transform:translate3d(-30%,0,0) rotate(17deg) skewX(-7deg);
+  animation:dgxenLiquidSheen 9.5s cubic-bezier(.45,0,.25,1) infinite;
   will-change:transform,opacity;
 }
 
 @keyframes dgxenLiquidSheen{
   0%{
-    transform:translate3d(-62%,0,0) rotate(15deg) skewX(-6deg);
+    transform:translate3d(-55%,0,0) rotate(17deg) skewX(-7deg);
     opacity:0;
   }
-  11%{ opacity:.30; }
-  42%{ opacity:.72; }
-  70%{
-    transform:translate3d(295%,0,0) rotate(15deg) skewX(-6deg);
-    opacity:.36;
+
+  10%{
+    opacity:.38;
   }
-  82%,100%{
-    transform:translate3d(295%,0,0) rotate(15deg) skewX(-6deg);
+
+  42%{
+    opacity:.78;
+  }
+
+  67%{
+    transform:translate3d(285%,0,0) rotate(17deg) skewX(-7deg);
+    opacity:.42;
+  }
+
+  76%,100%{
+    transform:translate3d(285%,0,0) rotate(17deg) skewX(-7deg);
     opacity:0;
   }
 }
 
-/* Upper volume light */
+/* Large soft refraction pocket at the upper edge. */
 .light-cap{
   position:absolute!important;
   z-index:0!important;
-  top:-34%;
-  left:-26%;
-  width:100%;
-  height:76%;
-  border-radius:52% 48% 46% 54% / 58% 42% 58% 42%;
+  top:-28%;
+  left:-21%;
+  width:92%;
+  height:69%;
+  border-radius:48% 52% 59% 41% / 56% 39% 61% 44%;
 
   background:
     radial-gradient(
-      ellipse at 38% 48%,
-      rgba(255,255,255,.52) 0%,
-      rgba(255,255,255,.20) 28%,
-      rgba(200,228,255,.07) 50%,
+      ellipse at 43% 55%,
+      rgba(255,255,255,.42) 0%,
+      rgba(255,255,255,.15) 28%,
+      rgba(176,222,255,.055) 51%,
       transparent 74%
     );
 
-  filter:blur(24px);
-  opacity:.92;
+  filter:blur(17px);
+  opacity:.86;
   pointer-events:none;
-  animation:dgxenRefractionDrift 13s ease-in-out infinite alternate;
+  animation:dgxenRefractionDrift 10s ease-in-out infinite alternate;
 }
 
+/* Lower warm/blue refracted glass pocket. */
 .light-cap.two{
   top:auto;
   left:auto;
-  right:-28%;
-  bottom:-34%;
-  width:90%;
-  height:72%;
+  right:-24%;
+  bottom:-29%;
+  width:82%;
+  height:65%;
 
   background:
     radial-gradient(
-      ellipse at 52% 40%,
-      rgba(255,130,55,.24) 0%,
-      rgba(255,80,140,.13) 30%,
-      rgba(70,155,255,.09) 52%,
-      transparent 74%
+      ellipse at 48% 45%,
+      rgba(255,164,78,.16) 0%,
+      rgba(255,92,181,.10) 29%,
+      rgba(82,174,255,.075) 51%,
+      transparent 73%
     );
 
-  filter:blur(28px);
-  opacity:.85;
+  filter:blur(21px);
+  opacity:.78;
   animation-direction:alternate-reverse;
 }
 
 @keyframes dgxenRefractionDrift{
-  0%{ transform:translate3d(-5px,-3px,0) rotate(-1.5deg) scale(1); }
-  50%{ transform:translate3d(8px,5px,0) rotate(1.6deg) scale(1.05); }
-  100%{ transform:translate3d(-2px,7px,0) rotate(-.8deg) scale(1.02); }
+  0%{
+    transform:translate3d(-3px,-2px,0) rotate(-2deg) scale(1);
+  }
+
+  50%{
+    transform:translate3d(8px,5px,0) rotate(2deg) scale(1.06);
+  }
+
+  100%{
+    transform:translate3d(-1px,8px,0) rotate(-1deg) scale(1.025);
+  }
 }
 
-/* Soft colour wash — low opacity, soft-light */
 .iridescent{
   position:absolute!important;
   z-index:0!important;
   inset:-8%;
   pointer-events:none;
-  opacity:.16;
+  opacity:.25;
 
   background:
     linear-gradient(
-      128deg,
-      rgba(255,95,70,.16) 0%,
-      rgba(255,170,90,.11) 22%,
-      rgba(255,255,255,.02) 40%,
-      rgba(70,200,175,.08) 56%,
-      rgba(85,145,255,.13) 76%,
-      rgba(170,90,255,.09) 100%
+      118deg,
+      rgba(255,80,158,.20) 0%,
+      rgba(255,180,79,.14) 22%,
+      rgba(255,255,255,.025) 38%,
+      rgba(65,222,199,.12) 53%,
+      rgba(72,153,255,.19) 73%,
+      rgba(199,94,255,.16) 100%
     );
 
   background-size:180% 180%;
-  mix-blend-mode:soft-light;
-  filter:blur(12px) saturate(110%);
-  animation:dgxenIridescentFlow 17s ease-in-out infinite alternate;
+  mix-blend-mode:screen;
+  filter:blur(7px) saturate(130%);
+  animation:dgxenIridescentFlow 13s ease-in-out infinite alternate;
 }
 
 @keyframes dgxenIridescentFlow{
   0%{
-    background-position:0% 18%;
-    transform:translate3d(-1.5%,0,0) scale(1);
+    background-position:0% 25%;
+    transform:translate3d(-2%,0,0) scale(1);
   }
+
   100%{
-    background-position:100% 82%;
-    transform:translate3d(1.5%,1%,0) scale(1.03);
+    background-position:100% 75%;
+    transform:translate3d(2%,1%,0) scale(1.035);
   }
 }
 
+/* Keep content sharper than the refracted glass underneath. */
 .content{
   position:relative;
   z-index:8;
-  transform:translateZ(28px);
+  transform:translateZ(26px);
 }
 
-/* Grain fully off — clean reference look */
+/* More natural film grain, less dirty looking. */
 .grain{
-  opacity:0!important;
-  visibility:hidden!important;
-  pointer-events:none!important;
+  opacity:.038!important;
+  mix-blend-mode:soft-light!important;
 }
 
+/* Softer internal travelling shadow. */
 .glass-shadow-runner{
-  opacity:.14!important;
-  filter:blur(18px);
+  opacity:.22!important;
+  filter:blur(13px);
   background:
     linear-gradient(
       105deg,
-      transparent 14%,
-      rgba(0,0,0,.09) 38%,
-      rgba(255,255,255,.06) 52%,
-      transparent 80%
+      transparent 10%,
+      rgba(0,0,0,.12) 34%,
+      rgba(255,255,255,.09) 51%,
+      transparent 76%
     );
 }
 
-/* Inputs in same liquid language */
+/* =========================================================
+   INPUT AND CONTROLS
+   ========================================================= */
+
 input[type=text]{
   background:
     linear-gradient(
       145deg,
-      rgba(255,255,255,.13),
-      rgba(255,255,255,.04)
+      rgba(255,255,255,.105),
+      rgba(255,255,255,.045)
     );
-  border:1px solid rgba(255,255,255,.28);
-  -webkit-backdrop-filter:blur(22px) saturate(185%);
-  backdrop-filter:blur(22px) saturate(185%);
+
+  border:1px solid rgba(255,255,255,.22);
+
+  -webkit-backdrop-filter:blur(16px) saturate(165%);
+  backdrop-filter:blur(16px) saturate(165%);
+
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,.22),
-    inset 0 -2px 9px rgba(0,0,0,.20),
-    0 6px 18px rgba(0,0,0,.10);
-  transition:border-color .22s ease,box-shadow .22s ease,background .22s ease;
+    inset 0 1px 1px rgba(255,255,255,.16),
+    inset 0 -2px 7px rgba(0,0,0,.22),
+    0 7px 20px rgba(0,0,0,.12);
+
+  transition:
+    border-color .22s ease,
+    box-shadow .22s ease,
+    background .22s ease;
 }
 
 input[type=text]:focus{
   background:
     linear-gradient(
       145deg,
-      rgba(255,255,255,.16),
-      rgba(255,255,255,.06)
+      rgba(255,255,255,.135),
+      rgba(255,255,255,.055)
     );
+
   border-color:rgba(120,255,196,.72);
+
   box-shadow:
-    0 0 0 4px rgba(0,255,136,.12),
-    0 0 22px rgba(0,255,136,.08),
-    inset 0 1px rgba(255,255,255,.26),
-    inset 0 -2px 8px rgba(0,0,0,.18);
+    0 0 0 4px rgba(0,255,136,.13),
+    0 0 24px rgba(0,255,136,.09),
+    inset 0 1px rgba(255,255,255,.22),
+    inset 0 -2px 7px rgba(0,0,0,.20);
 }
 
 .btn{
   border-radius:16px;
+
   background:
     linear-gradient(
       155deg,
-      rgba(255,255,255,.99),
-      rgba(230,238,234,.92)
+      rgba(255,255,255,.98),
+      rgba(229,237,233,.90)
     );
+
   box-shadow:
-    0 12px 28px rgba(0,0,0,.32),
-    inset 0 1.5px 1px rgba(255,255,255,.98),
-    inset 0 -2px 4px rgba(0,0,0,.08);
+    0 13px 30px rgba(0,0,0,.34),
+    inset 0 1.5px 1px rgba(255,255,255,.96),
+    inset 0 -2px 4px rgba(0,0,0,.10);
+
   transition:
     transform .15s cubic-bezier(.4,0,.2,1),
     filter .15s cubic-bezier(.4,0,.2,1),
     box-shadow .18s ease;
 }
+
+/* =========================================================
+   PRECISE TOUCH RESPONSE
+   Avoids transform conflicts on the draggable scene itself
+   ========================================================= */
 
 .btn,
 .join-badge,
@@ -1341,6 +1365,7 @@ input[type=text]:focus{
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
+
   transition:
     transform .15s cubic-bezier(.4,0,.2,1),
     filter .15s cubic-bezier(.4,0,.2,1),
@@ -1355,93 +1380,128 @@ input[type=text]:focus{
     0 6px 16px rgba(0,0,0,.28),
     inset 0 2px 5px rgba(0,0,0,.10);
 }
+
 .join-badge:active{
   transform:translateY(1px) scale(.92);
   filter:brightness(.96);
 }
+
 .atm-mute-btn:active{
   transform:scale(.86);
   filter:brightness(.92);
 }
+
 .get-key:active,
 .vip-word:active{
   transform:scale(.94);
   opacity:.82;
 }
 
+/* Auto notch needs translateX preserved or it jumps sideways. */
 .auto-notch{
   transition:
     transform .15s cubic-bezier(.4,0,.2,1),
     filter .15s ease,
     background .2s ease;
 }
+
 .auto-notch:active{
   transform:translateX(-50%) scale(.93);
   filter:brightness(.93);
 }
+
+/* Checkbox input covers the visual box, so react through its label. */
 .checkbox-container:active .checkbox-box{
   transform:scale(.88);
   filter:brightness(.92);
 }
 
+/* Physical pressure response without taking over glass.transform.
+   This remains compatible with the existing pointer-tilt code. */
 .glass.dgxen-touching{
-  filter:url(#dgxenLiquidRefract) brightness(.97) saturate(1.05);
+  filter:brightness(.975) saturate(1.04);
+
   box-shadow:
-    0 28px 68px rgba(0,0,0,.52),
-    0 10px 26px rgba(0,0,0,.28),
-    inset 0 3px 4px rgba(255,255,255,.50),
-    inset 0 -3px 7px rgba(0,0,0,.30),
-    inset 0 24px 42px rgba(255,255,255,.04);
+    0 30px 72px rgba(0,0,0,.54),
+    0 10px 28px rgba(0,0,0,.30),
+    inset 0 3px 4px rgba(255,255,255,.42),
+    inset 0 -3px 7px rgba(0,0,0,.32),
+    inset 0 22px 38px rgba(255,255,255,.028);
 }
+
 .glass.dgxen-touching::before{
   opacity:1;
-  filter:drop-shadow(0 0 6px rgba(255,255,255,.28)) saturate(130%);
+  filter:
+    drop-shadow(0 0 6px rgba(255,255,255,.24))
+    saturate(138%);
 }
-.glass.dgxen-touching .light-cap{ opacity:1; }
 
+.glass.dgxen-touching .light-cap{
+  opacity:1;
+}
+
+/* Hold has started, but the card has not begun moving yet. */
 body.dgxen-card-holding .glass{
-  filter:url(#dgxenLiquidRefract) brightness(.985) saturate(1.03);
+  filter:brightness(.985) saturate(1.025);
 }
 
+/* Heavier physical feeling while moving the block. */
 body.is-dragging .glass{
-  filter:url(#dgxenLiquidRefract) brightness(1.03) saturate(1.08);
+  filter:brightness(1.025) saturate(1.07);
+
   box-shadow:
-    0 60px 120px rgba(0,0,0,.58),
-    0 24px 50px rgba(0,0,0,.32),
-    0 0 44px rgba(255,130,70,.07),
-    inset 0 2px 2px rgba(255,255,255,.62),
-    inset 0 -2px 5px rgba(0,0,0,.26)!important;
+    0 64px 130px rgba(0,0,0,.62),
+    0 26px 52px rgba(0,0,0,.34),
+    0 0 48px rgba(130,205,255,.065),
+    inset 0 2px 2px rgba(255,255,255,.56),
+    inset 0 -2px 5px rgba(0,0,0,.28)!important;
 }
+
 body.is-dragging .glass::before{
   opacity:1;
-  filter:drop-shadow(0 0 7px rgba(255,255,255,.30)) saturate(140%);
+  filter:
+    drop-shadow(0 0 7px rgba(255,255,255,.25))
+    saturate(145%);
 }
+
 body.is-recalling .glass{
-  filter:url(#dgxenLiquidRefract) brightness(1.02) saturate(1.05);
+  filter:brightness(1.015) saturate(1.05);
 }
+
+/* Do not freeze the glass reflection while dragging. */
 body.is-dragging .glass::after,
 body.is-recalling .glass::after{
   display:block!important;
-  opacity:.70!important;
+  opacity:.74!important;
   animation-play-state:running!important;
 }
 
+/* Fallback for WebViews without backdrop-filter. */
 @supports not ((backdrop-filter:blur(1px)) or
                (-webkit-backdrop-filter:blur(1px))){
   .glass{
-    filter:none;
     background:
-      radial-gradient(circle at 18% 12%,rgba(255,255,255,.18),transparent 36%),
-      linear-gradient(145deg,rgba(42,36,34,.96),rgba(14,16,14,.97));
+      radial-gradient(
+        circle at 18% 12%,
+        rgba(255,255,255,.16),
+        transparent 35%
+      ),
+      linear-gradient(
+        145deg,
+        rgba(37,43,42,.97),
+        rgba(12,17,15,.97)
+      );
   }
 }
 
+/* Accessibility and low-power behaviour. */
 @media (prefers-reduced-motion:reduce){
   .glass::after,
   .light-cap,
   .iridescent{
     animation:none!important;
   }
+
   .btn,
   .join-badge,
   .atm-mute-btn,
@@ -1456,18 +1516,6 @@ body.is-recalling .glass::after{
 </style>
 </head>
 <body>
-
-<!-- Advanced liquid refraction (CSS filter:url) — zero JS -->
-<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
-  <defs>
-    <filter id="dgxenLiquidRefract" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency="0.018 0.028" numOctaves="2" seed="7" result="noise"/>
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="4.5" xChannelSelector="R" yChannelSelector="G" result="disp"/>
-      <feGaussianBlur in="disp" stdDeviation="0.35" result="soft"/>
-      <feComposite in="soft" in2="SourceGraphic" operator="atop"/>
-    </filter>
-  </defs>
-</svg>
 
 <div class="sky-layer" id="skyLayer" aria-hidden="true">
   <div class="orb-tl"></div>
