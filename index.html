@@ -51,11 +51,11 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
 }
 /* NATIVE boot: exact page-unfold from 🌹🌹 (paper unroll) — only on first open. */
 html[data-glass-mode="native"] .card-shell:not(.boot-done){
-  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  animation:unrollCorner4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 /* ENHANCED boot: smoother 4D glass unroll — only on first open. */
 html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
-  animation:unrollCorner4DEnhanced 1.95s cubic-bezier(.19,.86,.2,1) both;
+  animation:unrollCorner4DEnhanced 2.2s cubic-bezier(.19,.86,.2,1) both;
 }
 /* After first boot, idle. Switch transitions use .scene.glass-switching rules below
    (higher specificity) so they are never blocked by this. */
@@ -76,7 +76,7 @@ html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
 .roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);opacity:0}
 .card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold,
 html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold{
-  opacity:1;animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both;
+  opacity:1;animation:foldDepthFade 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 .roll-fold::before{
   content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
@@ -85,7 +85,7 @@ html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold{
 }
 .card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold::before,
 html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold::before{
-  animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  animation:foldRelease4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 .roll-fold::after{
   content:"";position:absolute;inset:-20% -55%;
@@ -93,7 +93,7 @@ html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold:
 }
 .card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold::after,
 html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold::after{
-  animation:rollShadow4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  animation:rollShadow4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 @keyframes foldDepthFade{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
 @keyframes foldRelease4D{
@@ -1274,72 +1274,33 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
   box-shadow:0 0 10px rgba(0,200,255,.18), inset 0 1px rgba(255,255,255,.55);
 }
 
-/* Full-screen wipe OFF — was washing the whole screen bright ("din"). */
+/* Full-screen wipe OFF */
 .glass-mode-wipe{ display:none !important; }
 
-/* Faded white line sweeps INSIDE the old block during switch-out */
-.scene.glass-switching .glass::after{
-  content:"" !important;
-  position:absolute !important;
-  top:-10% !important; left:0 !important;
-  width:28% !important; height:120% !important;
+/* Subtle white line inside glass only — no screen dim */
+.scene.glass-switching .glass > .block-sweep{
+  position:absolute; top:-8%; left:0;
+  width:22%; height:116%;
   background:linear-gradient(100deg,
     transparent 0%,
-    rgba(255,255,255,.05) 35%,
-    rgba(255,255,255,.5) 50%,
-    rgba(255,255,255,.05) 65%,
-    transparent 100%) !important;
-  filter:blur(1px);
+    rgba(255,255,255,.04) 40%,
+    rgba(255,255,255,.35) 50%,
+    rgba(255,255,255,.04) 60%,
+    transparent 100%);
+  filter:blur(.8px);
   opacity:0;
-  z-index:20 !important;
-  pointer-events:none !important;
-  animation:blockInnerSweep .42s cubic-bezier(.22,1,.36,1) forwards !important;
+  z-index:30;
+  pointer-events:none;
+  animation:blockInnerSweep .55s cubic-bezier(.22,1,.36,1) forwards;
   will-change:transform,opacity;
 }
 @keyframes blockInnerSweep{
-  0%{ transform:translateX(-120%) skewX(-14deg); opacity:0; }
-  18%{ opacity:.85; }
-  100%{ transform:translateX(420%) skewX(-14deg); opacity:0; }
+  0%{ transform:translateX(-130%) skewX(-12deg); opacity:0; }
+  20%{ opacity:.65; }
+  100%{ transform:translateX(480%) skewX(-12deg); opacity:0; }
 }
 
-/* Outgoing: soft fade+shrink (no bright flash) */
-.scene.glass-switching .card-shell.is-mode-switching,
-.scene.glass-switching .card-shell{
-  animation:glassModeFadeOut .38s cubic-bezier(.4,0,.2,1) forwards !important;
-}
-@keyframes glassModeFadeOut{
-  0%{ filter:blur(0); opacity:1; transform:translate3d(0,0,0) scale3d(1,1,1); }
-  100%{ filter:blur(2px); opacity:.18; transform:translate3d(8px,10px,0) scale3d(.96,.96,.96); }
-}
-
-/* Incoming NATIVE = FULL 🌹 paper unroll (exact same keyframes as first boot) */
-html[data-glass-mode="native"] .scene.glass-switching.in .card-shell.is-mode-switching,
-html[data-glass-mode="native"] .scene.glass-switching.in .card-shell{
-  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both !important;
-}
-/* Incoming ENHANCED = diagonal entrance from top-left */
-html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell.is-mode-switching,
-html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
-  animation:glassModeDiagonalIn .72s cubic-bezier(.19,.86,.2,1) both !important;
-}
-@keyframes glassModeDiagonalIn{
-  0%{
-    filter:blur(3px); opacity:0;
-    transform:translate3d(-48px,-56px,-80px) rotateX(-28deg) rotateY(22deg) rotateZ(-6deg) scale3d(.72,.68,.72);
-  }
-  40%{
-    filter:blur(1px); opacity:.75;
-    transform:translate3d(-10px,-12px,-18px) rotateX(-8deg) rotateY(6deg) rotateZ(-1.5deg) scale3d(.94,.92,.94);
-  }
-  72%{
-    filter:blur(0); opacity:1;
-    transform:translate3d(3px,2px,6px) rotateX(2deg) rotateY(-1deg) rotateZ(.3deg) scale3d(1.012,1.008,1.012);
-  }
-  100%{
-    filter:blur(0); opacity:1;
-    transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);
-  }
-}
+/* NO CSS fade-out — JS drives open animation directly so native paper always plays */
 
 /* Enhanced FIRST boot (page load) — softer 4D unroll */
 @keyframes unrollCorner4DEnhanced{
@@ -1349,6 +1310,26 @@ html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
   62%{transform:translate3d(2px,3px,10px) rotateX(6deg) rotateY(-4.5deg) rotateZ(.7deg) scale3d(1.012,1.008,1.012);filter:blur(0);opacity:1}
   80%{transform:translate3d(-.6px,-1px,-2px) rotateX(-1.8deg) rotateY(1.3deg) rotateZ(-.2deg) scale3d(.997,.998,.997)}
   100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);filter:blur(0);opacity:1}
+}
+
+/* Slow smooth diagonal for enhanced SWITCH */
+@keyframes glassModeDiagonalIn{
+  0%{
+    opacity:.4;
+    transform:translate3d(-36px,-42px,-60px) rotateX(-18deg) rotateY(14deg) rotateZ(-4deg) scale3d(.82,.78,.82);
+  }
+  45%{
+    opacity:.92;
+    transform:translate3d(-6px,-8px,-10px) rotateX(-4deg) rotateY(3deg) rotateZ(-.8deg) scale3d(.97,.95,.97);
+  }
+  78%{
+    opacity:1;
+    transform:translate3d(2px,1px,4px) rotateX(1.2deg) rotateY(-.6deg) rotateZ(.15deg) scale3d(1.008,1.005,1.008);
+  }
+  100%{
+    opacity:1;
+    transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);
+  }
 }
 
 .glass-mode-toast{
@@ -3699,7 +3680,7 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       shell.removeEventListener('animationend', onEnd);
       markDone();
     });
-    setTimeout(markDone, 2100);
+    setTimeout(markDone, 2300);
   }
 
   let switching = false;
@@ -3739,54 +3720,57 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
     if(next === mode){ springHome(); return; }
     switching = true;
 
-    /* Mark shell so boot-done cannot kill the switch animation */
+    /* Commit mode immediately so pill color + glass styles update together */
+    mode = next;
+    document.documentElement.setAttribute('data-glass-mode', mode);
+    try{ localStorage.setItem(KEY, mode); }catch(e){}
+    if(next === 'enhanced') showToast();
+
+    /* Prepare shell — clear any leftover state, no dimming */
     if(shell){
       shell.classList.add('is-mode-switching');
       shell.classList.remove('boot-done');
-      shell.style.animation = 'none';
       shell.style.filter = '';
       shell.style.opacity = '';
       shell.style.transform = '';
-      void shell.offsetWidth;
-      shell.style.animation = '';
     }
     if(sceneEl){
       sceneEl.classList.remove('in');
       sceneEl.classList.add('glass-switching');
     }
-    /* full-screen wipe disabled — no bright "din" flash */
 
-    var FADE_MS = 380;
-    /* native plays full 1.85s paper unroll; enhanced plays 0.72s diagonal */
-    var IN_MS = (next === 'native') ? 1900 : 780;
-    var TOTAL_MS = FADE_MS + IN_MS + 40;
-
-    /* After fade-out + inner white sweep: commit mode, start incoming animation */
-    setTimeout(function(){
-      mode = next;
-      document.documentElement.setAttribute('data-glass-mode', mode);
-      try{ localStorage.setItem(KEY, mode); }catch(e){}
-      try{
-        var g = document.getElementById('glass');
-        if(g){ g.style.filter = ''; g.style.opacity = ''; g.style.transform = ''; }
-        if(shell){
-          shell.style.filter = '';
-          shell.style.opacity = '';
-          shell.style.transform = '';
-          shell.style.animation = 'none';
-          void shell.offsetWidth;
-          shell.style.animation = '';
-        }
-      }catch(e){}
-      if(next === 'enhanced') showToast();
-      if(sceneEl){
-        sceneEl.classList.add('in');
-        void sceneEl.offsetWidth;
+    /* Inject subtle white sweep line inside the glass */
+    try{
+      var g = document.getElementById('glass');
+      if(g){
+        var old = g.querySelector('.block-sweep');
+        if(old) old.remove();
+        var sweep = document.createElement('div');
+        sweep.className = 'block-sweep';
+        g.appendChild(sweep);
+        setTimeout(function(){ try{ sweep.remove(); }catch(e){} }, 700);
       }
-      try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
-    }, FADE_MS);
+    }catch(e){}
 
-    /* After incoming finishes: clean up */
+    /* Force the open animation via inline style so CSS specificity cannot block it.
+       Native  → full 🌹 paper unroll (unrollCorner4D)
+       Enhanced → slow diagonal entrance */
+    var animName = (next === 'native')
+      ? 'unrollCorner4D 2.1s cubic-bezier(.16,.84,.18,1) both'
+      : 'glassModeDiagonalIn 1.05s cubic-bezier(.19,.86,.2,1) both';
+    var DURATION_MS = (next === 'native') ? 2200 : 1150;
+
+    if(shell){
+      shell.style.animation = 'none';
+      void shell.offsetWidth;
+      shell.style.animation = animName;
+    }
+    if(sceneEl){
+      sceneEl.classList.add('in');
+    }
+    try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
+
+    /* Cleanup after animation finishes */
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
       if(shell){
@@ -3797,13 +3781,9 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
         shell.style.opacity = '';
         shell.style.transform = '';
       }
-      try{
-        var g2 = document.getElementById('glass');
-        if(g2){ g2.style.filter = ''; g2.style.opacity = ''; g2.style.transform = ''; }
-      }catch(e){}
       switching = false;
       springHome();
-    }, TOTAL_MS);
+    }, DURATION_MS);
   }
 
   function onDown(e){
