@@ -58,7 +58,7 @@ html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
   animation:unrollCorner4DEnhanced 1.95s cubic-bezier(.19,.86,.2,1) both;
 }
 .card-shell.boot-done{
-  animation:none!important;
+  animation:none;
 }
 /* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
 @keyframes unrollCorner4D{
@@ -1276,7 +1276,7 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
   transform:translateX(-40%) skewX(-12deg);
 }
 .glass-mode-wipe.on .wipe-blade{
-  animation:glassModeWipe .7s cubic-bezier(.22,1,.36,1) forwards;
+  animation:glassModeWipe .35s cubic-bezier(.22,1,.36,1) forwards;
 }
 @keyframes glassModeWipe{
   0%{ transform:translateX(-50%) skewX(-12deg); opacity:0; }
@@ -1286,20 +1286,32 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
 
 /* Outgoing block: quick fade+blur, same for either direction. */
 .scene.glass-switching .card-shell{
-  animation:glassModeFadeOut .3s cubic-bezier(.4,0,.2,1) forwards;
+  animation:glassModeFadeOut .18s cubic-bezier(.4,0,.2,1) forwards;
 }
-/* Incoming block: replays each mode's OWN real unroll — native gets the exact
-   same page-unfold (unrollCorner4D) as first boot and as 🌹🌹, enhanced gets
-   its own 4D corner-roll (unrollCorner4DEnhanced). Never the same animation. */
+/* Incoming block: short, smooth, minimalistic — distinct per mode, but neither
+   one replays the full dramatic boot unroll (that's reserved for first load). */
 html[data-glass-mode="native"] .scene.glass-switching.in .card-shell{
-  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  animation:glassSwitchInNative .38s cubic-bezier(.22,1,.36,1) forwards;
 }
 html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
-  animation:unrollCorner4DEnhanced 1.95s cubic-bezier(.19,.86,.2,1) both;
+  animation:glassSwitchInEnhanced .42s cubic-bezier(.22,1,.36,1) forwards;
 }
 @keyframes glassModeFadeOut{
   0%{ filter:blur(0); opacity:1; }
-  100%{ filter:blur(4px); opacity:.45; }
+  100%{ filter:blur(3px); opacity:.5; }
+}
+/* Native switch-in: a small, clean unfold echo — minimal amplitude, no drama. */
+@keyframes glassSwitchInNative{
+  0%{ transform:translate3d(0,-5px,-16px) rotateX(-9deg) scale3d(.968,.958,.968); filter:blur(2px); opacity:.55; }
+  60%{ transform:translate3d(0,1px,3px) rotateX(2deg) scale3d(1.005,1.003,1.005); filter:blur(.3px); opacity:.96; }
+  100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
+}
+/* Enhanced switch-in: same minimal footprint, but a touch softer/slower — a quiet
+   glass materialize instead of the native fold. */
+@keyframes glassSwitchInEnhanced{
+  0%{ transform:translate3d(0,7px,-24px) rotateX(-12deg) scale3d(.945,.93,.945); filter:blur(3px); opacity:.4; }
+  55%{ transform:translate3d(0,-2px,4px) rotateX(3deg) scale3d(1.01,1.006,1.01); filter:blur(.5px); opacity:.9; }
+  100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
 }
 
 /* Enhanced boot: same corner-unroll story as native, but eased into fewer, softer
@@ -3725,14 +3737,14 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       if(next === 'enhanced') showToast();
       if(sceneEl) sceneEl.classList.add('in');
       try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
-    }, 300);
+    }, 180);
 
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
       if(wipe) wipe.classList.remove('on');
       switching = false;
       springHome();
-    }, 2300);
+    }, 620);
   }
 
   function onDown(e){
