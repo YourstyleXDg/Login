@@ -1005,8 +1005,10 @@ html[data-glass-mode="enhanced"] .glass{
   position:relative;
   overflow:hidden;
   isolation:isolate;
-  border-radius:var(--card-radius, 34px); /* same outer size as native — no growth */
+  border-radius:var(--card-radius, 34px);
   padding:43px 29px 34px;
+  box-sizing:border-box;
+  width:100%;
   background:
     radial-gradient(140% 95% at 20% -8%, rgba(255,255,255,.38) 0%, rgba(255,255,255,.14) 26%, transparent 58%),
     radial-gradient(90% 60% at 70% 8%, rgba(255,255,255,.10) 0%, transparent 55%),
@@ -1171,48 +1173,53 @@ html[data-glass-mode="enhanced"] body.is-recalling .glass::after{
   }
 }
 
-/* Bottom pill — movable, springs back, never reaches card edge */
+/* Bottom pill — movable L/R, clamps before edges, springs home */
 .glass-mode-rail{
   position:absolute;
-  left:0; right:0; bottom:0;
-  height:28px;
-  z-index:30;
-  pointer-events:auto;
+  left:12%;
+  right:12%;
+  bottom:4px;
+  height:32px;
+  z-index:40;
+  pointer-events:auto !important;
   touch-action:none;
   cursor:grab;
+  -webkit-user-select:none;
+  user-select:none;
   -webkit-tap-highlight-color:transparent;
-  overflow:visible;
 }
 .glass-mode-pill{
   position:absolute;
   left:50%;
   top:50%;
-  width:44px;
+  width:46px;
   height:5px;
-  margin-left:-22px;
-  margin-top:-2.5px;
   border-radius:999px;
-  background:rgba(255,255,255,.38);
-  box-shadow:0 0 8px rgba(255,255,255,.12), inset 0 1px rgba(255,255,255,.45);
+  background:rgba(255,255,255,.42);
+  box-shadow:0 0 8px rgba(255,255,255,.14), inset 0 1px rgba(255,255,255,.5);
+  transform:translate(-50%, -50%);
+  transform-origin:center center;
   pointer-events:none;
   will-change:transform;
-  transition: transform .55s cubic-bezier(.34,1.4,.44,1),
-              background .25s ease,
-              box-shadow .25s ease,
-              width .25s cubic-bezier(.34,1.4,.44,1);
+  transition:transform .5s cubic-bezier(.34,1.45,.44,1),
+              background .2s ease,
+              box-shadow .2s ease,
+              width .2s ease;
+}
+.glass-mode-rail.is-swiping{
+  cursor:grabbing;
 }
 .glass-mode-rail.is-swiping .glass-mode-pill{
-  width:52px;
-  margin-left:-26px;
-  background:rgba(255,255,255,.55);
-  box-shadow:0 0 14px rgba(0,255,180,.22), inset 0 1px rgba(255,255,255,.6);
-  transition: width .15s ease, background .15s ease, box-shadow .15s ease; /* no transform transition while dragging */
+  width:54px;
+  background:rgba(255,255,255,.62);
+  box-shadow:0 0 14px rgba(0,255,180,.28), inset 0 1px rgba(255,255,255,.65);
+  transition:background .15s ease, box-shadow .15s ease, width .15s ease;
 }
 html[data-glass-mode="enhanced"] .glass-mode-pill{
-  background:linear-gradient(90deg, rgba(255,150,90,.5), rgba(255,255,255,.5), rgba(100,170,255,.45));
+  background:linear-gradient(90deg, rgba(255,150,90,.55), rgba(255,255,255,.5), rgba(100,170,255,.5));
 }
 
-/* White slant wipe — does not resize card */
+/* Wipe — visual only, no size change */
 .glass-mode-wipe{
   position:fixed; inset:0; z-index:99990; pointer-events:none; opacity:0; overflow:hidden;
 }
@@ -1225,7 +1232,7 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
   transform:translateX(-40%) skewX(-12deg);
 }
 .glass-mode-wipe.on .wipe-blade{
-  animation:glassModeWipe .75s cubic-bezier(.22,1,.36,1) forwards;
+  animation:glassModeWipe .7s cubic-bezier(.22,1,.36,1) forwards;
 }
 @keyframes glassModeWipe{
   0%{ transform:translateX(-50%) skewX(-12deg); opacity:0; }
@@ -1233,23 +1240,22 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
   100%{ transform:translateX(50%) skewX(-12deg); opacity:0; }
 }
 
-/* Fade only — no scale growth (card size stays fixed) */
+/* Opacity only — never scale the card */
 .scene.glass-switching .card-shell{
-  animation:glassModeFadeOut .35s ease forwards;
+  animation:glassModeFadeOut .32s ease forwards;
 }
 .scene.glass-switching.in .card-shell{
-  animation:glassModeFadeIn .45s cubic-bezier(.22,1,.36,1) forwards;
+  animation:glassModeFadeIn .4s ease forwards;
 }
 @keyframes glassModeFadeOut{
-  0%{ filter:blur(0) brightness(1); opacity:1; }
-  100%{ filter:blur(5px) brightness(1.1); opacity:.4; }
+  0%{ filter:blur(0); opacity:1; }
+  100%{ filter:blur(4px); opacity:.45; }
 }
 @keyframes glassModeFadeIn{
-  0%{ filter:blur(6px) brightness(1.12); opacity:.35; }
-  100%{ filter:blur(0) brightness(1); opacity:1; }
+  0%{ filter:blur(4px); opacity:.45; }
+  100%{ filter:blur(0); opacity:1; }
 }
 
-/* Enhanced boot unroll (only when enhanced + not boot-done) */
 @keyframes unrollJellyEnhanced{
   0%{ transform:translate3d(0,24px,-100px) rotateX(-48deg) scale3d(.62,.48,.62); filter:blur(3px); opacity:0; }
   25%{ transform:translate3d(0,10px,-40px) rotateX(-18deg) scale3d(.86,.82,.86); filter:blur(1px); opacity:.8; }
@@ -1258,33 +1264,44 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
   100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
 }
 
-/* Minimal modern toast */
 .glass-mode-toast{
   position:fixed;
   left:50%;
   bottom:max(22px, env(safe-area-inset-bottom, 0px));
-  transform:translate(-50%, 12px);
+  transform:translate(-50%, 10px);
   z-index:99995;
-  padding:9px 16px;
+  padding:8px 14px;
   border-radius:999px;
-  background:rgba(16,18,20,.88);
+  background:rgba(14,16,18,.9);
   border:1px solid rgba(255,255,255,.1);
-  color:rgba(255,255,255,.78);
-  font-size:11.5px;
+  color:rgba(255,255,255,.75);
+  font-size:11px;
   font-weight:600;
-  letter-spacing:.15px;
-  line-height:1.2;
+  letter-spacing:.2px;
   white-space:nowrap;
   backdrop-filter:blur(12px);
   -webkit-backdrop-filter:blur(12px);
-  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
   opacity:0;
   pointer-events:none;
-  transition:opacity .28s ease, transform .32s cubic-bezier(.22,1,.36,1);
+  transition:opacity .25s ease, transform .3s cubic-bezier(.22,1,.36,1);
 }
 .glass-mode-toast.show{
   opacity:1;
   transform:translate(-50%, 0);
+}
+
+/* Lock outer size in both modes — no expansion */
+html[data-glass-mode="enhanced"] .glass,
+html[data-glass-mode="native"] .glass{
+  box-sizing:border-box !important;
+  width:100% !important;
+  max-width:100% !important;
+}
+html[data-glass-mode="enhanced"] .card-shell,
+html[data-glass-mode="native"] .card-shell,
+.scene.glass-switching .card-shell{
+  transform-origin:center center;
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -3568,7 +3585,7 @@ const recallHint=document.getElementById('recallHint');
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const HOLD_MS=600;
 const CARD_POSITION_KEY='dgxen_card_position_v1';
-const INTERACTIVE='#keyInput';
+const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
 
 /* ===== GLASS MODE SWITCH (native <-> enhanced) ===== */
 (function(){
@@ -3588,42 +3605,38 @@ const INTERACTIVE='#keyInput';
   }catch(e){}
   document.documentElement.setAttribute('data-glass-mode', mode);
 
-  /* One-shot boot animation, then lock so mode switch never re-unrolls */
   if(shell){
-    const markDone = function(){ shell.classList.add('boot-done'); };
+    const markDone = function(){ try{ shell.classList.add('boot-done'); }catch(e){} };
     shell.addEventListener('animationend', function onEnd(ev){
       if(ev.target !== shell) return;
       shell.removeEventListener('animationend', onEnd);
       markDone();
     });
-    setTimeout(markDone, 2200);
+    setTimeout(markDone, 2100);
   }
 
   let switching = false;
   let pid = null, sx = 0, sy = 0, lx = 0, active = false;
-  let pillX = 0;
 
   function maxTravel(){
-    /* stay clear of card edges — ~22% inset each side */
-    const w = rail.clientWidth || 280;
-    return Math.max(36, w * 0.28);
+    const w = rail.getBoundingClientRect().width || 200;
+    return Math.max(40, Math.floor(w * 0.36));
   }
 
-  function setPill(x, dragging){
+  function setPillX(x, live){
     const lim = maxTravel();
-    pillX = Math.max(-lim, Math.min(lim, x));
-    if(dragging){
+    const clamped = Math.max(-lim, Math.min(lim, x));
+    if(live){
       pill.style.transition = 'none';
-    }else{
-      pill.style.transition = 'transform .55s cubic-bezier(.34,1.4,.44,1), background .25s ease, box-shadow .25s ease, width .25s cubic-bezier(.34,1.4,.44,1)';
     }
-    pill.style.transform = 'translateX(' + pillX + 'px)';
+    /* always center with -50% then offset */
+    pill.style.transform = 'translate(calc(-50% + ' + clamped + 'px), -50%)';
+    return clamped;
   }
 
   function springHome(){
-    pillX = 0;
-    pill.style.transition = 'transform .55s cubic-bezier(.34,1.4,.44,1)';
-    pill.style.transform = 'translateX(0)';
+    pill.style.transition = 'transform .5s cubic-bezier(.34,1.45,.44,1)';
+    pill.style.transform = 'translate(-50%, -50%)';
   }
 
   function showToast(){
@@ -3653,18 +3666,17 @@ const INTERACTIVE='#keyInput';
       mode = next;
       document.documentElement.setAttribute('data-glass-mode', mode);
       try{ localStorage.setItem(KEY, mode); }catch(e){}
-      /* never re-run boot unroll on switch */
       if(shell) shell.classList.add('boot-done');
       if(next === 'enhanced') showToast();
       if(sceneEl) sceneEl.classList.add('in');
-    }, 280);
+    }, 260);
 
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
       if(wipe) wipe.classList.remove('on');
       switching = false;
       springHome();
-    }, 780);
+    }, 720);
   }
 
   function onDown(e){
@@ -3672,46 +3684,52 @@ const INTERACTIVE='#keyInput';
     if(e.button !== undefined && e.button !== 0) return;
     active = true;
     pid = e.pointerId;
-    sx = e.clientX; sy = e.clientY; lx = sx;
+    sx = e.clientX;
+    sy = e.clientY;
+    lx = sx;
     rail.classList.add('is-swiping');
-    try{ rail.setPointerCapture(e.pointerId); }catch(err){}
-    e.preventDefault();
-    e.stopPropagation();
+    try{ rail.setPointerCapture(pid); }catch(err){}
+    try{ e.preventDefault(); }catch(err){}
+    try{ e.stopPropagation(); }catch(err){}
   }
+
   function onMove(e){
-    if(!active || e.pointerId !== pid) return;
-    const dx = e.clientX - sx;
+    if(!active) return;
+    if(pid != null && e.pointerId !== pid) return;
     lx = e.clientX;
-    setPill(dx, true);
-    e.preventDefault();
-    e.stopPropagation();
+    const dx = e.clientX - sx;
+    setPillX(dx, true);
+    try{ e.preventDefault(); }catch(err){}
   }
+
   function onUp(e){
     if(!active) return;
-    if(e.pointerId !== undefined && e.pointerId !== pid) return;
+    if(pid != null && e.pointerId !== undefined && e.pointerId !== pid) return;
     active = false;
     rail.classList.remove('is-swiping');
-    const dx = (e.clientX != null ? e.clientX : lx) - sx;
-    const dy = (e.clientY != null ? e.clientY : sy) - sy;
+    const endX = (e && e.clientX != null) ? e.clientX : lx;
+    const endY = (e && e.clientY != null) ? e.clientY : sy;
+    const dx = endX - sx;
+    const dy = endY - sy;
     try{ if(pid != null) rail.releasePointerCapture(pid); }catch(err){}
     pid = null;
 
     const lim = maxTravel();
-    /* commit if past ~45% of allowed travel and mostly horizontal */
-    const commit = Math.abs(dx) >= lim * 0.45 && Math.abs(dx) > Math.abs(dy) * 0.85;
-    if(commit){
-      if(dx > 0) applyMode('enhanced');
-      else applyMode('native');
+    const farEnough = Math.abs(dx) >= lim * 0.4;
+    const horizontal = Math.abs(dx) > Math.abs(dy) * 0.75;
+    if(farEnough && horizontal){
+      applyMode(dx > 0 ? 'enhanced' : 'native');
     }else{
       springHome();
     }
   }
 
-  rail.addEventListener('pointerdown', onDown, {passive:false});
-  window.addEventListener('pointermove', onMove, {passive:false});
+  rail.addEventListener('pointerdown', onDown, {passive:false, capture:true});
+  rail.addEventListener('pointermove', onMove, {passive:false, capture:true});
+  rail.addEventListener('pointerup', onUp, {passive:false, capture:true});
+  rail.addEventListener('pointercancel', onUp, {passive:false, capture:true});
   window.addEventListener('pointerup', onUp, {passive:false});
   window.addEventListener('pointercancel', onUp, {passive:false});
-  rail.addEventListener('pointerdown', function(e){ e.stopPropagation(); }, true);
 })();
 
 
