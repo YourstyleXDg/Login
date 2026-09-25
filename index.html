@@ -1252,11 +1252,12 @@ html[data-glass-mode="enhanced"] body.is-recalling .glass::after{
 .glass-mode-rail.is-swiping{
   cursor:grabbing;
 }
+/* Grip feedback only — size, never color. Color is reserved for a committed
+   mode change (see html[data-glass-mode="enhanced"] rule below), so tapping
+   or dragging the rail without actually switching never tints the pill. */
 .glass-mode-rail.is-swiping .glass-mode-pill{
   width:54px;
-  background:rgba(255,255,255,.62);
-  box-shadow:0 0 14px rgba(0,255,180,.28), inset 0 1px rgba(255,255,255,.65);
-  transition:background .15s ease, box-shadow .15s ease, width .15s ease;
+  transition:width .15s ease;
 }
 html[data-glass-mode="enhanced"] .glass-mode-pill{
   background:linear-gradient(90deg, rgba(255,150,90,.55), rgba(255,255,255,.5), rgba(100,170,255,.5));
@@ -1287,20 +1288,18 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
 .scene.glass-switching .card-shell{
   animation:glassModeFadeOut .3s cubic-bezier(.4,0,.2,1) forwards;
 }
-/* Incoming block: each mode plays its own short unroll reprise, not a flat fade. */
+/* Incoming block: replays each mode's OWN real unroll — native gets the exact
+   same page-unfold (unrollCorner4D) as first boot and as 🌹🌹, enhanced gets
+   its own 4D corner-roll (unrollCorner4DEnhanced). Never the same animation. */
 html[data-glass-mode="native"] .scene.glass-switching.in .card-shell{
-  animation:glassModeSwitchInNative .55s cubic-bezier(.16,.84,.18,1) forwards;
+  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
 html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
-  animation:glassModeSwitchInEnhanced .6s cubic-bezier(.19,.86,.2,1) forwards;
+  animation:unrollCorner4DEnhanced 1.95s cubic-bezier(.19,.86,.2,1) both;
 }
 @keyframes glassModeFadeOut{
   0%{ filter:blur(0); opacity:1; }
   100%{ filter:blur(4px); opacity:.45; }
-}
-@keyframes glassModeFadeIn{
-  0%{ filter:blur(4px); opacity:.45; }
-  100%{ filter:blur(0); opacity:1; }
 }
 
 /* Enhanced boot: same corner-unroll story as native, but eased into fewer, softer
@@ -1312,18 +1311,6 @@ html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
   62%{transform:translate3d(2px,3px,10px) rotateX(6deg) rotateY(-4.5deg) rotateZ(.7deg) scale3d(1.012,1.008,1.012);filter:blur(0);opacity:1}
   80%{transform:translate3d(-.6px,-1px,-2px) rotateX(-1.8deg) rotateY(1.3deg) rotateZ(-.2deg) scale3d(.997,.998,.997)}
   100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);filter:blur(0);opacity:1}
-}
-/* Short reprise of each mode's unroll, played on mode SWITCH (not first boot). */
-@keyframes glassModeSwitchInNative{
-  0%{filter:blur(4px);opacity:.4;transform:translate3d(0,-10px,-40px) rotateX(-14deg) scale3d(.94,.9,.94)}
-  55%{filter:blur(1px);opacity:.85;transform:translate3d(0,2px,6px) rotateX(3deg) scale3d(1.01,1.006,1.01)}
-  100%{filter:blur(0);opacity:1;transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1)}
-}
-@keyframes glassModeSwitchInEnhanced{
-  0%{filter:blur(5px);opacity:.35;transform:translate3d(0,14px,-70px) rotateX(-26deg) scale3d(.82,.74,.82)}
-  45%{filter:blur(2px);opacity:.7;transform:translate3d(0,4px,-14px) rotateX(-6deg) scale3d(.96,.94,.96)}
-  75%{filter:blur(.4px);opacity:.95;transform:translate3d(0,-1px,4px) rotateX(2deg) scale3d(1.008,1.004,1.008)}
-  100%{filter:blur(0);opacity:1;transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1)}
 }
 
 .glass-mode-toast{
@@ -3745,7 +3732,7 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       if(wipe) wipe.classList.remove('on');
       switching = false;
       springHome();
-    }, 920);
+    }, 2300);
   }
 
   function onDown(e){
