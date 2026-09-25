@@ -49,12 +49,10 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   will-change:transform;backface-visibility:hidden;contain:layout style;
   transform:translateZ(0);
 }
-/* Native boot unroll only (enhanced uses its own keyframes below) */
-html[data-glass-mode="native"] .card-shell:not(.boot-done){
-  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
-}
+/* BOTH modes: exact native open animation (unrollCorner4D). No jelly boot. */
+html[data-glass-mode="native"] .card-shell:not(.boot-done),
 html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
-  animation:unrollJellyEnhanced 1.95s cubic-bezier(.16,.84,.18,1) both;
+  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
 }
 .card-shell.boot-done{
   animation:none!important;
@@ -1001,6 +999,16 @@ body[data-atm-intensity] .sky-layer{opacity:1}
   --depth-dark:rgba(0,0,0,.30);
 }
 
+
+/* STRICT: native glass never inherits enhanced filter / liquid extras */
+html[data-glass-mode="native"] .glass{
+  filter:none !important;
+}
+html[data-glass-mode="native"] .grain{
+  opacity:.07 !important;
+  visibility:visible !important;
+}
+
 html[data-glass-mode="enhanced"] .glass{
   position:relative;
   overflow:hidden;
@@ -1018,8 +1026,7 @@ html[data-glass-mode="enhanced"] .glass{
   border:1px solid rgba(255,255,255,.30);
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) contrast(107%) brightness(var(--glass-bright));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) contrast(107%) brightness(var(--glass-bright));
-  filter:url(#dgxenLiquidRefract);
-  box-shadow:
+    box-shadow:
     0 42px 96px rgba(0,0,0,.52), 0 16px 38px rgba(0,0,0,.30), 0 1px 0 rgba(255,255,255,.24),
     0 0 48px rgba(255,130,70,.05),
     inset 0 2.8px 1.2px var(--spec-top), inset 2.2px 0 1.5px var(--spec-side),
@@ -1110,6 +1117,39 @@ html[data-glass-mode="enhanced"] .iridescent{
 html[data-glass-mode="enhanced"] .content{
   position:relative; z-index:8; transform:translateZ(28px);
 }
+
+/* Sharp UI in enhanced — notch + input text must stay crisp (no warp) */
+html[data-glass-mode="enhanced"] .content,
+html[data-glass-mode="enhanced"] .auto-notch,
+html[data-glass-mode="enhanced"] input[type=text],
+html[data-glass-mode="enhanced"] .btn,
+html[data-glass-mode="enhanced"] .checkbox-container,
+html[data-glass-mode="enhanced"] h2,
+html[data-glass-mode="enhanced"] .tagline,
+html[data-glass-mode="enhanced"] .get-key,
+html[data-glass-mode="enhanced"] .status{
+  filter:none !important;
+  -webkit-font-smoothing:antialiased;
+  transform:translateZ(30px);
+  backface-visibility:hidden;
+}
+html[data-glass-mode="enhanced"] .auto-notch{
+  transform:translateX(-50%) translateZ(32px);
+}
+html[data-glass-mode="enhanced"] input[type=text]{
+  /* readable field — no extra backdrop mush on the glyphs */
+  -webkit-backdrop-filter:blur(12px) saturate(140%);
+  backdrop-filter:blur(12px) saturate(140%);
+  color:#fff !important;
+  -webkit-text-fill-color:#fff;
+  caret-color:#fff;
+}
+html[data-glass-mode="enhanced"] input[type=text]::placeholder{
+  color:rgba(255,255,255,.45);
+  -webkit-text-fill-color:rgba(255,255,255,.45);
+  opacity:1;
+}
+
 html[data-glass-mode="enhanced"] .grain{
   opacity:0!important; visibility:hidden!important; pointer-events:none!important;
 }
@@ -1138,7 +1178,7 @@ html[data-glass-mode="enhanced"] .btn{
 }
 
 html[data-glass-mode="enhanced"] .glass.dgxen-touching{
-  filter:url(#dgxenLiquidRefract) brightness(.97) saturate(1.05);
+  filter:brightness(.97) saturate(1.05);
   box-shadow:
     0 28px 68px rgba(0,0,0,.52), 0 10px 26px rgba(0,0,0,.28),
     inset 0 3px 4px rgba(255,255,255,.50), inset 0 -3px 7px rgba(0,0,0,.30),
@@ -1148,7 +1188,7 @@ html[data-glass-mode="enhanced"] .glass.dgxen-touching::before{
   opacity:1; filter:drop-shadow(0 0 6px rgba(255,255,255,.28)) saturate(130%);
 }
 html[data-glass-mode="enhanced"] body.is-dragging .glass{
-  filter:url(#dgxenLiquidRefract) brightness(1.03) saturate(1.08)!important;
+  filter:brightness(1.03) saturate(1.08)!important;
   box-shadow:
     0 60px 120px rgba(0,0,0,.58), 0 24px 50px rgba(0,0,0,.32), 0 0 44px rgba(255,130,70,.07),
     inset 0 2px 2px rgba(255,255,255,.62), inset 0 -2px 5px rgba(0,0,0,.26)!important;
@@ -1157,7 +1197,7 @@ html[data-glass-mode="enhanced"] body.is-dragging .glass::before{
   opacity:1; filter:drop-shadow(0 0 7px rgba(255,255,255,.30)) saturate(140%);
 }
 html[data-glass-mode="enhanced"] body.is-recalling .glass{
-  filter:url(#dgxenLiquidRefract) brightness(1.02) saturate(1.05);
+  filter:brightness(1.02) saturate(1.05);
 }
 html[data-glass-mode="enhanced"] body.is-dragging .glass::after,
 html[data-glass-mode="enhanced"] body.is-recalling .glass::after{
@@ -3667,6 +3707,12 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       document.documentElement.setAttribute('data-glass-mode', mode);
       try{ localStorage.setItem(KEY, mode); }catch(e){}
       if(shell) shell.classList.add('boot-done');
+      /* clear any leftover filter from fade so native never stays soft/bouncy */
+      try{
+        var g = document.getElementById('glass');
+        if(g){ g.style.filter = ''; g.style.opacity = ''; }
+        if(shell){ shell.style.filter = ''; shell.style.opacity = ''; }
+      }catch(e){}
       if(next === 'enhanced') showToast();
       if(sceneEl) sceneEl.classList.add('in');
     }, 260);
