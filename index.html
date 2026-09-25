@@ -1277,37 +1277,37 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
 /* Full-screen wipe OFF */
 .glass-mode-wipe{ display:none !important; }
 
-/* Block switch: card STAYS put — only a slow white sweep inside the glass */
+/* Block switch: card STAYS put — slow white sweep covers FULL card edge-to-edge */
 .scene.glass-switching .glass > .block-sweep{
-  position:absolute; top:-6%; left:0;
-  width:18%; height:112%;
+  position:absolute; top:-20%; left:0;
+  width:36%; height:140%;
   background:linear-gradient(100deg,
     transparent 0%,
-    rgba(255,255,255,.06) 38%,
-    rgba(255,255,255,.42) 50%,
-    rgba(255,255,255,.06) 62%,
+    rgba(255,255,255,.07) 36%,
+    rgba(255,255,255,.48) 50%,
+    rgba(255,255,255,.07) 64%,
     transparent 100%);
-  filter:blur(1px);
+  filter:blur(1.2px);
   opacity:0;
   z-index:30;
   pointer-events:none;
-  animation:blockInnerSweep .9s cubic-bezier(.22,1,.36,1) forwards;
+  animation:blockInnerSweep 1s cubic-bezier(.22,1,.36,1) forwards;
   will-change:transform,opacity;
 }
 @keyframes blockInnerSweep{
-  0%{ transform:translateX(-140%) skewX(-10deg); opacity:0; }
-  15%{ opacity:.75; }
-  100%{ transform:translateX(520%) skewX(-10deg); opacity:0; }
+  0%{ transform:translateX(-180%) skewX(-10deg); opacity:0; }
+  12%{ opacity:.8; }
+  100%{ transform:translateX(380%) skewX(-10deg); opacity:0; }
 }
 
-/* Enhanced FIRST boot only — opens from MIDDLE (center origin + scale) */
+/* Enhanced FIRST boot — original middle 4D unroll (diagonal), from login liq */
 @keyframes unrollCorner4DEnhanced{
-  0%{transform:translate3d(0,8px,-120px) rotateX(-55deg) scale3d(.2,.18,.2);filter:blur(5px);opacity:0}
-  18%{transform:translate3d(0,4px,-70px) rotateX(-38deg) scale3d(.42,.38,.42);filter:blur(2.5px);opacity:.5}
-  42%{transform:translate3d(0,0,-18px) rotateX(-14deg) scale3d(.78,.74,.78);filter:blur(.8px);opacity:.9}
-  68%{transform:translate3d(0,-2px,8px) rotateX(4deg) scale3d(1.015,1.01,1.015);filter:blur(0);opacity:1}
-  85%{transform:translate3d(0,1px,-2px) rotateX(-1.5deg) scale3d(.997,.998,.997)}
-  100%{transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1);filter:blur(0);opacity:1}
+  0%{transform:translate3d(-30px,-28px,-150px) rotateX(-70deg) rotateY(50deg) rotateZ(-7deg) scale3d(.22,.16,.22);filter:blur(4px);opacity:0}
+  16%{transform:translate3d(-26px,-22px,-108px) rotateX(-58deg) rotateY(42deg) rotateZ(-5.6deg) scale3d(.38,.3,.38);filter:blur(2.4px);opacity:.55}
+  38%{transform:translate3d(-13px,-11px,-38px) rotateX(-30deg) rotateY(21deg) rotateZ(-2.8deg) scale3d(.72,.66,.72);filter:blur(1px);opacity:.9}
+  62%{transform:translate3d(2px,3px,10px) rotateX(6deg) rotateY(-4.5deg) rotateZ(.7deg) scale3d(1.012,1.008,1.012);filter:blur(0);opacity:1}
+  80%{transform:translate3d(-.6px,-1px,-2px) rotateX(-1.8deg) rotateY(1.3deg) rotateZ(-.2deg) scale3d(.997,.998,.997)}
+  100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);filter:blur(0);opacity:1}
 }
 
 .glass-mode-toast{
