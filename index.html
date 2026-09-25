@@ -3653,13 +3653,10 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
   }catch(e){}
   document.documentElement.setAttribute('data-glass-mode', mode);
 
-  /* Enhanced-only: play 4D open FX with centre unroll (never on native open) */
+  /* Enhanced-only open FX — flag here; actual play runs AFTER Audio objects exist
+     (WebView fails if we call play before sfxEnhancedOpen is constructed). */
   if(mode === 'enhanced'){
-    try{
-      setTimeout(function(){
-        if(window.playSound && window.sfxEnhancedOpen) window.playSound(window.sfxEnhancedOpen);
-      }, 40);
-    }catch(e){}
+    window.__needEnhancedOpenFx = true;
   }
 
   if(shell){
@@ -3943,6 +3940,16 @@ window.playSoundReliable = function(obj){
   document.addEventListener('touchstart', flush, {once:true,passive:true});
 };
 
+/* Enhanced open FX after Audio + playSound exist. WebView often blocks until gesture;
+   playSoundReliable queues so first tap still hears it if autoplay was blocked. */
+(function playEnhancedOpenFxIfNeeded(){
+  if(!window.__needEnhancedOpenFx) return;
+  window.__needEnhancedOpenFx = false;
+  try{
+    if(window.sfxEnhancedOpen) window.playSoundReliable(window.sfxEnhancedOpen);
+  }catch(e){}
+})();
+
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
 let holdTimer=0,pressing=false,dragging=false,moved=false,activePointer=null,hintTimer=0;
@@ -3966,11 +3973,24 @@ function saveCardPosition(){
   try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
 }
 function restoreCardPosition(){
+  /* Fresh install / clear data → exact screen centre (no displacement). */
+  dragX=0;dragY=0;pendingX=0;pendingY=0;
   try{
-    const saved=JSON.parse(localStorage.getItem(CARD_POSITION_KEY)||'null');
-    if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y))return;
-    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;renderPosition();
-  }catch(error){localStorage.removeItem(CARD_POSITION_KEY)}
+    const raw=localStorage.getItem(CARD_POSITION_KEY);
+    if(!raw){ renderPosition(); return; }
+    const saved=JSON.parse(raw);
+    if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y)){
+      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+      renderPosition();
+      return;
+    }
+    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;
+    renderPosition();
+  }catch(error){
+    try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+    dragX=0;dragY=0;pendingX=0;pendingY=0;
+    renderPosition();
+  }
 }
 restoreCardPosition();
 
