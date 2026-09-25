@@ -37,7 +37,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translateZ(0)}
+.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translate3d(0,0,0);margin:0 auto;justify-self:center;align-self:center}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -3653,11 +3653,8 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
   }catch(e){}
   document.documentElement.setAttribute('data-glass-mode', mode);
 
-  /* Enhanced-only open FX — flag here; actual play runs AFTER Audio objects exist
-     (WebView fails if we call play before sfxEnhancedOpen is constructed). */
-  if(mode === 'enhanced'){
-    window.__needEnhancedOpenFx = true;
-  }
+  /* Enhanced-only open FX flag — play after Audio() + WebView unlock (never on native) */
+  window.__needEnhancedOpenFx = (mode === 'enhanced');
 
   if(shell){
     const markDone = function(){ try{ shell.classList.add('boot-done'); }catch(e){} };
@@ -3811,12 +3808,37 @@ window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preloa
 window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
 window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
 window.sfxBlockSwitch = new Audio('./sounds/swift block.mp3'); window.sfxBlockSwitch.preload='auto';
-window.sfxEnhancedOpen = new Audio('./sounds/enhanced block fx.mp3'); window.sfxEnhancedOpen.preload='auto';
+/* Spaces in filename → encode for WebView file:// / assets paths */
+window.sfxEnhancedOpen = new Audio(encodeURI('./sounds/enhanced block fx.mp3')); window.sfxEnhancedOpen.preload='auto';
+try{ window.sfxEnhancedOpen.load && window.sfxEnhancedOpen.load(); }catch(e){}
 window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto'; }catch(e){} });
 window.__audioUnlocked=false;
 window.__pendingSound=null;
+window.__playEnhancedOpenFx=function(){
+  if(!window.__needEnhancedOpenFx) return;
+  if(!window.sfxEnhancedOpen) return;
+  window.__needEnhancedOpenFx = false;
+  try{
+    if(window.playSoundReliable) window.playSoundReliable(window.sfxEnhancedOpen);
+    else if(window.playSound) window.playSound(window.sfxEnhancedOpen);
+    else {
+      window.sfxEnhancedOpen.currentTime = 0;
+      var p = window.sfxEnhancedOpen.play();
+      if(p && p.catch) p.catch(function(){ window.__needEnhancedOpenFx = true; window.__pendingSound = window.sfxEnhancedOpen; });
+    }
+  }catch(e){ window.__needEnhancedOpenFx = true; }
+};
+/* Try early (Chrome may allow); WebView will queue until gesture via unlockAudio */
+try{
+  setTimeout(function(){ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }, 60);
+  setTimeout(function(){ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }, 300);
+}catch(e){}
 window.unlockAudio=function(){
-  if(window.__audioUnlocked) return;
+  if(window.__audioUnlocked){
+    /* still flush enhanced open if it was blocked */
+    try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
+    return;
+  }
   window.__audioUnlocked=true;
   [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.sfxEnhancedOpen,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
     if(!a) return;
@@ -3828,6 +3850,8 @@ window.unlockAudio=function(){
   if(window.__pendingSound){
     try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
   }
+  /* Enhanced open FX after unlock (WebView needs this path) */
+  try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
 };
 ['pointerdown','touchstart','click'].forEach(function(ev){
   document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
@@ -3940,16 +3964,6 @@ window.playSoundReliable = function(obj){
   document.addEventListener('touchstart', flush, {once:true,passive:true});
 };
 
-/* Enhanced open FX after Audio + playSound exist. WebView often blocks until gesture;
-   playSoundReliable queues so first tap still hears it if autoplay was blocked. */
-(function playEnhancedOpenFxIfNeeded(){
-  if(!window.__needEnhancedOpenFx) return;
-  window.__needEnhancedOpenFx = false;
-  try{
-    if(window.sfxEnhancedOpen) window.playSoundReliable(window.sfxEnhancedOpen);
-  }catch(e){}
-})();
-
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
 let holdTimer=0,pressing=false,dragging=false,moved=false,activePointer=null,hintTimer=0;
@@ -3973,26 +3987,57 @@ function saveCardPosition(){
   try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
 }
 function restoreCardPosition(){
-  /* Fresh install / clear data → exact screen centre (no displacement). */
-  dragX=0;dragY=0;pendingX=0;pendingY=0;
+  /* Fresh install / clear data / invalid save → exact screen center (0,0). */
+  function forceCenter(){
+    dragX=0; dragY=0; pendingX=0; pendingY=0;
+    try{
+      if(scene){
+        scene.style.transition = 'none';
+        scene.style.transform = 'translate3d(0,0,0)';
+        void scene.offsetWidth;
+        scene.style.transition = '';
+      }
+    }catch(e){}
+  }
   try{
-    const raw=localStorage.getItem(CARD_POSITION_KEY);
-    if(!raw){ renderPosition(); return; }
-    const saved=JSON.parse(raw);
-    if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y)){
-      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
-      renderPosition();
+    const raw = localStorage.getItem(CARD_POSITION_KEY);
+    if(raw == null || raw === '' || raw === 'null'){
+      forceCenter();
       return;
     }
-    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;
+    const saved = JSON.parse(raw);
+    if(!saved || typeof saved !== 'object' || !Number.isFinite(+saved.x) || !Number.isFinite(+saved.y)){
+      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+      forceCenter();
+      return;
+    }
+    const x = +saved.x, y = +saved.y;
+    /* Ignore garbage / extreme values that would leave card off-screen */
+    const maxOff = Math.max(window.innerWidth || 400, window.innerHeight || 700) * 1.5;
+    if(!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > maxOff || Math.abs(y) > maxOff){
+      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+      forceCenter();
+      return;
+    }
+    dragX = x; dragY = y; pendingX = x; pendingY = y;
     renderPosition();
   }catch(error){
     try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
-    dragX=0;dragY=0;pendingX=0;pendingY=0;
-    renderPosition();
+    forceCenter();
   }
 }
 restoreCardPosition();
+/* Re-assert center after layout if still fresh (no saved pos) */
+try{
+  if(!localStorage.getItem(CARD_POSITION_KEY)){
+    requestAnimationFrame(function(){
+      if(!localStorage.getItem(CARD_POSITION_KEY)){
+        dragX=0; dragY=0; pendingX=0; pendingY=0;
+        if(scene) scene.style.transform = 'translate3d(0,0,0)';
+      }
+    });
+  }
+}catch(e){}
 
 /* True only while enhanced glass mode is active — gates every enhanced-only
    tilt/scale touch effect so native drag/recall physics never change. */
