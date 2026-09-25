@@ -1277,59 +1277,37 @@ html[data-glass-mode="enhanced"] .glass-mode-pill{
 /* Full-screen wipe OFF */
 .glass-mode-wipe{ display:none !important; }
 
-/* Subtle white line inside glass only — no screen dim */
+/* Block switch: card STAYS put — only a slow white sweep inside the glass */
 .scene.glass-switching .glass > .block-sweep{
-  position:absolute; top:-8%; left:0;
-  width:22%; height:116%;
+  position:absolute; top:-6%; left:0;
+  width:18%; height:112%;
   background:linear-gradient(100deg,
     transparent 0%,
-    rgba(255,255,255,.04) 40%,
-    rgba(255,255,255,.35) 50%,
-    rgba(255,255,255,.04) 60%,
+    rgba(255,255,255,.06) 38%,
+    rgba(255,255,255,.42) 50%,
+    rgba(255,255,255,.06) 62%,
     transparent 100%);
-  filter:blur(.8px);
+  filter:blur(1px);
   opacity:0;
   z-index:30;
   pointer-events:none;
-  animation:blockInnerSweep .55s cubic-bezier(.22,1,.36,1) forwards;
+  animation:blockInnerSweep .9s cubic-bezier(.22,1,.36,1) forwards;
   will-change:transform,opacity;
 }
 @keyframes blockInnerSweep{
-  0%{ transform:translateX(-130%) skewX(-12deg); opacity:0; }
-  20%{ opacity:.65; }
-  100%{ transform:translateX(480%) skewX(-12deg); opacity:0; }
+  0%{ transform:translateX(-140%) skewX(-10deg); opacity:0; }
+  15%{ opacity:.75; }
+  100%{ transform:translateX(520%) skewX(-10deg); opacity:0; }
 }
 
-/* NO CSS fade-out — JS drives open animation directly so native paper always plays */
-
-/* Enhanced FIRST boot (page load) — softer 4D unroll */
+/* Enhanced FIRST boot only — opens from MIDDLE (center origin + scale) */
 @keyframes unrollCorner4DEnhanced{
-  0%{transform:translate3d(-30px,-28px,-150px) rotateX(-70deg) rotateY(50deg) rotateZ(-7deg) scale3d(.22,.16,.22);filter:blur(4px);opacity:0}
-  16%{transform:translate3d(-26px,-22px,-108px) rotateX(-58deg) rotateY(42deg) rotateZ(-5.6deg) scale3d(.38,.3,.38);filter:blur(2.4px);opacity:.55}
-  38%{transform:translate3d(-13px,-11px,-38px) rotateX(-30deg) rotateY(21deg) rotateZ(-2.8deg) scale3d(.72,.66,.72);filter:blur(1px);opacity:.9}
-  62%{transform:translate3d(2px,3px,10px) rotateX(6deg) rotateY(-4.5deg) rotateZ(.7deg) scale3d(1.012,1.008,1.012);filter:blur(0);opacity:1}
-  80%{transform:translate3d(-.6px,-1px,-2px) rotateX(-1.8deg) rotateY(1.3deg) rotateZ(-.2deg) scale3d(.997,.998,.997)}
-  100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);filter:blur(0);opacity:1}
-}
-
-/* Slow smooth diagonal for enhanced SWITCH */
-@keyframes glassModeDiagonalIn{
-  0%{
-    opacity:.4;
-    transform:translate3d(-36px,-42px,-60px) rotateX(-18deg) rotateY(14deg) rotateZ(-4deg) scale3d(.82,.78,.82);
-  }
-  45%{
-    opacity:.92;
-    transform:translate3d(-6px,-8px,-10px) rotateX(-4deg) rotateY(3deg) rotateZ(-.8deg) scale3d(.97,.95,.97);
-  }
-  78%{
-    opacity:1;
-    transform:translate3d(2px,1px,4px) rotateX(1.2deg) rotateY(-.6deg) rotateZ(.15deg) scale3d(1.008,1.005,1.008);
-  }
-  100%{
-    opacity:1;
-    transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1);
-  }
+  0%{transform:translate3d(0,8px,-120px) rotateX(-55deg) scale3d(.2,.18,.2);filter:blur(5px);opacity:0}
+  18%{transform:translate3d(0,4px,-70px) rotateX(-38deg) scale3d(.42,.38,.42);filter:blur(2.5px);opacity:.5}
+  42%{transform:translate3d(0,0,-18px) rotateX(-14deg) scale3d(.78,.74,.78);filter:blur(.8px);opacity:.9}
+  68%{transform:translate3d(0,-2px,8px) rotateX(4deg) scale3d(1.015,1.01,1.015);filter:blur(0);opacity:1}
+  85%{transform:translate3d(0,1px,-2px) rotateX(-1.5deg) scale3d(.997,.998,.997)}
+  100%{transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1);filter:blur(0);opacity:1}
 }
 
 .glass-mode-toast{
@@ -1366,9 +1344,11 @@ html[data-glass-mode="native"] .glass{
   width:100% !important;
   max-width:100% !important;
 }
-html[data-glass-mode="enhanced"] .card-shell,
-html[data-glass-mode="native"] .card-shell,
-.scene.glass-switching .card-shell{
+/* Native = corner paper (0 0). Enhanced = middle 4D (center). */
+html[data-glass-mode="native"] .card-shell{
+  transform-origin:0 0;
+}
+html[data-glass-mode="enhanced"] .card-shell{
   transform-origin:center center;
 }
 
@@ -3720,26 +3700,11 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
     if(next === mode){ springHome(); return; }
     switching = true;
 
-    /* Commit mode immediately so pill color + glass styles update together */
-    mode = next;
-    document.documentElement.setAttribute('data-glass-mode', mode);
-    try{ localStorage.setItem(KEY, mode); }catch(e){}
-    if(next === 'enhanced') showToast();
+    /* Card STAYS — no open/unroll animation on switch.
+       Only: slow white sweep → commit new mode styles → done. */
+    if(sceneEl) sceneEl.classList.add('glass-switching');
 
-    /* Prepare shell — clear any leftover state, no dimming */
-    if(shell){
-      shell.classList.add('is-mode-switching');
-      shell.classList.remove('boot-done');
-      shell.style.filter = '';
-      shell.style.opacity = '';
-      shell.style.transform = '';
-    }
-    if(sceneEl){
-      sceneEl.classList.remove('in');
-      sceneEl.classList.add('glass-switching');
-    }
-
-    /* Inject subtle white sweep line inside the glass */
+    /* Slow white sweep inside the glass */
     try{
       var g = document.getElementById('glass');
       if(g){
@@ -3748,34 +3713,26 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
         var sweep = document.createElement('div');
         sweep.className = 'block-sweep';
         g.appendChild(sweep);
-        setTimeout(function(){ try{ sweep.remove(); }catch(e){} }, 700);
+        setTimeout(function(){ try{ sweep.remove(); }catch(e){} }, 1000);
       }
     }catch(e){}
 
-    /* Force the open animation via inline style so CSS specificity cannot block it.
-       Native  → full 🌹 paper unroll (unrollCorner4D)
-       Enhanced → slow diagonal entrance */
-    var animName = (next === 'native')
-      ? 'unrollCorner4D 2.1s cubic-bezier(.16,.84,.18,1) both'
-      : 'glassModeDiagonalIn 1.05s cubic-bezier(.19,.86,.2,1) both';
-    var DURATION_MS = (next === 'native') ? 2200 : 1150;
+    /* Mid-sweep: swap mode styles (pill color + glass look) — no cut, card never moves */
+    setTimeout(function(){
+      mode = next;
+      document.documentElement.setAttribute('data-glass-mode', mode);
+      try{ localStorage.setItem(KEY, mode); }catch(e){}
+      if(next === 'enhanced') showToast();
+      try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
+    }, 380);
 
-    if(shell){
-      shell.style.animation = 'none';
-      void shell.offsetWidth;
-      shell.style.animation = animName;
-    }
-    if(sceneEl){
-      sceneEl.classList.add('in');
-    }
-    try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
-
-    /* Cleanup after animation finishes */
+    /* Cleanup after sweep finishes */
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
       if(shell){
         shell.classList.remove('is-mode-switching');
-        shell.classList.add('boot-done');
+        /* keep boot-done so open animation never re-fires on switch */
+        if(!shell.classList.contains('boot-done')) shell.classList.add('boot-done');
         shell.style.animation = '';
         shell.style.filter = '';
         shell.style.opacity = '';
@@ -3783,7 +3740,7 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       }
       switching = false;
       springHome();
-    }, DURATION_MS);
+    }, 1000);
   }
 
   function onDown(e){
