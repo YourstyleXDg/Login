@@ -3653,6 +3653,15 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
   }catch(e){}
   document.documentElement.setAttribute('data-glass-mode', mode);
 
+  /* Enhanced-only: play 4D open FX with centre unroll (never on native open) */
+  if(mode === 'enhanced'){
+    try{
+      setTimeout(function(){
+        if(window.playSound && window.sfxEnhancedOpen) window.playSound(window.sfxEnhancedOpen);
+      }, 40);
+    }catch(e){}
+  }
+
   if(shell){
     const markDone = function(){ try{ shell.classList.add('boot-done'); }catch(e){} };
     shell.addEventListener('animationend', function onEnd(ev){
@@ -3805,13 +3814,14 @@ window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preloa
 window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
 window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
 window.sfxBlockSwitch = new Audio('./sounds/swift block.mp3'); window.sfxBlockSwitch.preload='auto';
+window.sfxEnhancedOpen = new Audio('./sounds/enhanced block fx.mp3'); window.sfxEnhancedOpen.preload='auto';
 window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto'; }catch(e){} });
 window.__audioUnlocked=false;
 window.__pendingSound=null;
 window.unlockAudio=function(){
   if(window.__audioUnlocked) return;
   window.__audioUnlocked=true;
-  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
+  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.sfxEnhancedOpen,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
     if(!a) return;
     try{
       const p=a.play();
