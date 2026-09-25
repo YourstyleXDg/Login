@@ -3819,14 +3819,26 @@ window.__playEnhancedOpenFx=function(){
   if(!window.sfxEnhancedOpen) return;
   window.__needEnhancedOpenFx = false;
   try{
-    if(window.playSoundReliable) window.playSoundReliable(window.sfxEnhancedOpen);
-    else if(window.playSound) window.playSound(window.sfxEnhancedOpen);
-    else {
-      window.sfxEnhancedOpen.currentTime = 0;
-      var p = window.sfxEnhancedOpen.play();
-      if(p && p.catch) p.catch(function(){ window.__needEnhancedOpenFx = true; window.__pendingSound = window.sfxEnhancedOpen; });
+    if(window.sfxEnhancedOpen){
+
+      try{
+        window.sfxEnhancedOpen.pause();
+        window.sfxEnhancedOpen.currentTime = 0;
+        window.sfxEnhancedOpen.muted = false;
+        window.sfxEnhancedOpen.volume = 1;
+
+        const p = window.sfxEnhancedOpen.play();
+
+        if(p && p.catch){
+          p.catch(() => {
+            window.__pendingSound = window.sfxEnhancedOpen;
+          });
+        }
+      }catch(e){
+        window.__pendingSound = window.sfxEnhancedOpen;
+      }
     }
-  }catch(e){ window.__needEnhancedOpenFx = true; }
+  }catch(e){}
 };
 /* Try early (Chrome may allow); WebView will queue until gesture via unlockAudio */
 try{
@@ -3847,6 +3859,13 @@ window.unlockAudio=function(){
       if(p&&p.then) p.then(function(){ a.pause(); a.currentTime=0; }).catch(function(){});
     }catch(e){}
   });
+  if(window.__needEnhancedOpenFx){
+    try{
+      window.sfxEnhancedOpen.currentTime = 0;
+      window.sfxEnhancedOpen.play().catch(function(){});
+      window.__needEnhancedOpenFx = false;
+    }catch(e){}
+  }
   if(window.__pendingSound){
     try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
   }
@@ -4027,17 +4046,23 @@ function restoreCardPosition(){
   }
 }
 restoreCardPosition();
-/* Re-assert center after layout if still fresh (no saved pos) */
-try{
-  if(!localStorage.getItem(CARD_POSITION_KEY)){
-    requestAnimationFrame(function(){
+
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+
+    try{
       if(!localStorage.getItem(CARD_POSITION_KEY)){
-        dragX=0; dragY=0; pendingX=0; pendingY=0;
-        if(scene) scene.style.transform = 'translate3d(0,0,0)';
+        dragX = 0;
+        dragY = 0;
+        pendingX = 0;
+        pendingY = 0;
+
+        scene.style.transform = 'translate3d(0,0,0)';
       }
-    });
-  }
-}catch(e){}
+    }catch(e){}
+
+  });
+});
 
 /* True only while enhanced glass mode is active — gates every enhanced-only
    tilt/scale touch effect so native drag/recall physics never change. */
