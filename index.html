@@ -19,6 +19,11 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
 html,body{min-height:100%;margin:0}
 body{
+  /* Fallback first for WebViews that don't support svh (falls back to
+     'auto' and collapses body height, breaking vertical centering on a
+     fresh install) — 100vh applies immediately, then 100svh overrides it
+     wherever it IS supported. */
+  min-height:100vh;
   min-height:100svh;
   overflow:hidden;
   display:grid;
@@ -3727,6 +3732,16 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       try{ localStorage.setItem(KEY, mode); }catch(e){}
       if(next === 'enhanced') showToast();
       try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
+      /* Enhanced block opened via live rail toggle (not just on boot) — play
+         the enhanced-open fx too. We're already inside a pointer-driven
+         gesture chain here, so WebView's play() is allowed; still route
+         through playSoundReliable so it retries/queues if blocked. */
+      if(next === 'enhanced'){
+        try{
+          if(window.playSoundReliable && window.sfxEnhancedOpen) window.playSoundReliable(window.sfxEnhancedOpen);
+          else if(window.playSound && window.sfxEnhancedOpen) window.playSound(window.sfxEnhancedOpen);
+        }catch(e){}
+      }
     }, 380);
 
     /* Cleanup after sweep finishes */
@@ -3817,28 +3832,31 @@ window.__pendingSound=null;
 window.__playEnhancedOpenFx=function(){
   if(!window.__needEnhancedOpenFx) return;
   if(!window.sfxEnhancedOpen) return;
-  window.__needEnhancedOpenFx = false;
+  /* Don't clear the flag until we actually know playback started — some
+     WebView engines return no Promise from .play() (or a Promise that never
+     settles), so clearing eagerly here was silently eating the flag and the
+     fx would never retry on the next real user gesture. */
   try{
-    if(window.sfxEnhancedOpen){
-
-      try{
-        window.sfxEnhancedOpen.pause();
-        window.sfxEnhancedOpen.currentTime = 0;
-        window.sfxEnhancedOpen.muted = false;
-        window.sfxEnhancedOpen.volume = 1;
-
-        const p = window.sfxEnhancedOpen.play();
-
-        if(p && p.catch){
-          p.catch(() => {
-            window.__pendingSound = window.sfxEnhancedOpen;
-          });
-        }
-      }catch(e){
+    if(window.playSoundReliable){
+      window.__needEnhancedOpenFx = false;
+      window.playSoundReliable(window.sfxEnhancedOpen);
+    } else if(window.playSound){
+      window.__needEnhancedOpenFx = false;
+      window.playSound(window.sfxEnhancedOpen);
+    } else {
+      window.sfxEnhancedOpen.currentTime = 0;
+      var p = window.sfxEnhancedOpen.play();
+      if(p && p.then){
+        window.__needEnhancedOpenFx = false;
+        p.catch(function(){ window.__needEnhancedOpenFx = true; window.__pendingSound = window.sfxEnhancedOpen; });
+      } else {
+        /* No Promise returned (older WebView) — assume it may not have
+           actually started; keep the flag set so the next gesture/unlock
+           retries it instead of silently giving up. */
         window.__pendingSound = window.sfxEnhancedOpen;
       }
     }
-  }catch(e){}
+  }catch(e){ window.__needEnhancedOpenFx = true; }
 };
 /* Try early (Chrome may allow); WebView will queue until gesture via unlockAudio */
 try{
@@ -3859,13 +3877,6 @@ window.unlockAudio=function(){
       if(p&&p.then) p.then(function(){ a.pause(); a.currentTime=0; }).catch(function(){});
     }catch(e){}
   });
-  if(window.__needEnhancedOpenFx){
-    try{
-      window.sfxEnhancedOpen.currentTime = 0;
-      window.sfxEnhancedOpen.play().catch(function(){});
-      window.__needEnhancedOpenFx = false;
-    }catch(e){}
-  }
   if(window.__pendingSound){
     try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
   }
@@ -4046,23 +4057,17 @@ function restoreCardPosition(){
   }
 }
 restoreCardPosition();
-
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-
-    try{
+/* Re-assert center after layout if still fresh (no saved pos) */
+try{
+  if(!localStorage.getItem(CARD_POSITION_KEY)){
+    requestAnimationFrame(function(){
       if(!localStorage.getItem(CARD_POSITION_KEY)){
-        dragX = 0;
-        dragY = 0;
-        pendingX = 0;
-        pendingY = 0;
-
-        scene.style.transform = 'translate3d(0,0,0)';
+        dragX=0; dragY=0; pendingX=0; pendingY=0;
+        if(scene) scene.style.transform = 'translate3d(0,0,0)';
       }
-    }catch(e){}
-
-  });
-});
+    });
+  }
+}catch(e){}
 
 /* True only while enhanced glass mode is active — gates every enhanced-only
    tilt/scale touch effect so native drag/recall physics never change. */
