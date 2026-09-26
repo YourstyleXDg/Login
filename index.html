@@ -3860,14 +3860,25 @@ window.unlockAudio=function(){
     return;
   }
   window.__audioUnlocked=true;
-  /* NOTE: sfxEnhancedOpen is deliberately excluded from this silent unlock
-     loop. This loop plays each sound muted-fast then immediately pauses +
-     rewinds it, purely to satisfy the browser's "user gesture" requirement
-     for future plays. Including sfxEnhancedOpen here raced against the real
-     playback below (__playEnhancedOpenFx) on the very first gesture: both
-     called .play() on the same shared <audio> element within the same tick,
-     and whichever .then()-pause landed second could immediately cut off the
-     other's audible playback — silently killing the fx in WebView. */
+  /* CRITICAL ORDERING: __playEnhancedOpenFx() must run FIRST, before any
+     other audio element calls .play() in this same gesture stack.
+     Android WebView's gesture-activation is stricter than Chrome's — it
+     appears to only honor the FIRST .play() call made inside a given
+     user-gesture callback (or grants a very small budget), whereas desktop
+     Chrome is lax enough to allow every subsequent call in the same stack
+     through too. Previously the 7-element silent-unlock loop below ran
+     first, on every single tap — spending Android's one-shot gesture
+     allowance on sfxSuccess/etc before sfxEnhancedOpen ever got a turn.
+     That's why the fx played 100% of the time on Chrome (no such budget
+     limit) and 0% of the time in WebView (budget already spent). Playing
+     the real fx first guarantees it gets whatever gesture allowance exists
+     on either platform. */
+  try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
+
+  /* NOTE: sfxEnhancedOpen is deliberately excluded from the loop below.
+     That loop plays each sound muted-fast then immediately pauses +
+     rewinds it, purely to satisfy the gesture requirement for later plays.
+     Including sfxEnhancedOpen here raced against its real playback above. */
   [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
     if(!a) return;
     try{
@@ -3878,12 +3889,11 @@ window.unlockAudio=function(){
   if(window.__pendingSound){
     try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
   }
-  /* Enhanced open FX after unlock (WebView needs this path) */
-  try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
 };
 ['pointerdown','touchstart','click'].forEach(function(ev){
   document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
 });
+
 
 function isOnline(){ return navigator.onLine !== false; }
 function paintOffline(){
