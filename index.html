@@ -3658,9 +3658,6 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
   }catch(e){}
   document.documentElement.setAttribute('data-glass-mode', mode);
 
-  /* Enhanced-only open FX flag — play after Audio() + WebView unlock (never on native) */
-  window.__needEnhancedOpenFx = (mode === 'enhanced');
-
   if(shell){
     const markDone = function(){ try{ shell.classList.add('boot-done'); }catch(e){} };
     shell.addEventListener('animationend', function onEnd(ev){
@@ -3813,72 +3810,12 @@ window.sfxSaveKey = new Audio('./sounds/save key.mp3'); window.sfxSaveKey.preloa
 window.sfxRecall = new Audio('./sounds/recall big block.mp3'); window.sfxRecall.preload='auto';
 window.sfxAutoLogin = new Audio('./sounds/auto login on.mp3'); window.sfxAutoLogin.preload='auto';
 window.sfxBlockSwitch = new Audio('./sounds/swift block.mp3'); window.sfxBlockSwitch.preload='auto';
-/* Spaces in filename → encode for WebView file:// / assets paths */
-window.sfxEnhancedOpen = new Audio(encodeURI('./sounds/enhanced block fx.mp3')); window.sfxEnhancedOpen.preload='auto';
-try{ window.sfxEnhancedOpen.load && window.sfxEnhancedOpen.load(); }catch(e){}
 window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=new Audio('./sounds/sucess login.mp3'); window.sfxSuccess.preload='auto'; }catch(e){} });
 window.__audioUnlocked=false;
 window.__pendingSound=null;
-window.__playEnhancedOpenFx=function(){
-  if(!window.__needEnhancedOpenFx) return;
-  if(!window.sfxEnhancedOpen) return;
-  /* Don't clear the flag until we actually know playback started — some
-     WebView engines return no Promise from .play() (or a Promise that never
-     settles), so clearing eagerly here was silently eating the flag and the
-     fx would never retry on the next real user gesture. */
-  try{
-    if(window.playSoundReliable){
-      window.__needEnhancedOpenFx = false;
-      window.playSoundReliable(window.sfxEnhancedOpen);
-    } else if(window.playSound){
-      window.__needEnhancedOpenFx = false;
-      window.playSound(window.sfxEnhancedOpen);
-    } else {
-      window.sfxEnhancedOpen.currentTime = 0;
-      var p = window.sfxEnhancedOpen.play();
-      if(p && p.then){
-        window.__needEnhancedOpenFx = false;
-        p.catch(function(){ window.__needEnhancedOpenFx = true; window.__pendingSound = window.sfxEnhancedOpen; });
-      } else {
-        /* No Promise returned (older WebView) — assume it may not have
-           actually started; keep the flag set so the next gesture/unlock
-           retries it instead of silently giving up. */
-        window.__pendingSound = window.sfxEnhancedOpen;
-      }
-    }
-  }catch(e){ window.__needEnhancedOpenFx = true; }
-};
-/* Try early (Chrome may allow); WebView will queue until gesture via unlockAudio */
-try{
-  setTimeout(function(){ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }, 60);
-  setTimeout(function(){ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }, 300);
-}catch(e){}
 window.unlockAudio=function(){
-  if(window.__audioUnlocked){
-    /* still flush enhanced open if it was blocked */
-    try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
-    return;
-  }
+  if(window.__audioUnlocked) return;
   window.__audioUnlocked=true;
-  /* CRITICAL ORDERING: __playEnhancedOpenFx() must run FIRST, before any
-     other audio element calls .play() in this same gesture stack.
-     Android WebView's gesture-activation is stricter than Chrome's — it
-     appears to only honor the FIRST .play() call made inside a given
-     user-gesture callback (or grants a very small budget), whereas desktop
-     Chrome is lax enough to allow every subsequent call in the same stack
-     through too. Previously the 7-element silent-unlock loop below ran
-     first, on every single tap — spending Android's one-shot gesture
-     allowance on sfxSuccess/etc before sfxEnhancedOpen ever got a turn.
-     That's why the fx played 100% of the time on Chrome (no such budget
-     limit) and 0% of the time in WebView (budget already spent). Playing
-     the real fx first guarantees it gets whatever gesture allowance exists
-     on either platform. */
-  try{ if(window.__needEnhancedOpenFx) window.__playEnhancedOpenFx(); }catch(e){}
-
-  /* NOTE: sfxEnhancedOpen is deliberately excluded from the loop below.
-     That loop plays each sound muted-fast then immediately pauses +
-     rewinds it, purely to satisfy the gesture requirement for later plays.
-     Including sfxEnhancedOpen here raced against its real playback above. */
   [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
     if(!a) return;
     try{
