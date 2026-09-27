@@ -506,28 +506,30 @@ body.recall-ready{cursor:crosshair}
   white-space:nowrap;
   font-weight:900;
   letter-spacing:.35px;
-  transition: transform .55s cubic-bezier(.22,.9,.28,1), opacity .4s ease;
+  transition: transform .9s cubic-bezier(.22,.85,.28,1), opacity .55s ease;
   will-change: transform, opacity;
 }
 .unlock-lab-main{ transform:translateX(0); opacity:1; }
 /* Granted starts fully off the LEFT edge of the button */
 .unlock-lab-granted{ transform:translateX(-100%); opacity:0; }
-/* Committed slide-right: main stays OUT (no bounce-back) */
+/* Committed: main exits slowly — stays out (no bounce). Overlaps with granted entry. */
 .unlock-slide-btn.unlock-committed .unlock-lab-main{
-  transform:translateX(120%);
+  transform:translateX(115%);
   opacity:0;
-  transition: transform .5s cubic-bezier(.22,.9,.28,1), opacity .35s ease;
+  transition: transform .85s cubic-bezier(.22,.85,.28,1), opacity .5s ease;
 }
-/* Success: main out right, granted from LEFT edge into center (same time) */
+/* Success: main continues out; granted enters from left with slight delay so the bar never looks empty */
 .unlock-slide-btn.success .unlock-lab-main,
 .unlock-slide-btn.unlock-granted .unlock-lab-main{
-  transform:translateX(120%);
+  transform:translateX(115%);
   opacity:0;
+  transition: transform .85s cubic-bezier(.22,.85,.28,1), opacity .45s ease;
 }
 .unlock-slide-btn.success .unlock-lab-granted,
 .unlock-slide-btn.unlock-granted .unlock-lab-granted{
   transform:translateX(0);
   opacity:1;
+  transition: transform .85s cubic-bezier(.22,.85,.28,1) .12s, opacity .5s ease .08s;
 }
 .unlock-slide-arrow{
   display:none;
@@ -3844,6 +3846,7 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
     const markDone = function(){
       if(bootMarked) return;
       bootMarked = true;
+      window.__dgxenBootDone = true;
       try{ shell.classList.add('boot-done'); }catch(e){}
       /* Restore decorative loops (sheen / JOIN / hang). Sound was never paused. */
       try{ document.body.classList.add('enhanced-boot-fx-on'); }catch(e2){}
@@ -4007,31 +4010,45 @@ window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=n
 window.__audioUnlocked=false;
 window.__pendingSound=null;
 window.unlockAudio=function(){
-  // Warm login SFX only — never touch JOIN dance/click (pause was killing VIP/JOIN sounds)
+  // ONE silent warm-up only. Never re-run on every tap (that caused distorted
+  // play/pause clicks across the whole screen).
+  if(window.__audioUnlocked || window.__audioWarming) return;
+  window.__audioWarming = true;
   var list=[window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch];
+  var left = 0;
   list.forEach(function(a){
     if(!a) return;
+    left++;
     try{
+      a.muted = true;
       var p=a.play();
       if(p&&p.then) p.then(function(){
-        window.__audioUnlocked=true;
-        try{ a.pause(); a.currentTime=0; }catch(e2){}
-      }).catch(function(){});
-    }catch(e){}
+        try{ a.pause(); a.currentTime=0; a.muted=false; }catch(e2){}
+        left--;
+        if(left<=0){ window.__audioUnlocked=true; window.__audioWarming=false; }
+      }).catch(function(){
+        try{ a.muted=false; }catch(e3){}
+        left--;
+        if(left<=0){ window.__audioUnlocked=true; window.__audioWarming=false; }
+      });
+    }catch(e){
+      left--;
+      try{ a.muted=false; }catch(e4){}
+    }
   });
+  if(left<=0){ window.__audioUnlocked=true; window.__audioWarming=false; }
   if(window.__pendingSound){
     try{
       var o=window.__pendingSound;
       var src=(o&&(o.currentSrc||o.src))||'';
       var n=src?new Audio(src):o;
-      if(!n) return;
-      n.volume=1;
-      n.play().then(function(){ window.__pendingSound=null; window.__audioUnlocked=true; }).catch(function(){});
+      if(n){ n.volume=1; n.play().then(function(){ window.__pendingSound=null; }).catch(function(){}); }
     }catch(e){}
   }
 };
-['pointerdown','touchstart','click'].forEach(function(ev){
-  document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
+// First user gesture only — not every pointerdown forever
+['pointerdown','touchstart'].forEach(function(ev){
+  document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:true,passive:true});
 });
 
 
@@ -4154,10 +4171,11 @@ window.applyAccessGrantedButton = function(button){
     button.disabled = true;
     var main = button.querySelector('.unlock-lab-main');
     var granted = button.querySelector('.unlock-lab-granted');
+    // Clear drag inline styles but KEEP unlock-committed until success classes take over
+    // so main does not snap back to center (empty-button flash).
     if(main){ main.style.transform = ''; main.style.opacity = ''; }
     if(granted){ granted.style.transform = ''; granted.style.opacity = ''; }
-    button.classList.remove('btn-label-swap', 'is-sliding', 'nudge-hint', 'unlock-committed');
-    try{ void button.offsetWidth; }catch(eR){}
+    button.classList.remove('btn-label-swap', 'is-sliding', 'nudge-hint');
     button.classList.add('success', 'unlock-granted');
     if(granted){ try{ granted.setAttribute('aria-hidden', 'false'); }catch(eA){} }
     if(!granted){ try{ button.textContent = 'ACCESS GRANTED'; }catch(e){} }
@@ -6105,20 +6123,11 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     playNextMove();
   }
 
-  function playVipJoinClick(){
-    try{
-      var a = getJoinClickAudio();
-      var src = (a && (a.currentSrc || a.src)) || './sounds/clicked on join button.mp3';
-      var n = new Audio(src);
-      n.volume = 1;
-      n.play().catch(function(){});
-    }catch(e){}
-  }
   function onVipTap(e){
     // small tap animation on the VIP text itself, every tap, regardless of gate
     vip.classList.remove('vip-tapped');
     void vip.offsetWidth;
-    playVipJoinClick(); vip.classList.add('vip-tapped');
+    vip.classList.add('vip-tapped');
 
     const enabled = !window.__dgxenJoinFxEnabled || window.__dgxenJoinFxEnabled();
     if (!enabled){ playDisabledFlash(); return; }
@@ -7745,13 +7754,13 @@ async function verifyKey(){
       window.__dgxenLoggedIn = true;
       try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
       try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
-      // ACCESS GRANTED is on screen now — wait 0.5s so user can see it, then enter app
+      // Labels animate ~0.9s; hold so ACCESS GRANTED is readable, then enter app
       setTimeout(function(){
         try{
           if(window.Android&&typeof window.Android.unlock==='function') window.Android.unlock();
           else show('Unlocked! (Browser Mode)','var(--accent)');
         }catch(e){ console.error('Android bridge error:',e); show('Unlocked! (Fallback Mode)','var(--accent)'); }
-      }, 500);
+      }, 1100);
 
       // Post-login bookkeeping in parallel (does not hold the green button)
       try {
@@ -7992,31 +8001,30 @@ document.addEventListener('visibilitychange', function(){
 </script>
 
 <script>
-/* Keep card visible after app background → foreground (no disappear/reappear) */
+/* After first boot only: keep card visible on app resume (never kill open animation) */
 (function(){
   function ensureCardVisible(){
+    // Critical: do not run before opening unroll finishes — that was wiping boot animation
+    if(!window.__dgxenBootDone) return;
     try{
       var shell = document.getElementById('cardShell');
       if(shell){
-        shell.classList.add('boot-done');
+        if(!shell.classList.contains('boot-done')) shell.classList.add('boot-done');
         shell.classList.remove('is-mode-switching');
-        shell.style.animation = 'none';
+        // only clear stuck mid-animation styles after boot already completed once
         shell.style.opacity = '1';
         shell.style.visibility = 'visible';
-        shell.style.transform = 'none';
       }
       try{ document.body.classList.add('enhanced-boot-fx-on'); }catch(e2){}
-      var scene = document.getElementById('scene');
-      if(scene){
-        scene.classList.remove('glass-switching', 'in', 'out');
-      }
     }catch(e){}
   }
   document.addEventListener('visibilitychange', function(){
     if(document.visibilityState === 'visible') ensureCardVisible();
   });
-  window.addEventListener('pageshow', ensureCardVisible);
-  window.addEventListener('focus', function(){ setTimeout(ensureCardVisible, 0); });
+  window.addEventListener('pageshow', function(ev){
+    if(ev && ev.persisted) ensureCardVisible();
+    else ensureCardVisible();
+  });
 })();
 </script>
 <div id="forceUpdateModal" aria-modal="true" role="dialog">
