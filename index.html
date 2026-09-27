@@ -478,7 +478,7 @@ body.recall-ready{cursor:crosshair}
 
 .btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .2s ease,box-shadow .4s ease,background .45s ease,color .35s ease,opacity .28s ease,filter .35s ease}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);color:#02140a;box-shadow:0 10px 30px rgba(0,255,136,.32)}.btn.btn-label-swap{opacity:.55;filter:saturate(.85);transform:scale(.985)}
 
-/* ===== Enhanced-only slide unlock / paste on UNLOCK button ===== */
+/* ===== Enhanced-only slide unlock (NO paste) ===== */
 .unlock-slide-btn{
   position:relative;
   overflow:hidden;
@@ -506,16 +506,22 @@ body.recall-ready{cursor:crosshair}
   white-space:nowrap;
   font-weight:900;
   letter-spacing:.35px;
-  transition: transform .38s cubic-bezier(.22,.9,.28,1), opacity .28s ease;
+  transition: transform .55s cubic-bezier(.22,.9,.28,1), opacity .4s ease;
   will-change: transform, opacity;
 }
 .unlock-lab-main{ transform:translateX(0); opacity:1; }
-.unlock-lab-granted{ transform:translateX(-110%); opacity:0; }
-.unlock-lab-pasted{ transform:translateX(110%); opacity:0; }
-/* Success: simultaneous — main exits right, granted enters left→center, with green theme */
+/* Granted starts fully off the LEFT edge of the button */
+.unlock-lab-granted{ transform:translateX(-100%); opacity:0; }
+/* Committed slide-right: main stays OUT (no bounce-back) */
+.unlock-slide-btn.unlock-committed .unlock-lab-main{
+  transform:translateX(120%);
+  opacity:0;
+  transition: transform .5s cubic-bezier(.22,.9,.28,1), opacity .35s ease;
+}
+/* Success: main out right, granted from LEFT edge into center (same time) */
 .unlock-slide-btn.success .unlock-lab-main,
 .unlock-slide-btn.unlock-granted .unlock-lab-main{
-  transform:translateX(110%);
+  transform:translateX(120%);
   opacity:0;
 }
 .unlock-slide-btn.success .unlock-lab-granted,
@@ -523,34 +529,53 @@ body.recall-ready{cursor:crosshair}
   transform:translateX(0);
   opacity:1;
 }
-.unlock-slide-btn.success .unlock-lab-pasted,
-.unlock-slide-btn.unlock-granted .unlock-lab-pasted{
+.unlock-slide-arrow{
+  display:none;
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(0,0,0,.38);
+  pointer-events:none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+html[data-glass-mode="enhanced"] .unlock-slide-arrow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+html[data-glass-mode="enhanced"] .unlock-slide-btn:not(.success):not(.unlock-granted):not(.unlock-committed) .unlock-slide-arrow{
+  animation: unlockArrowPulse 1.6s ease-in-out infinite;
+}
+@keyframes unlockArrowPulse{
+  0%,100%{ transform:translateY(-50%) translateX(0); opacity:.45; }
+  50%{ transform:translateY(-50%) translateX(3px); opacity:.85; }
+}
+html[data-glass-mode="enhanced"] .unlock-slide-btn.success .unlock-slide-arrow,
+html[data-glass-mode="enhanced"] .unlock-slide-btn.unlock-granted .unlock-slide-arrow{
   opacity:0;
-  transform:translateX(-110%);
+  animation:none;
 }
-/* paste motion mirrors success (opposite direction) */
-.unlock-slide-btn.is-pasting .unlock-lab-main{
-  transform:translateX(-110%);
-  opacity:0;
+html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding{ cursor:grabbing; }
+html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
+  transition: none;
 }
-.unlock-slide-btn.is-pasting .unlock-lab-pasted{
-  transform:translateX(0);
-  opacity:1;
-}
-.unlock-slide-btn.paste-exit .unlock-lab-pasted{
-  transform:translateX(-110%);
-  opacity:0;
-}
-.unlock-slide-btn.paste-exit .unlock-lab-main{
-  transform:translateX(0);
-  opacity:1;
-}
-/* micro-hint nudge on enhanced tap */
+/* micro-hint nudge on enhanced light tap */
 .unlock-slide-btn.nudge-hint .unlock-lab-main{
   transition: transform .35s cubic-bezier(.22,.9,.28,1), opacity .25s ease;
   transform:translateX(14px);
   opacity:.85;
 }
+/* Native: still show granted on success */
+html[data-glass-mode="native"] .unlock-slide-btn:not(.success):not(.unlock-granted) .unlock-lab-granted{
+  display:none;
+}
+html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-granted,
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-granted{
+  display:block !important;
+}
+html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
+
 /* richer green theme (not flat pure green) */
 .btn.success,
 .unlock-slide-btn.success{
@@ -564,37 +589,6 @@ body.recall-ready{cursor:crosshair}
   transition: background .45s ease, box-shadow .45s ease, color .35s ease, transform .2s ease, opacity .28s ease !important;
 }
 .btn:disabled.success{ opacity: 1; }
-
-/* Themed clipboard / paste helper (no system permission dialog) */
-.paste-sheet-backdrop{
-  position:fixed; inset:0; z-index:99999;
-  background:rgba(0,0,0,.55); backdrop-filter:blur(8px);
-  display:flex; align-items:center; justify-content:center;
-  padding:24px; opacity:0; pointer-events:none; transition:opacity .25s ease;
-}
-.paste-sheet-backdrop.show{ opacity:1; pointer-events:auto; }
-.paste-sheet{
-  width:min(340px,100%); border-radius:20px; padding:22px 20px 18px;
-  background:linear-gradient(160deg, rgba(40,48,46,.94), rgba(18,22,20,.96));
-  border:1px solid rgba(255,255,255,.12);
-  box-shadow:0 24px 60px rgba(0,0,0,.5), inset 0 1px rgba(255,255,255,.1);
-  color:#e8f5ef; font-family:inherit;
-}
-.paste-sheet h3{ margin:0 0 8px; font-size:16px; font-weight:900; letter-spacing:.02em; color:#7dffc4; }
-.paste-sheet p{ margin:0 0 14px; font-size:13px; line-height:1.45; color:rgba(255,255,255,.72); }
-.paste-sheet input{
-  width:100%; box-sizing:border-box; padding:14px 14px; border-radius:12px;
-  border:1px solid rgba(255,255,255,.14); background:rgba(0,0,0,.35);
-  color:#fff; font-size:14px; font-weight:700; margin-bottom:14px; outline:none;
-}
-.paste-sheet input:focus{ border-color:rgba(0,255,136,.45); box-shadow:0 0 0 3px rgba(0,255,136,.12); }
-.paste-sheet .ps-actions{ display:flex; gap:10px; }
-.paste-sheet .ps-actions button{
-  flex:1; padding:12px; border:0; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer;
-}
-.paste-sheet .ps-cancel{ background:rgba(255,255,255,.08); color:#fff; }
-.paste-sheet .ps-ok{ background:linear-gradient(135deg,#7dffc4,#00c973); color:#02140c; }
-
 
 .unlock-slide-arrow{
   display:none;
@@ -632,7 +626,6 @@ html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
 }
 html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
 /* Native: keep label stack so ACCESS GRANTED can animate on success */
-html[data-glass-mode="native"] .unlock-lab-pasted{ display:none !important; }
 html[data-glass-mode="native"] .unlock-slide-btn:not(.success):not(.unlock-granted) .unlock-lab-granted{
   display:none;
 }
@@ -3796,8 +3789,7 @@ html[data-glass-mode="enhanced"] .card-shell{
           <span class="unlock-slide-track">
             <span class="unlock-lab unlock-lab-main">UNLOCK APP</span>
             <span class="unlock-lab unlock-lab-granted" aria-hidden="true">ACCESS GRANTED</span>
-            <span class="unlock-lab unlock-lab-pasted" aria-hidden="true">PASTED</span>
-          </span>
+</span>
           <span class="unlock-slide-arrow" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </span>
@@ -4015,9 +4007,8 @@ window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=n
 window.__audioUnlocked=false;
 window.__pendingSound=null;
 window.unlockAudio=function(){
-  // Warm elements on user gesture. Only mark unlocked after a real play succeeds
-  // (old code set unlocked=true immediately, so a failed first unlock never retried).
-  var list=[window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio];
+  // Warm login SFX only — never touch JOIN dance/click (pause was killing VIP/JOIN sounds)
+  var list=[window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch];
   list.forEach(function(a){
     if(!a) return;
     try{
@@ -4119,46 +4110,44 @@ setInterval(function(){ if(document.visibilityState==='visible') verifyRealConne
 window.playSound = function(obj){
   try{
     if(!obj) return;
-    // Never restart while a clip is already playing (stops half/distorted multi-tap)
-    if(window.__sfxPlaying) return;
+    // Only block re-entry for the SAME success clip (prevents multi-tap chop).
+    // Other SFX (fail, save, switch) always allowed.
+    var isSuccess = (obj === window.sfxSuccess);
+    if(isSuccess && window.__sfxSuccessPlaying) return;
     var src = '';
     try{ src = obj.currentSrc || obj.src || ''; }catch(e0){}
     var node;
     try{ node = src ? new Audio(src) : obj; }catch(eN){ node = obj; }
     node.muted = false;
     node.volume = 1;
-    window.__sfxPlaying = true;
-    window.__activeSfxNode = node;
-    var clearLock = function(){
-      window.__sfxPlaying = false;
-      window.__activeSfxNode = null;
-    };
+    if(isSuccess) window.__sfxSuccessPlaying = true;
+    var clearLock = function(){ if(isSuccess) window.__sfxSuccessPlaying = false; };
     try{
       var p = node.play();
       if(p && p.then){
         p.then(function(){
           window.__audioUnlocked = true;
-          window.__pendingSound = null;
+          if(isSuccess) window.__pendingSound = null;
           try{ node.addEventListener('ended', clearLock, {once:true}); }catch(e1){ setTimeout(clearLock, 1400); }
-        }).catch(function(){ clearLock(); window.__pendingSound = obj; });
+        }).catch(function(){ clearLock(); if(isSuccess) window.__pendingSound = obj; });
       } else { setTimeout(clearLock, 900); }
-    }catch(e){ clearLock(); window.__pendingSound = obj; }
-  }catch(e){ window.__sfxPlaying = false; }
+    }catch(e){ clearLock(); }
+  }catch(e){ window.__sfxSuccessPlaying = false; }
 };
 window.playSoundReliable = function(obj){
   if(!obj) return;
-  // If success already playing, do nothing (no chop)
-  if(window.__sfxPlaying) return;
+  if(obj === window.sfxSuccess && window.__sfxSuccessPlaying) return;
   window.__pendingSound = obj;
   window.playSound(obj);
   setTimeout(function(){
-    if(window.__pendingSound === obj && !window.__sfxPlaying){
+    if(obj === window.sfxSuccess && window.__sfxSuccessPlaying) return;
+    if(window.__pendingSound === obj){
       window.playSound(obj);
     }
-  }, 400);
+  }, 450);
 };
 
-/** Simultaneous: green theme + UNLOCK exits right while ACCESS GRANTED enters from left. */
+/** Simultaneous green + labels: UNLOCK exits right, ACCESS GRANTED from LEFT edge. */
 window.applyAccessGrantedButton = function(button){
   try{
     if(!button) return;
@@ -4167,20 +4156,16 @@ window.applyAccessGrantedButton = function(button){
     var granted = button.querySelector('.unlock-lab-granted');
     if(main){ main.style.transform = ''; main.style.opacity = ''; }
     if(granted){ granted.style.transform = ''; granted.style.opacity = ''; }
-    button.classList.remove('btn-label-swap', 'is-sliding', 'is-pasting', 'paste-exit', 'nudge-hint', 'unlock-exit-main');
-    // Force reflow so transition always runs
+    button.classList.remove('btn-label-swap', 'is-sliding', 'nudge-hint', 'unlock-committed');
     try{ void button.offsetWidth; }catch(eR){}
     button.classList.add('success', 'unlock-granted');
-    if(granted){
-      try{ granted.setAttribute('aria-hidden', 'false'); }catch(eA){}
-    }
-    if(!granted){
-      try{ button.textContent = 'ACCESS GRANTED'; }catch(e){}
-    }
+    if(granted){ try{ granted.setAttribute('aria-hidden', 'false'); }catch(eA){} }
+    if(!granted){ try{ button.textContent = 'ACCESS GRANTED'; }catch(e){} }
   }catch(e){
     try{ button.classList.add('success','unlock-granted'); }catch(e2){}
   }
 };
+
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
 let pendingX=0,pendingY=0,renderFrame=0;
@@ -5977,7 +5962,16 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       muteBtn.classList.add('toggle-pop');
     });
   }
-  document.body.addEventListener('pointerdown', function(){
+  document.body.addEventListener('pointerdown', function(ev){
+    // Don't resume ambient on empty card glass taps (was causing distorted bubble-like audio)
+    try{
+      var tEl = ev && ev.target;
+      if(tEl && tEl.closest){
+        var onGlass = tEl.closest('#glass, .glass, #cardShell, .card-shell');
+        var onCtrl = tEl.closest('button,a,input,label,.auto-notch,.atm-mute-btn,.vip-word,.dgxen-word,.join-badge,.unlock-slide-btn');
+        if(onGlass && !onCtrl) return;
+      }
+    }catch(eSkip){}
     const inWorldNow = !!(window.__dgxenInWorld && window.__dgxenInWorld());
     if (!window.__dgxenLoggedIn && !inWorldNow && !isNativeTheme && opts.sound && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
   });
@@ -6111,11 +6105,20 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     playNextMove();
   }
 
+  function playVipJoinClick(){
+    try{
+      var a = getJoinClickAudio();
+      var src = (a && (a.currentSrc || a.src)) || './sounds/clicked on join button.mp3';
+      var n = new Audio(src);
+      n.volume = 1;
+      n.play().catch(function(){});
+    }catch(e){}
+  }
   function onVipTap(e){
     // small tap animation on the VIP text itself, every tap, regardless of gate
     vip.classList.remove('vip-tapped');
     void vip.offsetWidth;
-    vip.classList.add('vip-tapped');
+    playVipJoinClick(); vip.classList.add('vip-tapped');
 
     const enabled = !window.__dgxenJoinFxEnabled || window.__dgxenJoinFxEnabled();
     if (!enabled){ playDisabledFlash(); return; }
@@ -6126,12 +6129,15 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 
   // Actual JOIN click sound — the one file that is NOT in the atm folder.
   // Already preloaded above; just play it.
-  badge.addEventListener('click', function(){
+  badge.addEventListener('click', function(ev){
+    try{ if(ev && ev.stopPropagation) ev.stopPropagation(); }catch(e0){}
     try{
-      const a = getJoinClickAudio();
-      a.currentTime = 0;
-      const p = a.play();
-      if (p && p.catch) p.catch(function(){});
+      // Fresh node so unlockAudio warm-up never pauses this clip mid-play
+      var a = getJoinClickAudio();
+      var src = (a && (a.currentSrc || a.src)) || './sounds/clicked on join button.mp3';
+      var n = new Audio(src);
+      n.volume = 1;
+      n.play().catch(function(){});
     }catch(e){}
   });
 })();
@@ -6995,7 +7001,6 @@ btn.addEventListener('click', function(e){
   verifyKey();
 });
 
-/* Enhanced-only: slide right = unlock, slide left = paste clipboard */
 (function setupUnlockSlide(){
   var btnEl = document.getElementById('unlockBtn');
   if(!btnEl) return;
@@ -7009,6 +7014,21 @@ btn.addEventListener('click', function(e){
     if(main){ main.style.transform = ''; main.style.opacity = ''; }
     btnEl.classList.remove('is-sliding');
   }
+  function commitMainOut(){
+    var main = btnEl.querySelector('.unlock-lab-main');
+    if(main){
+      main.style.transform = 'translateX(120%)';
+      main.style.opacity = '0';
+    }
+    btnEl.classList.add('unlock-committed');
+    btnEl.classList.remove('is-sliding');
+  }
+  function restoreMain(){
+    var main = btnEl.querySelector('.unlock-lab-main');
+    if(main){ main.style.transform = ''; main.style.opacity = ''; }
+    btnEl.classList.remove('unlock-committed', 'is-sliding', 'success', 'unlock-granted');
+  }
+  window.__dgxenRestoreUnlockBtn = restoreMain;
   function nudgeHint(){
     if(!isEnhanced()) return;
     btnEl.classList.remove('nudge-hint');
@@ -7018,7 +7038,7 @@ btn.addEventListener('click', function(e){
   }
   function onDown(ev){
     if(!isEnhanced()) return;
-    if(btnEl.disabled || btnEl.classList.contains('success') || btnEl.classList.contains('unlock-granted')) return;
+    if(btnEl.disabled || btnEl.classList.contains('success') || btnEl.classList.contains('unlock-granted') || btnEl.classList.contains('unlock-committed')) return;
     var pt = (ev.touches && ev.touches[0]) || ev;
     startX = pt.clientX; startY = pt.clientY;
     dragging = true; axis = null; dx = 0;
@@ -7038,108 +7058,30 @@ btn.addEventListener('click', function(e){
     if(axis !== 'x') return;
     try{ if(ev.cancelable) ev.preventDefault(); ev.stopPropagation(); }catch(e){}
     dx = mx;
+    // only follow finger to the RIGHT (unlock direction)
     var main = btnEl.querySelector('.unlock-lab-main');
     if(main){
-      var shift = Math.max(-130, Math.min(130, dx * 0.9));
+      var shift = Math.max(0, Math.min(140, dx * 0.95));
       main.style.transform = 'translateX(' + shift + 'px)';
-      main.style.opacity = String(Math.max(0.2, 1 - Math.abs(shift) / 140));
+      main.style.opacity = String(Math.max(0.2, 1 - shift / 150));
     }
-  }
-  function runPasteAnim(){
-    clearInlineLab();
-    btnEl.classList.remove('paste-exit');
-    btnEl.classList.add('is-pasting');
-    setTimeout(function(){
-      btnEl.classList.add('paste-exit');
-      btnEl.classList.remove('is-pasting');
-      setTimeout(function(){ btnEl.classList.remove('paste-exit'); }, 400);
-    }, 500);
-  }
-  function openPasteSheet(){
-    var existing = document.getElementById('pasteSheetBackdrop');
-    if(existing) existing.remove();
-    var bd = document.createElement('div');
-    bd.id = 'pasteSheetBackdrop';
-    bd.className = 'paste-sheet-backdrop';
-    bd.innerHTML = '<div class="paste-sheet" role="dialog" aria-modal="true">'
-      + '<h3>Paste access key</h3>'
-      + '<p>Clipboard access is blocked in this WebView. Long-press the field below and choose Paste, then confirm.</p>'
-      + '<input type="text" id="pasteSheetInput" placeholder="Long-press here to paste…" autocomplete="off" autocapitalize="none" spellcheck="false" />'
-      + '<div class="ps-actions">'
-      + '<button type="button" class="ps-cancel" id="pasteSheetCancel">Cancel</button>'
-      + '<button type="button" class="ps-ok" id="pasteSheetOk">Use key</button>'
-      + '</div></div>';
-    document.body.appendChild(bd);
-    requestAnimationFrame(function(){ bd.classList.add('show'); });
-    var inp = document.getElementById('pasteSheetInput');
-    var keyInp = document.getElementById('keyInput');
-    setTimeout(function(){ try{ inp && inp.focus(); }catch(e){} }, 200);
-    function close(){ try{ bd.classList.remove('show'); setTimeout(function(){ bd.remove(); }, 220); }catch(e){} }
-    document.getElementById('pasteSheetCancel').onclick = close;
-    document.getElementById('pasteSheetOk').onclick = function(){
-      var v = (inp && inp.value || '').trim();
-      if(v && keyInp){
-        keyInp.value = v;
-        try{ keyInp.dispatchEvent(new Event('input', {bubbles:true})); }catch(e){}
-      }
-      close();
-      if(v){ try{ show('Key pasted','var(--accent)'); }catch(e){} runPasteAnim(); }
-    };
-    bd.addEventListener('click', function(e){ if(e.target === bd) close(); });
-  }
-  async function doPaste(){
-    try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
-    var text = '';
-    var inputEl = document.getElementById('keyInput');
-    try{
-      if(navigator.clipboard && navigator.clipboard.readText){
-        text = await navigator.clipboard.readText();
-      }
-    }catch(e){}
-    if(!text){
-      try{
-        if(window.Android){
-          if(typeof window.Android.getClipboard === 'function') text = window.Android.getClipboard();
-          else if(typeof window.Android.getClipText === 'function') text = window.Android.getClipText();
-          else if(typeof window.Android.clipboard === 'function') text = window.Android.clipboard();
-          else if(typeof window.Android.getTextFromClipboard === 'function') text = window.Android.getTextFromClipboard();
-        }
-      }catch(e2){}
-    }
-    text = String(text || '').trim();
-    if(text && inputEl){
-      inputEl.value = text;
-      try{ inputEl.dispatchEvent(new Event('input', {bubbles:true})); }catch(e4){}
-      runPasteAnim();
-      try{ show('Pasted from clipboard','var(--accent)'); }catch(e5){}
-      return;
-    }
-    // No system permission dialog — themed sheet instead
-    runPasteAnim();
-    openPasteSheet();
   }
   function onUp(ev){
     if(!dragging) return;
     dragging = false;
     if(!isEnhanced()){ clearInlineLab(); return; }
-    if(axis === 'x'){
-      if(dx >= THRESH){
-        clearInlineLab();
-        try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
-        verifyKey();
-        return;
-      }
-      if(dx <= -THRESH){
-        clearInlineLab();
-        doPaste();
-        return;
-      }
+    if(axis === 'x' && dx >= THRESH){
+      // Stay OUT — no bounce-back
+      commitMainOut();
+      try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
+      verifyKey();
+      return;
     }
-    // Small tap / incomplete slide → teaching nudge (text drifts right briefly)
     if(Math.abs(dx) < 12){
       clearInlineLab();
       nudgeHint();
     } else {
+      // incomplete slide — smooth return
       clearInlineLab();
     }
   }
@@ -7643,7 +7585,7 @@ async function verifyKey(){
     if(!isValid&&userInput.startsWith('DGXEN-')){
       let banned=false,reason='';
       try{const bannedSnap=await get(ref(db,'settings/bannedKeys/'+userInput));if(bannedSnap.exists()){banned=true;reason=(bannedSnap.val()&&bannedSnap.val().reason)||'This key has been banned by the administrator.'}}catch(e){console.error('Key ban check failed:',e)}
-      if(banned){show(reason||'Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;return}
+      if(banned){show(reason||'Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;try{if(window.__dgxenRestoreUnlockBtn)window.__dgxenRestoreUnlockBtn();}catch(eR){}return}
       
       const usersSnap=await get(ref(db,'users'));
       let found=false;
@@ -7666,8 +7608,8 @@ async function verifyKey(){
           const user=pick.user;
           {
             found=true;
-            if(user.status==='banned'){show('Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;return}
-            if(user.keyExpiresAt&&Date.now()>user.keyExpiresAt){show('This key has expired! Get a new one.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;return}
+            if(user.status==='banned'){show('Ban: generate a new key to continue.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;try{if(window.__dgxenRestoreUnlockBtn)window.__dgxenRestoreUnlockBtn();}catch(eR){}return}
+            if(user.keyExpiresAt&&Date.now()>user.keyExpiresAt){show('This key has expired! Get a new one.','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;try{if(window.__dgxenRestoreUnlockBtn)window.__dgxenRestoreUnlockBtn();}catch(eR){}return}
             
             if (user.keyExpiresAt) {
               let remainingMs = user.keyExpiresAt - Date.now();
@@ -7779,18 +7721,14 @@ async function verifyKey(){
           }
         }
       }
-      if(!found){show('Deleted, Unregistered or Fake Key!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;return}
-    }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;return}
+      if(!found){show('Deleted, Unregistered or Fake Key!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;try{if(window.__dgxenRestoreUnlockBtn)window.__dgxenRestoreUnlockBtn();}catch(eR){}return}
+    }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;window.__verifyBusy=false;try{if(window.__dgxenRestoreUnlockBtn)window.__dgxenRestoreUnlockBtn();}catch(eR){}return}
 
     if(isValid){
       // Force-update gate first (must block unlock). Keep this before success UI.
       if (await shouldBlockUnlockForForceUpdate()) {
         btn.disabled = false; window.__verifyBusy=false;
-        btn.classList.remove('success');
-        btn.classList.remove('btn-label-swap');
-        btn.classList.remove('success','unlock-granted','btn-label-swap','is-pasting','paste-exit');
-        var mainLab = btn.querySelector('.unlock-lab-main');
-        if(mainLab){ /* labels handle text */ } else { btn.textContent = 'UNLOCK APP'; }
+        try{ if(window.__dgxenRestoreUnlockBtn) window.__dgxenRestoreUnlockBtn(); }catch(eR){}
         show('Update required before unlock', 'var(--error)');
         try { window.playSound(window.sfxFailed); } catch (e) {}
         return;
@@ -7807,13 +7745,13 @@ async function verifyKey(){
       window.__dgxenLoggedIn = true;
       try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
       try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
-      // Enter app shortly after ACCESS GRANTED is visible (~0.5s), without waiting for Firebase post-work
+      // ACCESS GRANTED is on screen now — wait 0.5s so user can see it, then enter app
       setTimeout(function(){
         try{
           if(window.Android&&typeof window.Android.unlock==='function') window.Android.unlock();
           else show('Unlocked! (Browser Mode)','var(--accent)');
         }catch(e){ console.error('Android bridge error:',e); show('Unlocked! (Fallback Mode)','var(--accent)'); }
-      }, 750);
+      }, 500);
 
       // Post-login bookkeeping in parallel (does not hold the green button)
       try {
@@ -8053,6 +7991,34 @@ document.addEventListener('visibilitychange', function(){
 
 </script>
 
+<script>
+/* Keep card visible after app background → foreground (no disappear/reappear) */
+(function(){
+  function ensureCardVisible(){
+    try{
+      var shell = document.getElementById('cardShell');
+      if(shell){
+        shell.classList.add('boot-done');
+        shell.classList.remove('is-mode-switching');
+        shell.style.animation = 'none';
+        shell.style.opacity = '1';
+        shell.style.visibility = 'visible';
+        shell.style.transform = 'none';
+      }
+      try{ document.body.classList.add('enhanced-boot-fx-on'); }catch(e2){}
+      var scene = document.getElementById('scene');
+      if(scene){
+        scene.classList.remove('glass-switching', 'in', 'out');
+      }
+    }catch(e){}
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible') ensureCardVisible();
+  });
+  window.addEventListener('pageshow', ensureCardVisible);
+  window.addEventListener('focus', function(){ setTimeout(ensureCardVisible, 0); });
+})();
+</script>
 <div id="forceUpdateModal" aria-modal="true" role="dialog">
   <div class="fu-card">
     <div class="fu-logo">DGXEN</div>
