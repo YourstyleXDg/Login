@@ -7348,19 +7348,6 @@ async function verifyKey(){
                   const logKey = safeKey + '_' + String(deviceId).replace(/[.#$\[\]\/]/g,'_');
                   const existingLogRef = ref(db, 'settings/shareLogs/' + logKey);
                   const existingLogSnap = await get(existingLogRef);
-
-                  // Flag a suspiciously fast key generation — name set and
-                  // key generated within 1 minute of each other, on the
-                  // generator's own record (index.html stamps both
-                  // nameSetAt and keyGeneratedAt). This is informational
-                  // only (shown in admin's Share/User Logs), not a block —
-                  // a genuine fast user is possible, this just surfaces it.
-                  const genNameSetAt = user && user.nameSetAt;
-                  const genKeyGeneratedAt = user && user.keyGeneratedAt;
-                  const fastGeneration = !!(genNameSetAt && genKeyGeneratedAt &&
-                    (Number(genKeyGeneratedAt) - Number(genNameSetAt)) < 60000 &&
-                    Number(genKeyGeneratedAt) >= Number(genNameSetAt));
-
                   const payload = {
                     generatorName,
                     generatorId,
@@ -7371,7 +7358,6 @@ async function verifyKey(){
                     originalDevices: existing,
                     timestamp: Date.now(),
                     type: 'normal',
-                    fastGeneration: fastGeneration
                   };
                   // Create once; allow name upgrade if receiver registers later
                   if (!existingLogSnap.exists()) {
