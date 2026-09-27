@@ -19,6 +19,11 @@
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}
 html,body{min-height:100%;margin:0}
 body{
+  /* Fallback first for WebViews that don't support svh (falls back to
+     'auto' and collapses body height, breaking vertical centering on a
+     fresh install) — 100vh applies immediately, then 100svh overrides it
+     wherever it IS supported. */
+  min-height:100vh;
   min-height:100svh;
   overflow:hidden;
   display:grid;
@@ -37,7 +42,7 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translateZ(0)}
+.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translate3d(0,0,0);margin:0 auto;justify-self:center;align-self:center}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -49,16 +54,18 @@ body.is-dragging .card-shell,body.is-recalling .card-shell{filter:none!important
   will-change:transform;backface-visibility:hidden;contain:layout style;
   transform:translateZ(0);
 }
-/* NATIVE: exact page-unfold open animation — byte-identical to the original build. */
+/* NATIVE boot: exact page-unfold from 🌹🌹 (paper unroll) — only on first open. */
 html[data-glass-mode="native"] .card-shell:not(.boot-done){
-  animation:unrollCorner4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  animation:unrollCorner4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
-/* ENHANCED: its own 4D corner-unroll — same page-unfold language, smoother glass settle. */
+/* ENHANCED boot: smoother 4D glass unroll — only on first open. */
 html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
-  animation:unrollCorner4DEnhanced 1.95s cubic-bezier(.19,.86,.2,1) both;
+  animation:unrollCorner4DEnhanced 2.2s cubic-bezier(.19,.86,.2,1) both;
 }
-.card-shell.boot-done{
-  animation:none;
+/* After first boot, idle. Switch transitions use .scene.glass-switching rules below
+   (higher specificity) so they are never blocked by this. */
+.card-shell.boot-done:not(.is-mode-switching){
+  animation:none!important;
 }
 /* Realistic top-left page release: compressed corner, deep fold, overshoot, then settle. */
 @keyframes unrollCorner4D{
@@ -70,17 +77,28 @@ html[data-glass-mode="enhanced"] .card-shell:not(.boot-done){
   93%{transform:translate3d(0,1px,2px) rotateX(1.1deg) rotateY(-.8deg) rotateZ(.12deg) scale3d(1.003,1.002,1.003)}
   100%{transform:translate3d(0,0,0) rotateX(0) rotateY(0) rotateZ(0) scale3d(1,1,1)}
 }
-/* Curled edge and its moving shadow */
-.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);animation:foldDepthFade 1.85s cubic-bezier(.16,.84,.18,1) both}
+/* Curled edge + moving shadow — first boot (any mode) + native switch-in (paper unroll). */
+.roll-fold{position:absolute;inset:-2px;overflow:hidden;border-radius:var(--card-radius);pointer-events:none;z-index:8;transform:translateZ(52px);opacity:0}
+.card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold,
+html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold{
+  opacity:1;animation:foldDepthFade 2.1s cubic-bezier(.16,.84,.18,1) both;
+}
 .roll-fold::before{
   content:"";position:absolute;left:-30%;top:-31%;width:92%;height:78%;
   background:conic-gradient(from 220deg,transparent 0 21%,rgba(255,255,255,.55) 30%,rgba(255,255,255,.10) 39%,rgba(0,0,0,.45) 52%,transparent 64%);
-  filter:blur(9px);transform-origin:0 0;animation:foldRelease4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+  filter:blur(9px);transform-origin:0 0;
+}
+.card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold::before,
+html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold::before{
+  animation:foldRelease4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 .roll-fold::after{
   content:"";position:absolute;inset:-20% -55%;
   background:linear-gradient(108deg,transparent 35%,rgba(0,0,0,.5) 47%,rgba(255,255,255,.22) 52%,transparent 64%);
-  animation:rollShadow4D 1.85s cubic-bezier(.16,.84,.18,1) both;
+}
+.card-shell:not(.boot-done):not(.is-mode-switching) .roll-fold::after,
+html[data-glass-mode="native"] .scene.glass-switching.in .card-shell .roll-fold::after{
+  animation:rollShadow4D 2.1s cubic-bezier(.16,.84,.18,1) both;
 }
 @keyframes foldDepthFade{0%,35%{opacity:1}82%{opacity:.32}100%{opacity:0}}
 @keyframes foldRelease4D{
@@ -447,7 +465,7 @@ body.recall-ready{cursor:crosshair}
 .btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .15s,box-shadow .25s,background .25s}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);box-shadow:0 10px 30px rgba(0,255,136,.32)}
 .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}.get-key{display:block;margin-top:17px;padding:7px;color:var(--muted);font-size:12px;text-decoration:none}.get-key:hover{color:#fff}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
-@media (max-height:650px){body{overflow:auto;padding-top:62px;padding-bottom:25px}.glass{padding-top:34px;padding-bottom:27px}.tagline{margin-bottom:18px}}
+@media (max-height:650px){body{overflow:auto;padding-top:28px;padding-bottom:28px}.glass{padding-top:34px;padding-bottom:27px}.tagline{margin-bottom:18px}}
 
 /* Smooth travelling mode: only active while the card is moving. */
 .scene.drag-active{will-change:transform;contain:layout style paint}
@@ -1244,78 +1262,50 @@ html[data-glass-mode="enhanced"] body.is-recalling .glass::after{
   transform-origin:center center;
   pointer-events:none;
   will-change:transform;
+  /* Color ONLY follows the committed mode (data-glass-mode). No color flash on tap/swipe. */
   transition:transform .5s cubic-bezier(.34,1.45,.44,1),
-              background .2s ease,
-              box-shadow .2s ease,
-              width .2s ease;
+              background .35s ease,
+              box-shadow .35s ease;
 }
 .glass-mode-rail.is-swiping{
   cursor:grabbing;
 }
-/* Grip feedback only — size, never color. Color is reserved for a committed
-   mode change (see html[data-glass-mode="enhanced"] rule below), so tapping
-   or dragging the rail without actually switching never tints the pill. */
+/* Drag feedback = position only. Never change pill color/width while swiping. */
 .glass-mode-rail.is-swiping .glass-mode-pill{
-  width:54px;
-  transition:width .15s ease;
+  transition:none;
 }
 html[data-glass-mode="enhanced"] .glass-mode-pill{
   background:linear-gradient(90deg, rgba(255,150,90,.55), rgba(255,255,255,.5), rgba(100,170,255,.5));
+  box-shadow:0 0 10px rgba(0,200,255,.18), inset 0 1px rgba(255,255,255,.55);
 }
 
-/* Wipe — visual only, no size change */
-.glass-mode-wipe{
-  position:fixed; inset:0; z-index:99990; pointer-events:none; opacity:0; overflow:hidden;
+/* Full-screen wipe OFF */
+.glass-mode-wipe{ display:none !important; }
+
+/* Block switch: card STAYS put — slow white sweep covers FULL card edge-to-edge */
+.scene.glass-switching .glass > .block-sweep{
+  position:absolute; top:-20%; left:0;
+  width:36%; height:140%;
+  background:linear-gradient(100deg,
+    transparent 0%,
+    rgba(255,255,255,.07) 36%,
+    rgba(255,255,255,.48) 50%,
+    rgba(255,255,255,.07) 64%,
+    transparent 100%);
+  filter:blur(1.2px);
+  opacity:0;
+  z-index:30;
+  pointer-events:none;
+  animation:blockInnerSweep 1s cubic-bezier(.22,1,.36,1) forwards;
+  will-change:transform,opacity;
 }
-.glass-mode-wipe.on{ opacity:1; }
-.glass-mode-wipe .wipe-blade{
-  position:absolute; top:-20%; left:-30%; width:160%; height:140%;
-  background:linear-gradient(105deg,
-    transparent 40%, rgba(255,255,255,.06) 47%, rgba(255,255,255,.9) 50%,
-    rgba(255,255,255,.06) 53%, transparent 60%);
-  transform:translateX(-40%) skewX(-12deg);
-}
-.glass-mode-wipe.on .wipe-blade{
-  animation:glassModeWipe .35s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes glassModeWipe{
-  0%{ transform:translateX(-50%) skewX(-12deg); opacity:0; }
-  12%{ opacity:1; }
-  100%{ transform:translateX(50%) skewX(-12deg); opacity:0; }
+@keyframes blockInnerSweep{
+  0%{ transform:translateX(-180%) skewX(-10deg); opacity:0; }
+  12%{ opacity:.8; }
+  100%{ transform:translateX(380%) skewX(-10deg); opacity:0; }
 }
 
-/* Outgoing block: quick fade+blur, same for either direction. */
-.scene.glass-switching .card-shell{
-  animation:glassModeFadeOut .18s cubic-bezier(.4,0,.2,1) forwards;
-}
-/* Incoming block: short, smooth, minimalistic — distinct per mode, but neither
-   one replays the full dramatic boot unroll (that's reserved for first load). */
-html[data-glass-mode="native"] .scene.glass-switching.in .card-shell{
-  animation:glassSwitchInNative .38s cubic-bezier(.22,1,.36,1) forwards;
-}
-html[data-glass-mode="enhanced"] .scene.glass-switching.in .card-shell{
-  animation:glassSwitchInEnhanced .42s cubic-bezier(.22,1,.36,1) forwards;
-}
-@keyframes glassModeFadeOut{
-  0%{ filter:blur(0); opacity:1; }
-  100%{ filter:blur(3px); opacity:.5; }
-}
-/* Native switch-in: a small, clean unfold echo — minimal amplitude, no drama. */
-@keyframes glassSwitchInNative{
-  0%{ transform:translate3d(0,-5px,-16px) rotateX(-9deg) scale3d(.968,.958,.968); filter:blur(2px); opacity:.55; }
-  60%{ transform:translate3d(0,1px,3px) rotateX(2deg) scale3d(1.005,1.003,1.005); filter:blur(.3px); opacity:.96; }
-  100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
-}
-/* Enhanced switch-in: same minimal footprint, but a touch softer/slower — a quiet
-   glass materialize instead of the native fold. */
-@keyframes glassSwitchInEnhanced{
-  0%{ transform:translate3d(0,7px,-24px) rotateX(-12deg) scale3d(.945,.93,.945); filter:blur(3px); opacity:.4; }
-  55%{ transform:translate3d(0,-2px,4px) rotateX(3deg) scale3d(1.01,1.006,1.01); filter:blur(.5px); opacity:.9; }
-  100%{ transform:translate3d(0,0,0) rotateX(0) scale3d(1,1,1); filter:blur(0); opacity:1; }
-}
-
-/* Enhanced boot: same corner-unroll story as native, but eased into fewer, softer
-   overshoots and a glass materialize (blur+opacity) instead of a hard snap. */
+/* Enhanced FIRST boot — original middle 4D unroll (diagonal), from login liq */
 @keyframes unrollCorner4DEnhanced{
   0%{transform:translate3d(-30px,-28px,-150px) rotateX(-70deg) rotateY(50deg) rotateZ(-7deg) scale3d(.22,.16,.22);filter:blur(4px);opacity:0}
   16%{transform:translate3d(-26px,-22px,-108px) rotateX(-58deg) rotateY(42deg) rotateZ(-5.6deg) scale3d(.38,.3,.38);filter:blur(2.4px);opacity:.55}
@@ -1359,9 +1349,11 @@ html[data-glass-mode="native"] .glass{
   width:100% !important;
   max-width:100% !important;
 }
-html[data-glass-mode="enhanced"] .card-shell,
-html[data-glass-mode="native"] .card-shell,
-.scene.glass-switching .card-shell{
+/* Native = corner paper (0 0). Enhanced = middle 4D (center). */
+html[data-glass-mode="native"] .card-shell{
+  transform-origin:0 0;
+}
+html[data-glass-mode="enhanced"] .card-shell{
   transform-origin:center center;
 }
 
@@ -3673,7 +3665,7 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
       shell.removeEventListener('animationend', onEnd);
       markDone();
     });
-    setTimeout(markDone, 2100);
+    setTimeout(markDone, 2300);
   }
 
   let switching = false;
@@ -3713,38 +3705,47 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
     if(next === mode){ springHome(); return; }
     switching = true;
 
-    if(sceneEl){
-      sceneEl.classList.remove('in');
-      sceneEl.classList.add('glass-switching');
-    }
-    if(wipe){
-      wipe.classList.remove('on');
-      void wipe.offsetWidth;
-      wipe.classList.add('on');
-    }
+    /* Card STAYS — no open/unroll animation on switch.
+       Only: slow white sweep → commit new mode styles → done. */
+    if(sceneEl) sceneEl.classList.add('glass-switching');
 
+    /* Slow white sweep inside the glass */
+    try{
+      var g = document.getElementById('glass');
+      if(g){
+        var old = g.querySelector('.block-sweep');
+        if(old) old.remove();
+        var sweep = document.createElement('div');
+        sweep.className = 'block-sweep';
+        g.appendChild(sweep);
+        setTimeout(function(){ try{ sweep.remove(); }catch(e){} }, 1000);
+      }
+    }catch(e){}
+
+    /* Mid-sweep: swap mode styles (pill color + glass look) — no cut, card never moves */
     setTimeout(function(){
       mode = next;
       document.documentElement.setAttribute('data-glass-mode', mode);
       try{ localStorage.setItem(KEY, mode); }catch(e){}
-      if(shell) shell.classList.add('boot-done');
-      /* clear any leftover filter from fade so native never stays soft/bouncy */
-      try{
-        var g = document.getElementById('glass');
-        if(g){ g.style.filter = ''; g.style.opacity = ''; }
-        if(shell){ shell.style.filter = ''; shell.style.opacity = ''; }
-      }catch(e){}
       if(next === 'enhanced') showToast();
-      if(sceneEl) sceneEl.classList.add('in');
       try{ window.playSound && window.sfxBlockSwitch && window.playSound(window.sfxBlockSwitch); }catch(e){}
-    }, 180);
+    }, 380);
 
+    /* Cleanup after sweep finishes */
     setTimeout(function(){
       if(sceneEl) sceneEl.classList.remove('glass-switching', 'in');
-      if(wipe) wipe.classList.remove('on');
+      if(shell){
+        shell.classList.remove('is-mode-switching');
+        /* keep boot-done so open animation never re-fires on switch */
+        if(!shell.classList.contains('boot-done')) shell.classList.add('boot-done');
+        shell.style.animation = '';
+        shell.style.filter = '';
+        shell.style.opacity = '';
+        shell.style.transform = '';
+      }
       switching = false;
       springHome();
-    }, 620);
+    }, 1000);
   }
 
   function onDown(e){
@@ -3829,6 +3830,7 @@ window.unlockAudio=function(){
 ['pointerdown','touchstart','click'].forEach(function(ev){
   document.addEventListener(ev, function(){ window.unlockAudio(); }, {once:false,passive:true});
 });
+
 
 function isOnline(){ return navigator.onLine !== false; }
 function paintOffline(){
@@ -3960,13 +3962,57 @@ function saveCardPosition(){
   try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
 }
 function restoreCardPosition(){
+  /* Fresh install / clear data / invalid save → exact screen center (0,0). */
+  function forceCenter(){
+    dragX=0; dragY=0; pendingX=0; pendingY=0;
+    try{
+      if(scene){
+        scene.style.transition = 'none';
+        scene.style.transform = 'translate3d(0,0,0)';
+        void scene.offsetWidth;
+        scene.style.transition = '';
+      }
+    }catch(e){}
+  }
   try{
-    const saved=JSON.parse(localStorage.getItem(CARD_POSITION_KEY)||'null');
-    if(!saved||!Number.isFinite(+saved.x)||!Number.isFinite(+saved.y))return;
-    dragX=+saved.x;dragY=+saved.y;pendingX=dragX;pendingY=dragY;renderPosition();
-  }catch(error){localStorage.removeItem(CARD_POSITION_KEY)}
+    const raw = localStorage.getItem(CARD_POSITION_KEY);
+    if(raw == null || raw === '' || raw === 'null'){
+      forceCenter();
+      return;
+    }
+    const saved = JSON.parse(raw);
+    if(!saved || typeof saved !== 'object' || !Number.isFinite(+saved.x) || !Number.isFinite(+saved.y)){
+      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+      forceCenter();
+      return;
+    }
+    const x = +saved.x, y = +saved.y;
+    /* Ignore garbage / extreme values that would leave card off-screen */
+    const maxOff = Math.max(window.innerWidth || 400, window.innerHeight || 700) * 1.5;
+    if(!Number.isFinite(x) || !Number.isFinite(y) || Math.abs(x) > maxOff || Math.abs(y) > maxOff){
+      try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+      forceCenter();
+      return;
+    }
+    dragX = x; dragY = y; pendingX = x; pendingY = y;
+    renderPosition();
+  }catch(error){
+    try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
+    forceCenter();
+  }
 }
 restoreCardPosition();
+/* Re-assert center after layout if still fresh (no saved pos) */
+try{
+  if(!localStorage.getItem(CARD_POSITION_KEY)){
+    requestAnimationFrame(function(){
+      if(!localStorage.getItem(CARD_POSITION_KEY)){
+        dragX=0; dragY=0; pendingX=0; pendingY=0;
+        if(scene) scene.style.transform = 'translate3d(0,0,0)';
+      }
+    });
+  }
+}catch(e){}
 
 /* True only while enhanced glass mode is active — gates every enhanced-only
    tilt/scale touch effect so native drag/recall physics never change. */
