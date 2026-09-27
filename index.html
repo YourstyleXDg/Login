@@ -476,7 +476,117 @@ body.recall-ready{cursor:crosshair}
 .auto-notch.active span{color:var(--accent)}
 .auto-notch.active .notch-led{background:var(--accent);box-shadow:0 0 10px rgba(0,255,136,.6),inset 0 0 4px #fff}
 
-.btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .15s,box-shadow .25s,background .25s}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);box-shadow:0 10px 30px rgba(0,255,136,.32)}
+.btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .2s ease,box-shadow .4s ease,background .45s ease,color .35s ease,opacity .28s ease,filter .35s ease}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);color:#02140a;box-shadow:0 10px 30px rgba(0,255,136,.32)}.btn.btn-label-swap{opacity:.55;filter:saturate(.85);transform:scale(.985)}
+
+/* ===== Enhanced-only slide unlock / paste on UNLOCK button ===== */
+.unlock-slide-btn{
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:52px;
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y;
+}
+.unlock-slide-track{
+  position:relative;
+  display:block;
+  width:100%;
+  height:1.2em;
+  overflow:hidden;
+  text-align:center;
+  pointer-events:none;
+}
+.unlock-lab{
+  position:absolute;
+  left:0; right:0; top:0;
+  display:block;
+  white-space:nowrap;
+  font-weight:900;
+  letter-spacing:.35px;
+  transition: transform .38s cubic-bezier(.22,.9,.28,1), opacity .28s ease;
+  will-change: transform, opacity;
+}
+.unlock-lab-main{ transform:translateX(0); opacity:1; }
+.unlock-lab-granted{ transform:translateX(-110%); opacity:0; }
+.unlock-lab-pasted{ transform:translateX(110%); opacity:0; }
+/* success: main out right, granted in from left */
+.unlock-slide-btn.success .unlock-lab-main,
+.unlock-slide-btn.unlock-granted .unlock-lab-main{
+  transform:translateX(110%);
+  opacity:0;
+}
+.unlock-slide-btn.success .unlock-lab-granted,
+.unlock-slide-btn.unlock-granted .unlock-lab-granted{
+  transform:translateX(0);
+  opacity:1;
+}
+.unlock-slide-btn.success .unlock-lab-pasted,
+.unlock-slide-btn.unlock-granted .unlock-lab-pasted{
+  opacity:0;
+}
+/* paste flash: main out left, pasted in from right then exits left */
+.unlock-slide-btn.is-pasting .unlock-lab-main{
+  transform:translateX(-110%);
+  opacity:0;
+}
+.unlock-slide-btn.is-pasting .unlock-lab-pasted{
+  transform:translateX(0);
+  opacity:1;
+}
+.unlock-slide-btn.paste-exit .unlock-lab-pasted{
+  transform:translateX(-110%);
+  opacity:0;
+}
+.unlock-slide-btn.paste-exit .unlock-lab-main{
+  transform:translateX(0);
+  opacity:1;
+}
+.unlock-slide-arrow{
+  display:none;
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  color:rgba(0,0,0,.38);
+  pointer-events:none;
+  transition: opacity .25s ease, transform .25s ease;
+}
+html[data-glass-mode="enhanced"] .unlock-slide-arrow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+html[data-glass-mode="enhanced"] .unlock-slide-btn:not(.success):not(.unlock-granted) .unlock-slide-arrow{
+  animation: unlockArrowPulse 1.6s ease-in-out infinite;
+}
+@keyframes unlockArrowPulse{
+  0%,100%{ transform:translateY(-50%) translateX(0); opacity:.45; }
+  50%{ transform:translateY(-50%) translateX(3px); opacity:.85; }
+}
+html[data-glass-mode="enhanced"] .unlock-slide-btn.success .unlock-slide-arrow,
+html[data-glass-mode="enhanced"] .unlock-slide-btn.unlock-granted .unlock-slide-arrow{
+  opacity:0;
+  animation:none;
+}
+/* while dragging thumb visually */
+html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding{
+  cursor:grabbing;
+}
+html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
+  transition: none;
+}
+html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
+html[data-glass-mode="native"] .unlock-lab-granted,
+html[data-glass-mode="native"] .unlock-lab-pasted{ display:none !important; }
+html[data-glass-mode="native"] .unlock-lab-main{
+  position:static;
+  transform:none !important;
+  opacity:1 !important;
+}
+
 .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}.get-key{display:block;margin-top:17px;padding:7px;color:var(--muted);font-size:12px;text-decoration:none}.get-key:hover{color:#fff}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
 @media (max-height:650px){body{overflow:auto;padding-top:28px;padding-bottom:28px}.glass{padding-top:34px;padding-bottom:27px}.tagline{margin-bottom:18px}}
@@ -3626,7 +3736,16 @@ html[data-glass-mode="enhanced"] .card-shell{
           <span class="checkbox-box"><svg class="checkbox-check" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12l5 5L20 6"/></svg><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span></span>
           <span>Save Key for next time</span>
         </label>
-        <button class="btn" id="unlockBtn" type="button">UNLOCK APP</button>
+        <button class="btn unlock-slide-btn" id="unlockBtn" type="button" aria-label="Unlock App">
+          <span class="unlock-slide-track">
+            <span class="unlock-lab unlock-lab-main">UNLOCK APP</span>
+            <span class="unlock-lab unlock-lab-granted" aria-hidden="true">ACCESS GRANTED</span>
+            <span class="unlock-lab unlock-lab-pasted" aria-hidden="true">PASTED</span>
+          </span>
+          <span class="unlock-slide-arrow" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
         <div id="statusText" class="status" role="status" aria-live="polite"></div>
         <a href="https://YourstyleXdg.github.io/DGXEN-KEY/steps.html" class="get-key" id="getKeyLink" target="_blank" rel="noopener noreferrer">Don't have a key? Get one here.</a>
       </div>
@@ -3840,17 +3959,28 @@ window.sfxSuccess.addEventListener('error', function(){ try{ window.sfxSuccess=n
 window.__audioUnlocked=false;
 window.__pendingSound=null;
 window.unlockAudio=function(){
-  if(window.__audioUnlocked) return;
-  window.__audioUnlocked=true;
-  [window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio].forEach(function(a){
+  // Warm elements on user gesture. Only mark unlocked after a real play succeeds
+  // (old code set unlocked=true immediately, so a failed first unlock never retried).
+  var list=[window.sfxSuccess,window.sfxFailed,window.sfxSaveKey,window.sfxRecall,window.sfxAutoLogin,window.sfxBlockSwitch,window.__dgxenJoinDanceAudio,window.__dgxenJoinClickAudio];
+  list.forEach(function(a){
     if(!a) return;
     try{
-      const p=a.play();
-      if(p&&p.then) p.then(function(){ a.pause(); a.currentTime=0; }).catch(function(){});
+      var p=a.play();
+      if(p&&p.then) p.then(function(){
+        window.__audioUnlocked=true;
+        try{ a.pause(); a.currentTime=0; }catch(e2){}
+      }).catch(function(){});
     }catch(e){}
   });
   if(window.__pendingSound){
-    try{ const o=window.__pendingSound; window.__pendingSound=null; o.currentTime=0; o.play().catch(function(){}); }catch(e){}
+    try{
+      var o=window.__pendingSound;
+      var src=(o&&(o.currentSrc||o.src))||'';
+      var n=src?new Audio(src):o;
+      if(!n) return;
+      n.volume=1;
+      n.play().then(function(){ window.__pendingSound=null; window.__audioUnlocked=true; }).catch(function(){});
+    }catch(e){}
   }
 };
 ['pointerdown','touchstart','click'].forEach(function(ev){
@@ -3976,39 +4106,68 @@ window.playSoundReliable = function(obj){
   if(!obj) return;
   window.__pendingSound = obj;
   try{ if(window.unlockAudio) window.unlockAudio(); }catch(eU){}
+  // Prefer the preloaded element first (already warmed by unlockAudio), then clones
+  var played = false;
+  function attempt(useClone){
+    if(played) return;
+    try{
+      var node = obj;
+      if(useClone){
+        var src = obj.currentSrc || obj.src || '';
+        if(src) node = new Audio(src);
+      }
+      node.muted = false;
+      node.volume = 1;
+      try{ node.currentTime = 0; }catch(eC){}
+      var pr = node.play();
+      if(pr && pr.then){
+        pr.then(function(){
+          played = true;
+          window.__audioUnlocked = true;
+          window.__pendingSound = null;
+        }).catch(function(){});
+      }
+    }catch(e){}
+  }
+  attempt(false);
+  attempt(true);
   window.playSound(obj);
-  // Retry a few times for WebView; clear when play actually starts
   var tries = 0;
   var iv = setInterval(function(){
     tries++;
-    if(!window.__pendingSound || tries > 10){ try{ clearInterval(iv); }catch(e){} return; }
-    try{
-      var o = window.__pendingSound;
-      var src = (o && (o.currentSrc || o.src)) || '';
-      var n = src ? new Audio(src) : o;
-      if(!n) return;
-      n.volume = 1;
-      var pr = n.play();
-      if(pr && pr.then){
-        pr.then(function(){ window.__pendingSound = null; try{ clearInterval(iv); }catch(e){} }).catch(function(){});
-      }
-    }catch(e){}
-  }, 220);
-  // After any next user gesture, ensure it plays (auto-login / blocked autoplay)
+    if(played || !window.__pendingSound || tries > 12){ try{ clearInterval(iv); }catch(e){} return; }
+    attempt(tries % 2 === 0);
+  }, 180);
   const flush = function(){
-    if(!window.__pendingSound) return;
-    const o = window.__pendingSound;
-    try{
-      var src = o.currentSrc || o.src || '';
-      var n = src ? new Audio(src) : o;
-      n.volume = 1;
-      try{ if(n === o) o.currentTime = 0; }catch(e){}
-      n.play().then(function(){ window.__pendingSound = null; try{ clearInterval(iv); }catch(e2){} }).catch(function(){});
-    }catch(e){}
+    if(played || !window.__pendingSound) return;
+    attempt(false);
+    attempt(true);
   };
   document.addEventListener('pointerdown', flush, {once:true, passive:true});
   document.addEventListener('touchstart', flush, {once:true, passive:true});
   document.addEventListener('click', flush, {once:true, passive:true});
+};
+
+/** Smooth UNLOCK → ACCESS GRANTED (uses slide labels when present). */
+window.applyAccessGrantedButton = function(button){
+  try{
+    if(!button) return;
+    button.disabled = true;
+    button.classList.add('success', 'unlock-granted');
+    button.classList.remove('btn-label-swap', 'is-sliding', 'is-pasting', 'paste-exit');
+    // Native / fallback: if no label spans, set text
+    if(!button.querySelector('.unlock-lab-granted')){
+      button.classList.add('btn-label-swap');
+      setTimeout(function(){
+        try{
+          button.textContent = 'ACCESS GRANTED';
+          button.classList.remove('btn-label-swap');
+        }catch(e){}
+      }, 140);
+    }
+  }catch(e){
+    try{ button.classList.add('success','unlock-granted'); }catch(e2){}
+  }
 };
 
 let dragX=0,dragY=0,startX=0,startY=0,baseX=0,baseY=0;
@@ -6813,7 +6972,120 @@ autoNotch.addEventListener('click',toggleAutoLogin);
 autoNotch.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggleAutoLogin()}});
 const show=(message,color='white')=>{status.textContent=message;status.style.color=color};
 window.addEventListener('load',()=>{updateNotchUI();const p=new URLSearchParams(location.search);const urlDid=p.get('deviceId')||p.get('uuid')||p.get('id')||p.get('device');if(urlDid&&urlDid.trim()){try{localStorage.setItem('deviceId',urlDid.trim());}catch(e){}}const urlKey=p.get('key')||p.get('token');const saved=urlKey||localStorage.getItem('dgxen_saved_key');if(saved){input.value=saved.trim();save.checked=true;if(isAutoLoginEnabled&&!urlKey){setTimeout(function(){try{window.unlockAudio&&window.unlockAudio();}catch(e){}if(!btn.disabled)verifyKey();},500);}}paintOffline&&paintOffline();});
-btn.addEventListener('click',verifyKey);
+btn.addEventListener('click', function(e){
+  // Enhanced: unlock is slide-right only (click ignored). Native: normal click.
+  try{
+    if(document.documentElement.getAttribute('data-glass-mode') === 'enhanced'){
+      e.preventDefault();
+      return;
+    }
+  }catch(err){}
+  verifyKey();
+});
+
+/* Enhanced-only: slide right = unlock, slide left = paste clipboard */
+(function setupUnlockSlide(){
+  var btnEl = document.getElementById('unlockBtn');
+  if(!btnEl) return;
+  var startX = 0, startY = 0, dragging = false, axis = null, dx = 0;
+  var THRESH = 56; // px
+  function isEnhanced(){
+    try{ return document.documentElement.getAttribute('data-glass-mode') === 'enhanced'; }catch(e){ return false; }
+  }
+  function onDown(ev){
+    if(!isEnhanced()) return;
+    if(btnEl.disabled || btnEl.classList.contains('success') || btnEl.classList.contains('unlock-granted')) return;
+    var pt = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+    startX = pt.clientX; startY = pt.clientY;
+    dragging = true; axis = null; dx = 0;
+    btnEl.classList.add('is-sliding');
+    try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
+  }
+  function onMove(ev){
+    if(!dragging || !isEnhanced()) return;
+    var pt = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+    var mx = pt.clientX - startX;
+    var my = pt.clientY - startY;
+    if(axis === null && (Math.abs(mx) > 8 || Math.abs(my) > 8)){
+      axis = Math.abs(mx) >= Math.abs(my) ? 'x' : 'y';
+    }
+    if(axis !== 'x') return;
+    if(ev.cancelable) ev.preventDefault();
+    dx = mx;
+    var main = btnEl.querySelector('.unlock-lab-main');
+    if(main){
+      var shift = Math.max(-90, Math.min(90, dx * 0.55));
+      main.style.transform = 'translateX(' + shift + 'px)';
+      main.style.opacity = String(Math.max(0.35, 1 - Math.abs(shift) / 100));
+    }
+  }
+  function resetMainLab(){
+    var main = btnEl.querySelector('.unlock-lab-main');
+    if(main){ main.style.transform = ''; main.style.opacity = ''; }
+    btnEl.classList.remove('is-sliding');
+  }
+  function runPasteAnim(){
+    btnEl.classList.remove('paste-exit');
+    btnEl.classList.add('is-pasting');
+    setTimeout(function(){
+      btnEl.classList.add('paste-exit');
+      btnEl.classList.remove('is-pasting');
+      setTimeout(function(){
+        btnEl.classList.remove('paste-exit');
+        resetMainLab();
+      }, 380);
+    }, 520);
+  }
+  async function doPaste(){
+    try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
+    var text = '';
+    try{
+      if(navigator.clipboard && navigator.clipboard.readText){
+        text = await navigator.clipboard.readText();
+      }
+    }catch(e){ text = ''; }
+    text = (text || '').trim();
+    var inputEl = document.getElementById('keyInput');
+    if(text && inputEl){
+      inputEl.value = text;
+      try{ inputEl.dispatchEvent(new Event('input', {bubbles:true})); }catch(e2){}
+    }
+    runPasteAnim();
+    try{
+      if(text) show('Pasted from clipboard','var(--accent)');
+      else show('Clipboard empty or blocked','var(--error)');
+    }catch(e3){}
+  }
+  function onUp(ev){
+    if(!dragging) return;
+    dragging = false;
+    if(!isEnhanced()){ resetMainLab(); return; }
+    if(axis === 'x'){
+      if(dx >= THRESH){
+        resetMainLab();
+        // Slide right → unlock (gesture keeps audio session alive)
+        try{ if(window.unlockAudio) window.unlockAudio(); }catch(e){}
+        verifyKey();
+        return;
+      }
+      if(dx <= -THRESH){
+        resetMainLab();
+        doPaste();
+        return;
+      }
+    }
+    resetMainLab();
+  }
+  btnEl.addEventListener('pointerdown', onDown, {passive:true});
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp, {passive:true});
+  window.addEventListener('pointercancel', onUp, {passive:true});
+  btnEl.addEventListener('touchstart', onDown, {passive:true});
+  window.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp, {passive:true});
+  window.addEventListener('touchcancel', onUp, {passive:true});
+})();
+
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!btn.disabled)verifyKey()});
 
 
@@ -7443,6 +7715,32 @@ async function verifyKey(){
     }else if(!isValid){show('Invalid Key Format!','var(--error)'); window.playSound(window.sfxFailed); localStorage.removeItem('dgxen_saved_key');btn.disabled=false;return}
 
     if(isValid){
+      // Force-update gate first (must block unlock). Keep this before success UI.
+      if (await shouldBlockUnlockForForceUpdate()) {
+        btn.disabled = false;
+        btn.classList.remove('success');
+        btn.classList.remove('btn-label-swap');
+        btn.classList.remove('success','unlock-granted','btn-label-swap','is-pasting','paste-exit');
+        var mainLab = btn.querySelector('.unlock-lab-main');
+        if(mainLab){ /* labels handle text */ } else { btn.textContent = 'UNLOCK APP'; }
+        show('Update required before unlock', 'var(--error)');
+        try { window.playSound(window.sfxFailed); } catch (e) {}
+        return;
+      }
+      // CRITICAL: success sound + button MUST run before heavy Firebase post-work.
+      // User keys used to await reportAppVersionCode / sessionGuard / trial cleanup
+      // first — that delayed SFX past the gesture window (silent) and left the
+      // button stuck on "UNLOCK APP" / checking state when those awaits were slow.
+      try{ window.playSoundReliable(window.sfxSuccess); }catch(eSfx){}
+      try{ window.applyAccessGrantedButton(btn); }catch(eBtn){
+        try{ btn.classList.add('success','unlock-granted'); }catch(eBtn2){}
+      }
+      save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
+      window.__dgxenLoggedIn = true;
+      try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
+      try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
+
+      // Post-login bookkeeping (same as before) — after UI/SFX so user keys match master feel
       try {
         const matchedUid = window.__lastMatchedUserId || null;
         await reportAppVersionCode(matchedUid);
@@ -7456,7 +7754,6 @@ async function verifyKey(){
             });
           }
         } catch (eWrite) { console.warn('native id write', eWrite); }
-        // Start live session guard (ban / key ban / master delete) while user uses app
         const isMaster = !userInput.startsWith('DGXEN-');
         try {
           let expAt = null;
@@ -7487,13 +7784,6 @@ async function verifyKey(){
             expiresAt: expAt
           });
         } catch (gErr) { console.warn('guard start', gErr); }
-        // Clear any stale trial flag / duplicate trial block for this
-        // device the moment a REAL (non-trial) login succeeds — matches
-        // the exact bug this fixes: a device's users/ record keeping
-        // trial:true (and its old trial keyExpiresAt) even after the
-        // person has since generated and logged in with a real key,
-        // which made the trial prompt/timer wrongly reappear and made
-        // admin.html keep showing a TRIAL badge on a real key.
         try {
           const isTrialKeyItself = String(userInput || '').trim().toUpperCase() === String(__trialKeyValue || '').trim().toUpperCase();
           if (!isTrialKeyItself) {
@@ -7502,24 +7792,6 @@ async function verifyKey(){
         } catch (eClean) { console.warn('trial cleanup', eClean); }
         window.__lastMatchedUserId=null;
       } catch(e) {}
-      // Force-update gate: never unlock (or auto-login loop) while stale + forceUpdate
-      if (await shouldBlockUnlockForForceUpdate()) {
-        btn.disabled = false;
-        btn.classList.remove('success');
-        btn.textContent = 'UNLOCK APP';
-        show('Update required before unlock', 'var(--error)');
-        try { window.playSound(window.sfxFailed); } catch (e) {}
-        return;
-      }
-      window.playSoundReliable(window.sfxSuccess);
-      btn.classList.add('success');btn.textContent='ACCESS GRANTED';
-      save.checked?localStorage.setItem('dgxen_saved_key',userInput):localStorage.removeItem('dgxen_saved_key');
-      // Once logged in, all background/ambient sound stays off for good — both the 2D
-      // theme track and the 3D world's ultrasonic track — and this flag stops either
-      // one from being restarted by a stray tap, theme refresh, or re-entering the world.
-      window.__dgxenLoggedIn = true;
-      try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
-      try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
       setTimeout(()=>{try{if(window.Android&&typeof window.Android.unlock==='function')window.Android.unlock();else show('Unlocked! (Browser Mode)','var(--accent)')}catch(e){console.error('Android bridge error:',e);show('Unlocked! (Fallback Mode)','var(--accent)')}},250);
     }
   }catch(e){console.error(e);show('Network Error!','var(--error)'); window.playSound(window.sfxFailed); btn.disabled=false}
