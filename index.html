@@ -1357,6 +1357,26 @@ html[data-glass-mode="enhanced"] .card-shell{
   transform-origin:center center;
 }
 
+/* Enhanced first-boot quiet (~1.2s): full 4D unroll keeps running;
+   only secondary loops pause so the shell gets GPU/main-thread priority. */
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .glass::after,
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .light-cap,
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .iridescent,
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .glass-shadow-runner{
+  animation-play-state: paused !important;
+}
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .join-badge:not(.jb-dancing):not(.jb-disabled-flash),
+html[data-glass-mode="enhanced"].enhanced-boot-quiet .hang{
+  animation-play-state: paused !important;
+}
+html[data-glass-mode="enhanced"].enhanced-boot-quiet #adminNotice{
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+html[data-glass-mode="enhanced"].enhanced-boot-quiet #joinFinger{
+  visibility: hidden !important;
+}
+
 @media (prefers-reduced-motion:reduce){
   html[data-glass-mode="enhanced"] .glass::after,
   html[data-glass-mode="enhanced"] .light-cap,
@@ -1370,7 +1390,7 @@ html[data-glass-mode="enhanced"] .card-shell{
 
 </style>
 <script>
-(function(){try{var m=localStorage.getItem('dgxen_glass_mode_v1');if(m==='enhanced'||m==='native')document.documentElement.setAttribute('data-glass-mode',m);}catch(e){}})();
+(function(){try{var m=localStorage.getItem('dgxen_glass_mode_v1');if(m==='enhanced'||m==='native')document.documentElement.setAttribute('data-glass-mode',m);if((m||document.documentElement.getAttribute('data-glass-mode'))==='enhanced'){document.documentElement.classList.add('enhanced-boot-quiet');window.__dgxenEnhancedBootQuiet=true;}}catch(e){}})();
 </script>
 </head>
 <body>
@@ -3659,12 +3679,33 @@ const INTERACTIVE='#keyInput,#glassModeRail,.glass-mode-rail,.glass-mode-pill';
   document.documentElement.setAttribute('data-glass-mode', mode);
 
   if(shell){
-    const markDone = function(){ try{ shell.classList.add('boot-done'); }catch(e){} };
+    const markDone = function(){
+      try{ shell.classList.add('boot-done'); }catch(e){}
+      try{
+        if(document.documentElement.classList.contains('enhanced-boot-quiet')){
+          document.documentElement.classList.remove('enhanced-boot-quiet');
+          window.__dgxenEnhancedBootQuiet = false;
+          try{ if(typeof window.__dgxenFlushBootQuiet === 'function') window.__dgxenFlushBootQuiet(); }catch(e2){}
+        }
+      }catch(e3){}
+    };
     shell.addEventListener('animationend', function onEnd(ev){
       if(ev.target !== shell) return;
       shell.removeEventListener('animationend', onEnd);
       markDone();
     });
+    /* Enhanced: lift quiet a bit before full 2.2s end so extras resume while settle finishes.
+       Native: markDone only ends animation (no quiet class). */
+    var quietMs = (document.documentElement.getAttribute('data-glass-mode') === 'enhanced') ? 1200 : 2300;
+    setTimeout(function(){
+      try{
+        if(document.documentElement.classList.contains('enhanced-boot-quiet')){
+          document.documentElement.classList.remove('enhanced-boot-quiet');
+          window.__dgxenEnhancedBootQuiet = false;
+          try{ if(typeof window.__dgxenFlushBootQuiet === 'function') window.__dgxenFlushBootQuiet(); }catch(e2){}
+        }
+      }catch(e){}
+    }, quietMs);
     setTimeout(markDone, 2300);
   }
 
@@ -5557,6 +5598,11 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
   window.__dgxenCurrentTheme = function(){ return document.documentElement.getAttribute('data-atm') || 'native'; };
   function startSound(theme){
     if (window.__dgxenLoggedIn) return; // no background sound is ever restarted after a successful login
+    // Enhanced first-boot quiet: skip audio decode/play until shell open has priority
+    if (window.__dgxenEnhancedBootQuiet) {
+      window.__dgxenPendingAtmSound = theme || document.documentElement.getAttribute('data-atm') || 'native';
+      return;
+    }
     stopSound();
     if (isNativeTheme) return;
     if (!opts.sound) return;
@@ -5616,26 +5662,32 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
       document.body.classList.toggle('skin-' + t, !!opts.cardSkin);
     }
     if (!sameTheme) {
-      if (t === 'rain') buildRain();
-      if (t === 'morning') buildMorningLeaves();
-      if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
-      if (t === 'sakura' || t === 'fest_holi') buildPetals();
-      if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
-      if (t === 'windy') {
-        if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
-      } else if (window.__dgxenWindFX) {
-        window.__dgxenWindFX.stop();
-      }
-      if (t === 'metroid') {
-        if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
-      } else if (window.__dgxenMeteorFX) {
-        window.__dgxenMeteorFX.stop();
-      }
-      if (t === 'apex') {
-        if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
-        else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
-      } else if (window.__dgxenApexFightFX) {
-        window.__dgxenApexFightFX.stop();
+      // Theme class already applied above (admin/theme truth). Heavy particle
+      // systems wait out enhanced first-boot quiet so the 4D shell stays smooth.
+      if (window.__dgxenEnhancedBootQuiet) {
+        window.__dgxenPendingAtmParticles = t;
+      } else {
+        if (t === 'rain') buildRain();
+        if (t === 'morning') buildMorningLeaves();
+        if (t === 'night_stars' || t === 'night_aurora' || t === 'fest_christmas') buildStars();
+        if (t === 'sakura' || t === 'fest_holi') buildPetals();
+        if (t === 'fest_diwali' || t === 'fest_newyear') buildSparks();
+        if (t === 'windy') {
+          if (window.__dgxenWindFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenWindFX.start();
+        } else if (window.__dgxenWindFX) {
+          window.__dgxenWindFX.stop();
+        }
+        if (t === 'metroid') {
+          if (window.__dgxenMeteorFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenMeteorFX.start();
+        } else if (window.__dgxenMeteorFX) {
+          window.__dgxenMeteorFX.stop();
+        }
+        if (t === 'apex') {
+          if (window.__dgxenApexFightFX && !(window.__dgxenInWorld && window.__dgxenInWorld())) window.__dgxenApexFightFX.start();
+          else if (!window.__dgxenApexFightFX) console.warn('[apex-fight] theme is apex but __dgxenApexFightFX was never registered');
+        } else if (window.__dgxenApexFightFX) {
+          window.__dgxenApexFightFX.stop();
+        }
       }
     }
     const sky = document.getElementById('skyLayer');
@@ -5738,6 +5790,27 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
     const inWorldNow = !!(window.__dgxenInWorld && window.__dgxenInWorld());
     if (!window.__dgxenLoggedIn && !inWorldNow && !isNativeTheme && opts.sound && !muted && audioEl && audioEl.paused) { try { audioEl.play().catch(function(err){ console.warn('[atm-sound] resume-on-tap failed:', err && err.message); }); } catch(e){} }
   });
+
+
+  window.__dgxenFlushBootQuiet = function(){
+    try {
+      var t = window.__dgxenPendingAtmParticles;
+      window.__dgxenPendingAtmParticles = null;
+      if (t && typeof window.applyLoginAtmosphere === 'function') {
+        // Force particle rebuild for pending theme (sameTheme would skip)
+        var prev = window.__dgxenCurrentAtm;
+        window.__dgxenCurrentAtm = null;
+        window.applyLoginAtmosphere(t);
+        // applyLoginAtmosphere will set current again
+      }
+      var st = window.__dgxenPendingAtmSound;
+      window.__dgxenPendingAtmSound = null;
+      if (st && typeof startSound === 'function') startSound(st);
+    } catch (e) {}
+    try {
+      if (typeof window.__dgxenFlushPendingNotice === 'function') window.__dgxenFlushPendingNotice();
+    } catch (e2) {}
+  };
 
   window.__DGXEN_FESTIVALS = FESTIVAL_MAP;
 
@@ -7480,8 +7553,23 @@ async function verifyKey(){
 
   function setFinger(on){
     if(!finger) return;
+    if(on && window.__dgxenEnhancedBootQuiet){
+      window.__dgxenPendingFinger = true;
+      return;
+    }
     if(on) finger.classList.add('show'); else finger.classList.remove('show');
   }
+  window.__dgxenFlushPendingNotice = function(){
+    try{
+      if(window.__dgxenPendingFinger){
+        window.__dgxenPendingFinger = false;
+        if(finger) finger.classList.add('show');
+      }
+      var p = window.__dgxenPendingNotice;
+      window.__dgxenPendingNotice = null;
+      if(p && p.msg) showNotice(p.msg, p.seconds);
+    }catch(e){}
+  };
   function escapeHtml(s){
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -7507,6 +7595,10 @@ async function verifyKey(){
     if(!noticeEl||!noticeText) return;
     const text=String(msg||'').trim();
     if(!text){ hideNotice(); return; }
+    if(window.__dgxenEnhancedBootQuiet){
+      window.__dgxenPendingNotice = { msg: text, seconds: seconds };
+      return;
+    }
     if(isShowing) return; // never restart mid-countdown
     isShowing=true;
     let left=Math.max(1, Math.floor(Number(seconds)||8));
@@ -7602,7 +7694,14 @@ async function cleanupSkippedGetKey(){
     }
   }catch(e){}
 }
-cleanupSkippedGetKey();
+(function(){
+  var delay = 0;
+  try {
+    if (document.documentElement.getAttribute('data-glass-mode') === 'enhanced' || window.__dgxenEnhancedBootQuiet)
+      delay = 1300;
+  } catch (e) {}
+  setTimeout(cleanupSkippedGetKey, delay);
+})();
 setTimeout(cleanupSkippedGetKey, 8000);
 document.addEventListener('visibilitychange', function(){
   if(document.visibilityState==='visible') cleanupSkippedGetKey();
