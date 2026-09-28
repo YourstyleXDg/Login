@@ -54,7 +54,12 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .55s cubic-bezier(.22,1,.36,1),opacity 1s ease;transform:translate3d(0,0,0);margin:0 auto;justify-self:center;align-self:center}
+.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .62s cubic-bezier(.18,.9,.22,1),opacity 1s ease;transform:translate3d(0,0,0);margin:0 auto;justify-self:center;align-self:center}
+body.is-dragging .scene,
+body.is-recalling .scene{
+  /* Keep liquid transition alive while finger moves — never paper-snap */
+  transition:transform .62s cubic-bezier(.18,.9,.22,1) !important;
+}
 
 /* Soft grounding shadow only. The trapezium is clipped inside the glass. */
 .scene::before,.scene::after{display:none!important;content:none!important}
@@ -4270,7 +4275,7 @@ function restoreCardPosition(){
         scene.style.transition = 'none';
         scene.style.transform = 'translate3d(0,0,0)';
         void scene.offsetWidth;
-        scene.style.transition = '';
+        scene.style.removeProperty('transition');
       }
     }catch(e){}
   }
@@ -4430,8 +4435,12 @@ cardShell.addEventListener('pointerdown',e=>{
   holdTimer=setTimeout(()=>{
     if(!pressing||activePointer!==e.pointerId)return;
     dragging=true;setMoveMode('is-dragging',true);cardShell.setPointerCapture(e.pointerId);cardShell.style.cursor='grabbing';
-    /* Always liquid drag feel — never inherit transition:none from resume path */
-    try{ if(scene && scene.style.transition === 'none') scene.style.transition = ''; }catch(eT){}
+    /* Always liquid: clear any sticky inline transition from resume / forceCenter */
+    try{
+      if(scene){
+        scene.style.removeProperty('transition');
+      }
+    }catch(eT){}
     if(isEnhancedGlass())glass.style.transform='rotateX(0) rotateY(0)';
     if(navigator.vibrate)navigator.vibrate(12);
   },HOLD_MS);
@@ -7446,12 +7455,20 @@ async function verifyKey(){
   window.__verifyBusy = true;
   try{ if(window.unlockAudio) window.unlockAudio(); }catch(eAud){}
   const userInput=input.value.trim();
-  if(!userInput){window.__verifyBusy=false;show('Key khali nahi ho sakti!','var(--error)'); window.playSound(window.sfxFailed); input.focus();return}
+  if(!userInput){
+    window.__verifyBusy=false;
+    show('Key khali nahi ho sakti!','var(--error)');
+    window.playSound(window.sfxFailed);
+    try{ if(window.__dgxenRestoreUnlockBtn) window.__dgxenRestoreUnlockBtn(); }catch(eR){}
+    input.focus();
+    return;
+  }
   if(typeof isOnline==='function' && !isOnline()){
     window.__verifyBusy=false;
     show('Connect internet','var(--error)');
     window.playSound(window.sfxFailed);
     paintOffline && paintOffline();
+    try{ if(window.__dgxenRestoreUnlockBtn) window.__dgxenRestoreUnlockBtn(); }catch(eR){}
     return;
   }
   show('Strict Security Check...');btn.disabled=true;btn.classList.remove('success');
@@ -8073,14 +8090,14 @@ document.addEventListener('visibilitychange', function(){
     }catch(e2){}
   }
   function restoreDragFeel(){
-    /* Re-enable liquid drag transition after background — never leave
-       scene with transition:none (sharp paper follow). */
+    /* Force liquid scene transition after background — WebView often leaves
+       transform follow 1:1 (paper). Re-apply the exact cubic transition. */
     try{
       var sc = document.querySelector('.scene');
       if(sc){
-        if(sc.style.transition === 'none' || sc.style.transition === 'none !important'){
-          sc.style.transition = '';
-        }
+        sc.style.transition = '';
+        /* re-assert stylesheet liquid feel even if inline was cleared */
+        sc.style.removeProperty('transition');
       }
     }catch(e3){}
     try{
@@ -8094,7 +8111,15 @@ document.addEventListener('visibilitychange', function(){
           gl.style.transform = 'rotateX(0deg) rotateY(0deg) translateZ(0) scale(1)';
         }
       }
+      var shell = document.getElementById('cardShell');
+      if(shell) shell.style.cursor = 'grab';
     }catch(e4){}
+    /* Drop resumed flag after a tick so no other CSS stays sticky */
+    try{
+      setTimeout(function(){
+        try{ document.documentElement.classList.remove('dgxen-resumed'); }catch(e5){}
+      }, 120);
+    }catch(e6){}
   }
   function ensureCardVisible(){
     if(!window.__dgxenBootDone) return;
