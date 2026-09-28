@@ -568,15 +568,53 @@ html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
   transform:translateX(14px);
   opacity:.85;
 }
-/* Native: still show granted on success */
-html[data-glass-mode="native"] .unlock-slide-btn:not(.success):not(.unlock-granted) .unlock-lab-granted{
-  display:none;
+/* NATIVE unlock = attached login-⚡⚡ behavior: instant, no slide/nudge */
+html[data-glass-mode="native"] .unlock-slide-btn{
+  display:block;
+  touch-action:manipulation;
+}
+html[data-glass-mode="native"] .unlock-slide-track{
+  position:relative;
+  height:auto;
+  overflow:visible;
+}
+html[data-glass-mode="native"] .unlock-lab{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  transform:none !important;
+  transition:none !important;
+  will-change:auto !important;
+  opacity:1 !important;
+}
+html[data-glass-mode="native"] .unlock-lab-granted{
+  display:none !important;
+}
+html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-main,
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main,
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-committed .unlock-lab-main{
+  display:none !important;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-granted,
 html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-granted{
   display:block !important;
+  position:static !important;
+  transform:none !important;
+  opacity:1 !important;
+  transition:none !important;
+}
+html[data-glass-mode="native"] .unlock-slide-arrow,
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  display:none;
+}
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  display:block;
+  transform:none !important;
+  opacity:1 !important;
 }
 html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
+
 
 /* richer green theme (not flat pure green) */
 .btn.success,
@@ -626,16 +664,53 @@ html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding{
 html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
   transition: none;
 }
-html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
-/* Native: keep label stack so ACCESS GRANTED can animate on success */
-html[data-glass-mode="native"] .unlock-slide-btn:not(.success):not(.unlock-granted) .unlock-lab-granted{
-  display:none;
+/* NATIVE unlock = attached login-⚡⚡ behavior: instant, no slide/nudge */
+html[data-glass-mode="native"] .unlock-slide-btn{
+  display:block;
+  touch-action:manipulation;
+}
+html[data-glass-mode="native"] .unlock-slide-track{
+  position:relative;
+  height:auto;
+  overflow:visible;
+}
+html[data-glass-mode="native"] .unlock-lab{
+  position:static !important;
+  left:auto !important;
+  right:auto !important;
+  top:auto !important;
+  transform:none !important;
+  transition:none !important;
+  will-change:auto !important;
+  opacity:1 !important;
+}
+html[data-glass-mode="native"] .unlock-lab-granted{
+  display:none !important;
+}
+html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-main,
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main,
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-committed .unlock-lab-main{
+  display:none !important;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-granted,
 html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-granted{
   display:block !important;
+  position:static !important;
+  transform:none !important;
+  opacity:1 !important;
+  transition:none !important;
+}
+html[data-glass-mode="native"] .unlock-slide-arrow,
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  display:none;
+}
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  display:block;
+  transform:none !important;
+  opacity:1 !important;
 }
 html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
+
 
 
 .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}.get-key{display:block;margin-top:17px;padding:7px;color:var(--muted);font-size:12px;text-decoration:none}.get-key:hover{color:#fff}
@@ -4169,14 +4244,20 @@ window.applyAccessGrantedButton = function(button){
   try{
     if(!button) return;
     button.disabled = true;
+    var isEnh = false;
+    try{ isEnh = document.documentElement.getAttribute('data-glass-mode')==='enhanced'; }catch(eM){}
     var main = button.querySelector('.unlock-lab-main');
     var granted = button.querySelector('.unlock-lab-granted');
-    // Clear drag inline styles but KEEP unlock-committed until success classes take over
-    // so main does not snap back to center (empty-button flash).
     if(main){ main.style.transform = ''; main.style.opacity = ''; }
     if(granted){ granted.style.transform = ''; granted.style.opacity = ''; }
     button.classList.remove('btn-label-swap', 'is-sliding', 'nudge-hint');
-    button.classList.add('success', 'unlock-granted');
+    if(!isEnh){
+      // Native: instant swap like login-⚡⚡ — no slide classes
+      button.classList.remove('unlock-committed');
+      button.classList.add('success', 'unlock-granted');
+    } else {
+      button.classList.add('success', 'unlock-granted');
+    }
     if(granted){ try{ granted.setAttribute('aria-hidden', 'false'); }catch(eA){} }
     if(!granted){ try{ button.textContent = 'ACCESS GRANTED'; }catch(e){} }
   }catch(e){
@@ -7754,13 +7835,17 @@ async function verifyKey(){
       window.__dgxenLoggedIn = true;
       try{ if(window.__dgxenStopAtmSound) window.__dgxenStopAtmSound(); }catch(e){}
       try{ if(window.__dgxenStopWorldSound) window.__dgxenStopWorldSound(); }catch(e){}
-      // Labels animate ~0.9s; hold so ACCESS GRANTED is readable, then enter app
+      // Native: old 250ms. Enhanced: wait for slide labels (~0.9s) + brief hold.
+      var unlockDelay = 250;
+      try{
+        if(document.documentElement.getAttribute('data-glass-mode')==='enhanced') unlockDelay = 1100;
+      }catch(eD){}
       setTimeout(function(){
         try{
           if(window.Android&&typeof window.Android.unlock==='function') window.Android.unlock();
           else show('Unlocked! (Browser Mode)','var(--accent)');
         }catch(e){ console.error('Android bridge error:',e); show('Unlocked! (Fallback Mode)','var(--accent)'); }
-      }, 1100);
+      }, unlockDelay);
 
       // Post-login bookkeeping in parallel (does not hold the green button)
       try {
