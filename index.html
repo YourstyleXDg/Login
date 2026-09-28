@@ -685,7 +685,16 @@ html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
 @media (max-height:650px){body{overflow:auto;padding-top:28px;padding-bottom:28px}.glass{padding-top:34px;padding-bottom:27px}.tagline{margin-bottom:18px}}
 
 /* Smooth travelling mode: only active while the card is moving. */
-.scene.drag-active{will-change:transform;contain:layout style paint}
+.scene.drag-active{
+  will-change:transform;
+  contain:layout style paint;
+  /* Lerp owns smoothness — disable long CSS transition so no double-lag or snap */
+  transition:opacity .35s ease !important;
+}
+body.is-dragging .scene,
+body.is-recalling .scene{
+  transition:opacity .35s ease !important;
+}
 body.is-dragging .glass, body.is-recalling .glass{
   /* keep glass visible; sheen bar keeps moving */
   backdrop-filter:blur(28px) saturate(170%) !important;
@@ -1252,9 +1261,11 @@ html[data-glass-mode="enhanced"] .glass{
   overflow:hidden;
   isolation:isolate;
   border-radius:var(--card-radius, 34px);
-  padding:43px 29px 34px;
+  /* IDENTICAL outer box to native — only visuals differ (no size jump on switch) */
+  padding:clamp(28px, 5.2vh, 43px) clamp(18px, 5.2vw, 29px) clamp(22px, 4.2vh, 34px);
   box-sizing:border-box;
   width:100%;
+  max-width:100%;
   background:
     radial-gradient(140% 95% at 20% -8%, rgba(255,255,255,.38) 0%, rgba(255,255,255,.14) 26%, transparent 58%),
     radial-gradient(90% 60% at 70% 8%, rgba(255,255,255,.10) 0%, transparent 55%),
@@ -1565,6 +1576,25 @@ html[data-glass-mode="native"] .glass{
   box-sizing:border-box !important;
   width:100% !important;
   max-width:100% !important;
+  /* Size/shape locked — only paint props animate on mode switch */
+  min-height:0;
+  transition:
+    background .55s cubic-bezier(.22,1,.36,1),
+    border-color .55s cubic-bezier(.22,1,.36,1),
+    box-shadow .55s cubic-bezier(.22,1,.36,1),
+    filter .45s ease,
+    backdrop-filter .55s ease,
+    -webkit-backdrop-filter .55s ease;
+}
+/* During switch: keep geometry frozen so nothing resizes */
+.scene.glass-switching .glass{
+  transition:
+    background .55s cubic-bezier(.22,1,.36,1),
+    border-color .55s cubic-bezier(.22,1,.36,1),
+    box-shadow .55s cubic-bezier(.22,1,.36,1),
+    filter .45s ease,
+    backdrop-filter .55s ease,
+    -webkit-backdrop-filter .55s ease !important;
 }
 /* Native = corner paper (0 0). Enhanced = middle 4D (center). */
 html[data-glass-mode="native"] .card-shell{
@@ -4251,18 +4281,48 @@ let holdTimer=0,pressing=false,dragging=false,moved=false,activePointer=null,hin
 let recallTimer=0,recallPointer=null,recallStartX=0,recallStartY=0,recallFollowing=false;
 let travelFrame=0,travelStart=0,travelFromX=0,travelFromY=0,travelTargetX=0,travelTargetY=0;
 
+/* Live visual position (lerped) vs finger target (pending*) */
+let __smoothX=0,__smoothY=0,__smoothActive=false;
+const DRAG_FOLLOW = 0.22;   /* butter follow while finger down */
+const DRAG_SETTLE = 0.14;   /* softer settle when released */
+
 function renderPosition(){
   scene.style.transform=`translate3d(${dragX.toFixed(2)}px,${dragY.toFixed(2)}px,0)`;
 }
 function queuePosition(x,y){
   pendingX=x;pendingY=y;
-  if(renderFrame)return;
-  renderFrame=requestAnimationFrame(()=>{
-    renderFrame=0;dragX=pendingX;dragY=pendingY;renderPosition();
-  });
+  if(!__smoothActive){
+    __smoothActive=true;
+    if(!renderFrame){
+      renderFrame=requestAnimationFrame(smoothTick);
+    }
+  }
+}
+function smoothTick(){
+  renderFrame=0;
+  const tx=pendingX, ty=pendingY;
+  const k = dragging ? DRAG_FOLLOW : DRAG_SETTLE;
+  __smoothX += (tx - __smoothX) * k;
+  __smoothY += (ty - __smoothY) * k;
+  /* snap when close enough to avoid eternal micro-motion */
+  if(Math.abs(tx-__smoothX)<0.15 && Math.abs(ty-__smoothY)<0.15){
+    __smoothX=tx; __smoothY=ty;
+    if(!dragging) __smoothActive=false;
+  }
+  dragX=__smoothX; dragY=__smoothY;
+  renderPosition();
+  if(__smoothActive || dragging || Math.abs(tx-__smoothX)>0.15 || Math.abs(ty-__smoothY)>0.15){
+    renderFrame=requestAnimationFrame(smoothTick);
+  }else{
+    __smoothActive=false;
+  }
 }
 function flushPosition(){
-  if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=0;dragX=pendingX;dragY=pendingY;renderPosition()}
+  if(renderFrame){cancelAnimationFrame(renderFrame);renderFrame=0}
+  dragX=pendingX; dragY=pendingY;
+  __smoothX=pendingX; __smoothY=pendingY;
+  __smoothActive=false;
+  renderPosition();
 }
 function saveCardPosition(){
   try{localStorage.setItem(CARD_POSITION_KEY,JSON.stringify({x:dragX,y:dragY}))}catch(error){console.warn('Card position could not be saved:',error)}
@@ -4271,6 +4331,7 @@ function restoreCardPosition(){
   /* Fresh install / clear data / invalid save → exact screen center (0,0). */
   function forceCenter(){
     dragX=0; dragY=0; pendingX=0; pendingY=0;
+    try{ __smoothX=0; __smoothY=0; __smoothActive=false; }catch(eS){}
     try{
       if(scene){
         scene.style.transition = 'none';
@@ -4301,6 +4362,7 @@ function restoreCardPosition(){
       return;
     }
     dragX = x; dragY = y; pendingX = x; pendingY = y;
+    try{ __smoothX=x; __smoothY=y; __smoothActive=false; }catch(eS){}
     renderPosition();
   }catch(error){
     try{ localStorage.removeItem(CARD_POSITION_KEY); }catch(e){}
