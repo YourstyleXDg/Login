@@ -477,6 +477,9 @@ body.recall-ready{cursor:crosshair}
 .auto-notch.active .notch-led{background:var(--accent);box-shadow:0 0 10px rgba(0,255,136,.6),inset 0 0 4px #fff}
 
 .btn{width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#fff,#dfe5e1);color:#020302;font-size:15px;font-weight:900;letter-spacing:.35px;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.38),inset 0 1px #fff;transition:transform .2s ease,box-shadow .4s ease,background .45s ease,color .35s ease,opacity .28s ease,filter .35s ease}.btn:active{transform:scale(.975)}.btn:disabled{opacity:.64;cursor:wait}.btn.success{background:linear-gradient(135deg,#60ffb5,#00cf73);color:#02140a;box-shadow:0 10px 30px rgba(0,255,136,.32)}.btn.btn-label-swap{opacity:.55;filter:saturate(.85);transform:scale(.985)}
+/* Unlock button: no press-scale flash (native + enhanced) */
+#unlockBtn.btn:active{transform:none}
+#unlockBtn.btn.success{transition:background .45s ease,box-shadow .45s ease,color .3s ease}
 
 /* ===== Enhanced-only slide unlock (NO paste) ===== */
 .unlock-slide-btn{
@@ -568,54 +571,51 @@ html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
   transform:translateX(14px);
   opacity:.85;
 }
-/* NATIVE unlock = attached login-⚡⚡ behavior: instant, no slide/nudge */
+/* NATIVE unlock: no slide-gesture, but SMOOTH text+color crossfade (no flash) */
 html[data-glass-mode="native"] .unlock-slide-btn{
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   touch-action:manipulation;
+  overflow:hidden;
 }
 html[data-glass-mode="native"] .unlock-slide-track{
   position:relative;
-  height:auto;
-  overflow:visible;
+  display:block;
+  width:100%;
+  height:1.2em;
+  overflow:hidden;
 }
 html[data-glass-mode="native"] .unlock-lab{
-  position:static !important;
-  left:auto !important;
-  right:auto !important;
-  top:auto !important;
-  transform:none !important;
-  transition:none !important;
-  will-change:auto !important;
-  opacity:1 !important;
+  position:absolute !important;
+  left:0; right:0; top:0;
+  display:block !important;
+  transition: transform .42s cubic-bezier(.22,.85,.28,1), opacity .36s ease !important;
+  will-change: transform, opacity;
+}
+html[data-glass-mode="native"] .unlock-lab-main{
+  transform:translateX(0);
+  opacity:1;
 }
 html[data-glass-mode="native"] .unlock-lab-granted{
-  display:none !important;
+  transform:translateX(-18px);
+  opacity:0;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-main,
-html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main,
-html[data-glass-mode="native"] .unlock-slide-btn.unlock-committed .unlock-lab-main{
-  display:none !important;
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main{
+  transform:translateX(22px);
+  opacity:0;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-granted,
 html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-granted{
-  display:block !important;
-  position:static !important;
-  transform:none !important;
-  opacity:1 !important;
-  transition:none !important;
-}
-html[data-glass-mode="native"] .unlock-slide-arrow,
-html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
-  display:none;
-}
-html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
-  display:block;
-  transform:none !important;
-  opacity:1 !important;
+  transform:translateX(0);
+  opacity:1;
 }
 html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
-
-
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  transform:none !important;
+  opacity:1 !important;
+}
 /* richer green theme (not flat pure green) */
 .btn.success,
 .unlock-slide-btn.success{
@@ -664,55 +664,51 @@ html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding{
 html[data-glass-mode="enhanced"] .unlock-slide-btn.is-sliding .unlock-lab-main{
   transition: none;
 }
-/* NATIVE unlock = attached login-⚡⚡ behavior: instant, no slide/nudge */
+/* NATIVE unlock: no slide-gesture, but SMOOTH text+color crossfade (no flash) */
 html[data-glass-mode="native"] .unlock-slide-btn{
-  display:block;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   touch-action:manipulation;
+  overflow:hidden;
 }
 html[data-glass-mode="native"] .unlock-slide-track{
   position:relative;
-  height:auto;
-  overflow:visible;
+  display:block;
+  width:100%;
+  height:1.2em;
+  overflow:hidden;
 }
 html[data-glass-mode="native"] .unlock-lab{
-  position:static !important;
-  left:auto !important;
-  right:auto !important;
-  top:auto !important;
-  transform:none !important;
-  transition:none !important;
-  will-change:auto !important;
-  opacity:1 !important;
+  position:absolute !important;
+  left:0; right:0; top:0;
+  display:block !important;
+  transition: transform .42s cubic-bezier(.22,.85,.28,1), opacity .36s ease !important;
+  will-change: transform, opacity;
+}
+html[data-glass-mode="native"] .unlock-lab-main{
+  transform:translateX(0);
+  opacity:1;
 }
 html[data-glass-mode="native"] .unlock-lab-granted{
-  display:none !important;
+  transform:translateX(-18px);
+  opacity:0;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-main,
-html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main,
-html[data-glass-mode="native"] .unlock-slide-btn.unlock-committed .unlock-lab-main{
-  display:none !important;
+html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-main{
+  transform:translateX(22px);
+  opacity:0;
 }
 html[data-glass-mode="native"] .unlock-slide-btn.success .unlock-lab-granted,
 html[data-glass-mode="native"] .unlock-slide-btn.unlock-granted .unlock-lab-granted{
-  display:block !important;
-  position:static !important;
-  transform:none !important;
-  opacity:1 !important;
-  transition:none !important;
-}
-html[data-glass-mode="native"] .unlock-slide-arrow,
-html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
-  display:none;
-}
-html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
-  display:block;
-  transform:none !important;
-  opacity:1 !important;
+  transform:translateX(0);
+  opacity:1;
 }
 html[data-glass-mode="native"] .unlock-slide-arrow{ display:none !important; }
-
-
-
+html[data-glass-mode="native"] .unlock-slide-btn.nudge-hint .unlock-lab-main{
+  transform:none !important;
+  opacity:1 !important;
+}
 .status{min-height:20px;margin-top:14px;font-size:12.5px;font-weight:750;line-height:1.45}.get-key{display:block;margin-top:17px;padding:7px;color:var(--muted);font-size:12px;text-decoration:none}.get-key:hover{color:#fff}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}.glass{transform:none!important}}
 @media (max-height:650px){body{overflow:auto;padding-top:28px;padding-bottom:28px}.glass{padding-top:34px;padding-bottom:27px}.tagline{margin-bottom:18px}}
@@ -1618,6 +1614,16 @@ html[data-glass-mode="enhanced"] .card-shell{
 }
 
 
+html.dgxen-resumed .scene{
+  transition:none !important;
+  opacity:1 !important;
+}
+html.dgxen-resumed .card-shell{
+  animation:none !important;
+  opacity:1 !important;
+  visibility:visible !important;
+}
+html.dgxen-resumed .roll-fold{ opacity:0 !important; animation:none !important; }
 </style>
 <script>
 (function(){try{var m=localStorage.getItem('dgxen_glass_mode_v1');if(m==='enhanced'||m==='native')document.documentElement.setAttribute('data-glass-mode',m);}catch(e){}})();
@@ -4251,13 +4257,8 @@ window.applyAccessGrantedButton = function(button){
     if(main){ main.style.transform = ''; main.style.opacity = ''; }
     if(granted){ granted.style.transform = ''; granted.style.opacity = ''; }
     button.classList.remove('btn-label-swap', 'is-sliding', 'nudge-hint');
-    if(!isEnh){
-      // Native: instant swap like login-⚡⚡ — no slide classes
-      button.classList.remove('unlock-committed');
-      button.classList.add('success', 'unlock-granted');
-    } else {
-      button.classList.add('success', 'unlock-granted');
-    }
+    button.classList.remove('unlock-committed');
+    button.classList.add('success', 'unlock-granted');
     if(granted){ try{ granted.setAttribute('aria-hidden', 'false'); }catch(eA){} }
     if(!granted){ try{ button.textContent = 'ACCESS GRANTED'; }catch(e){} }
   }catch(e){
@@ -8088,28 +8089,27 @@ document.addEventListener('visibilitychange', function(){
 <script>
 /* After first boot only: keep card visible on app resume (never kill open animation) */
 (function(){
-  function ensureCardVisible(){
-    // Critical: do not run before opening unroll finishes — that was wiping boot animation
-    if(!window.__dgxenBootDone) return;
+  function freezeForResume(){
+    try{ document.documentElement.classList.add('dgxen-resumed'); }catch(e){}
     try{
       var shell = document.getElementById('cardShell');
       if(shell){
-        if(!shell.classList.contains('boot-done')) shell.classList.add('boot-done');
+        shell.classList.add('boot-done');
         shell.classList.remove('is-mode-switching');
-        // only clear stuck mid-animation styles after boot already completed once
-        shell.style.opacity = '1';
-        shell.style.visibility = 'visible';
       }
-      try{ document.body.classList.add('enhanced-boot-fx-on'); }catch(e2){}
-    }catch(e){}
+      document.body.classList.add('enhanced-boot-fx-on');
+    }catch(e2){}
+  }
+  function ensureCardVisible(){
+    if(!window.__dgxenBootDone) return;
+    freezeForResume();
   }
   document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'hidden') freezeForResume();
     if(document.visibilityState === 'visible') ensureCardVisible();
   });
-  window.addEventListener('pageshow', function(ev){
-    if(ev && ev.persisted) ensureCardVisible();
-    else ensureCardVisible();
-  });
+  window.addEventListener('pagehide', freezeForResume);
+  window.addEventListener('pageshow', function(){ ensureCardVisible(); });
 })();
 </script>
 <div id="forceUpdateModal" aria-modal="true" role="dialog">
