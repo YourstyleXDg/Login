@@ -54,10 +54,22 @@ body::before{
   background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
   mix-blend-mode:soft-light;
 }
-.scene{width:min(390px,100%);perspective:1500px;position:relative;isolation:isolate;will-change:transform;transition:transform .62s cubic-bezier(.18,.9,.22,1),opacity 1s ease;transform:translate3d(0,0,0);margin:0 auto;justify-self:center;align-self:center}
+.scene{
+  width:min(390px,100%);
+  perspective:1500px;
+  position:relative;
+  isolation:isolate;
+  will-change:transform;
+  transition:transform .62s cubic-bezier(.18,.9,.22,1),opacity 1s ease;
+  transform:translate3d(0,0,0);
+  margin:0 auto;
+  justify-self:center;
+  align-self:center;
+}
 body.is-dragging .scene,
-body.is-recalling .scene{
-  /* Keep liquid transition alive while finger moves — never paper-snap */
+body.is-recalling .scene,
+.scene.drag-active{
+  /* Hard-lock liquid follow — beats any leftover inline transition:none */
   transition:transform .62s cubic-bezier(.18,.9,.22,1) !important;
 }
 
@@ -724,13 +736,47 @@ body{padding-bottom:calc(28px + env(safe-area-inset-bottom, 0px));}
 .admin-notice .an-count{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:rgba(0,255,136,.15);color:var(--accent);font-variant-numeric:tabular-nums;font-size:11px;font-weight:900}
 
 
-.offline-banner{display:none;
-  position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:200;
-  padding:10px 18px;border-radius:999px;font-size:12.5px;font-weight:800;
-  background:rgba(255,82,82,.92);color:#fff;letter-spacing:.2px;
-  box-shadow:0 10px 28px rgba(0,0,0,.35);display:none;pointer-events:none;
+.offline-banner{display:none !important}
+/* Full-screen offline gate (in-page; works when HTML already loaded) */
+.offline-gate{
+  display:none;position:fixed;inset:0;z-index:99999;
+  align-items:center;justify-content:center;
+  padding:28px 22px;
+  background:radial-gradient(circle at 50% 30%,rgba(0,40,30,.55),transparent 55%),
+             linear-gradient(165deg,#020302 0%,#070a08 50%,#020403 100%);
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:#fff;text-align:center;
 }
-.offline-banner.show{display:block}
+.offline-gate.show{display:flex}
+.offline-gate .og-card{
+  width:min(340px,100%);
+  padding:32px 26px 26px;
+  border-radius:28px;
+  background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 24px 60px rgba(0,0,0,.55), inset 0 1px rgba(255,255,255,.2);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+}
+.offline-gate .og-icon{
+  width:54px;height:54px;margin:0 auto 16px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,82,82,.15);border:1px solid rgba(255,82,82,.35);
+  font-size:26px;line-height:1;
+}
+.offline-gate .og-title{
+  margin:0 0 8px;font-size:18px;font-weight:850;letter-spacing:.3px;
+}
+.offline-gate .og-desc{
+  margin:0 0 22px;font-size:13px;line-height:1.45;color:rgba(255,255,255,.62);
+}
+.offline-gate .og-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-width:160px;padding:13px 22px;border:0;border-radius:14px;cursor:pointer;
+  font-size:14px;font-weight:800;letter-spacing:.3px;
+  color:#020302;background:linear-gradient(135deg,#fff,#dfe5e1);
+  box-shadow:0 8px 22px rgba(0,0,0,.25);
+}
+.offline-gate .og-btn:active{transform:scale(.97)}
 
 
 /* ===== LOGIN ATMOSPHERE (corners + sky, outside card) ===== */
@@ -3821,7 +3867,15 @@ html.dgxen-resumed .roll-fold{opacity:0 !important;animation:none !important}
 </script>
 <!-- ============ /DGXEN ∞ 4D ============ -->
 
-<div class="offline-banner" id="offlineBanner">Connect internet</div>
+<div class="offline-banner" id="offlineBanner" aria-hidden="true">Connect internet</div>
+<div class="offline-gate" id="offlineGate" aria-live="polite">
+  <div class="og-card">
+    <div class="og-icon" aria-hidden="true">⚡</div>
+    <p class="og-title">No Internet</p>
+    <p class="og-desc">Turn on mobile data or Wi‑Fi to continue. Then tap Refresh.</p>
+    <button type="button" class="og-btn" id="offlineRefreshBtn">Refresh</button>
+  </div>
+</div>
 <main class="scene" id="scene">
   <section class="card-shell" id="cardShell" aria-label="DGXEN login">
     <div class="hang">
@@ -4113,19 +4167,43 @@ window.unlockAudio=function(){
 
 function isOnline(){ return navigator.onLine !== false; }
 function paintOffline(){
+  const offline = !isOnline();
+  const gate=document.getElementById('offlineGate');
+  if(gate) gate.classList.toggle('show', offline);
   const b=document.getElementById('offlineBanner');
-  if(b) b.classList.toggle('show', !isOnline());
-  if(!isOnline()){
+  if(b) b.classList.remove('show'); /* replaced by full gate */
+  if(offline){
     try{ show('Connect internet','var(--error)'); }catch(e){}
   }
 }
 function clearOfflineUI(){
+  const gate=document.getElementById('offlineGate');
+  if(gate) gate.classList.remove('show');
   const b=document.getElementById('offlineBanner');
   if(b) b.classList.remove('show');
   try{ if(status&&status.textContent==='Connect internet') show('','white'); }catch(e){}
 }
 window.addEventListener('online', clearOfflineUI);
 window.addEventListener('offline', paintOffline);
+try{
+  var rb=document.getElementById('offlineRefreshBtn');
+  if(rb){
+    rb.addEventListener('click', function(){
+      try{
+        if(typeof isOnline==='function' && isOnline()){
+          clearOfflineUI();
+          try{ location.reload(); }catch(e){}
+          return;
+        }
+        /* still offline — soft retry check */
+        try{
+          if(navigator.onLine){ clearOfflineUI(); location.reload(); }
+          else { rb.textContent = 'Still offline…'; setTimeout(function(){ rb.textContent='Refresh'; }, 1200); }
+        }catch(e2){ try{ location.reload(); }catch(e3){} }
+      }catch(e){}
+    });
+  }
+}catch(eR){}
 paintOffline();
 
 // ===== REAL CONNECTIVITY RE-CHECK (fixes false "Connect internet" after the
@@ -4459,6 +4537,16 @@ cardShell.addEventListener('pointermove',e=>{
   }
   e.preventDefault();
   moved=true;
+  try{
+    if(!document.body.classList.contains('is-dragging')){
+      document.body.classList.add('is-dragging');
+      scene.classList.add('drag-active');
+    }
+    /* Kill sticky paper: wipe inline transition every move if present */
+    if(scene && scene.style.transition){
+      scene.style.removeProperty('transition');
+    }
+  }catch(eLiq){}
   queuePosition(baseX + dx, baseY + dy);
 
 /* Small physical glass tilt while the block follows the finger — ENHANCED ONLY.
@@ -8091,13 +8179,13 @@ document.addEventListener('visibilitychange', function(){
   }
   function restoreDragFeel(){
     /* Force liquid scene transition after background — WebView often leaves
-       transform follow 1:1 (paper). Re-apply the exact cubic transition. */
+       transform follow 1:1 (paper). Never touch transform here (position lives
+       in the drag script scope). Only clear sticky transition:none. */
     try{
       var sc = document.querySelector('.scene');
       if(sc){
-        sc.style.transition = '';
-        /* re-assert stylesheet liquid feel even if inline was cleared */
         sc.style.removeProperty('transition');
+        sc.style.willChange = 'transform';
       }
     }catch(e3){}
     try{
